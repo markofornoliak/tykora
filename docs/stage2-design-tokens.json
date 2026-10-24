@@ -1,0 +1,419 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "project": "TYKORA",
+  "version": "1.0-stage2",
+  "description": "Stage 2 design decisions. All values and sample data are demonstrative.",
+  "typography": {
+    "ui": {
+      "$value": "-apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif"
+    },
+    "typing": {
+      "$value": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    },
+    "scalePx": {
+      "xs": 11,
+      "sm": 12,
+      "body": 14,
+      "lead": 16,
+      "h3": 17,
+      "h2": 23,
+      "h1Desktop": 58,
+      "h1Mobile": 37,
+      "typingDesktop": 37,
+      "typingMobile": 25
+    },
+    "tracking": {
+      "display": "-0.055em",
+      "label": "0.12em"
+    }
+  },
+  "spacing": {
+    "1": {
+      "$value": "4px"
+    },
+    "2": {
+      "$value": "8px"
+    },
+    "3": {
+      "$value": "12px"
+    },
+    "4": {
+      "$value": "16px"
+    },
+    "5": {
+      "$value": "20px"
+    },
+    "6": {
+      "$value": "24px"
+    },
+    "8": {
+      "$value": "32px"
+    },
+    "10": {
+      "$value": "40px"
+    },
+    "12": {
+      "$value": "48px"
+    },
+    "16": {
+      "$value": "64px"
+    }
+  },
+  "radiusPx": {
+    "control": 11,
+    "card": 18,
+    "pill": 999,
+    "key": 7
+  },
+  "motion": {
+    "microMs": 120,
+    "uiMs": 180,
+    "screenMs": 220,
+    "easing": "cubic-bezier(.18,.8,.25,1)",
+    "reducedMotion": "all nonessential animation disabled"
+  },
+  "layout": {
+    "sidebarPx": 244,
+    "mobileNavBreakpointPx": 820,
+    "compactBreakpointPx": 520,
+    "touchTargetRecommendedPx": 44
+  },
+  "themes": {
+    "daylight": {
+      "label": "Daylight",
+      "color": {
+        "background": "#f7f7f3",
+        "surface": "#ffffff",
+        "text": "#19231f",
+        "accent": "#185f50"
+      },
+      "contrastRatio": {
+        "textOnSurface": 16.13,
+        "textOnBackground": 15.02,
+        "accentOnSurface": 7.52
+      }
+    },
+    "nightfall": {
+      "label": "Nightfall",
+      "color": {
+        "background": "#111916",
+        "surface": "#1d2924",
+        "text": "#f5f8f4",
+        "accent": "#9bdbc3"
+      },
+      "contrastRatio": {
+        "textOnSurface": 14.06,
+        "textOnBackground": 16.7,
+        "accentOnSurface": 9.55
+      }
+    },
+    "porcelain": {
+      "label": "Porcelain",
+      "color": {
+        "background": "#f3f6f6",
+        "surface": "#ffffff",
+        "text": "#192c32",
+        "accent": "#195b72"
+      },
+      "contrastRatio": {
+        "textOnSurface": 14.51,
+        "textOnBackground": 13.35,
+        "accentOnSurface": 7.55
+      }
+    },
+    "ink": {
+      "label": "Ink",
+      "color": {
+        "background": "#101218",
+        "surface": "#1b1f27",
+        "text": "#f3f4f6",
+        "accent": "#a7b9ed"
+      },
+      "contrastRatio": {
+        "textOnSurface": 15.0,
+        "textOnBackground": 17.01,
+        "accentOnSurface": 8.5
+      }
+    },
+    "limestone": {
+      "label": "Limestone",
+      "color": {
+        "background": "#f2f1ed",
+        "surface": "#ffffff",
+        "text": "#292923",
+        "accent": "#525d35"
+      },
+      "contrastRatio": {
+        "textOnSurface": 14.63,
+        "textOnBackground": 12.94,
+        "accentOnSurface": 7.06
+      }
+    },
+    "moss": {
+      "label": "Moss",
+      "color": {
+        "background": "#e9eee7",
+        "surface": "#fafbf7",
+        "text": "#202e22",
+        "accent": "#285b38"
+      },
+      "contrastRatio": {
+        "textOnSurface": 13.7,
+        "textOnBackground": 12.1,
+        "accentOnSurface": 7.64
+      }
+    },
+    "terracotta": {
+      "label": "Terracotta",
+      "color": {
+        "background": "#f9f2ed",
+        "surface": "#ffffff",
+        "text": "#3d2920",
+        "accent": "#92502a"
+      },
+      "contrastRatio": {
+        "textOnSurface": 13.67,
+        "textOnBackground": 12.33,
+        "accentOnSurface": 6.17
+      }
+    },
+    "ocean": {
+      "label": "Ocean",
+      "color": {
+        "background": "#eef5f7",
+        "surface": "#ffffff",
+        "text": "#102a39",
+        "accent": "#1e6081"
+      },
+      "contrastRatio": {
+        "textOnSurface": 14.87,
+        "textOnBackground": 13.48,
+        "accentOnSurface": 6.9
+      }
+    },
+    "cobalt": {
+      "label": "Cobalt",
+      "color": {
+        "background": "#eff2fa",
+        "surface": "#ffffff",
+        "text": "#1d2850",
+        "accent": "#344f9d"
+      },
+      "contrastRatio": {
+        "textOnSurface": 14.27,
+        "textOnBackground": 12.74,
+        "accentOnSurface": 7.63
+      }
+    },
+    "burgundy": {
+      "label": "Burgundy",
+      "color": {
+        "background": "#faf1f3",
+        "surface": "#ffffff",
+        "text": "#361e2b",
+        "accent": "#812f49"
+      },
+      "contrastRatio": {
+        "textOnSurface": 15.25,
+        "textOnBackground": 13.75,
+        "accentOnSurface": 8.62
+      }
+    },
+    "midnight": {
+      "label": "Midnight",
+      "color": {
+        "background": "#121722",
+        "surface": "#1e2533",
+        "text": "#f5f7ff",
+        "accent": "#b4c7ff"
+      },
+      "contrastRatio": {
+        "textOnSurface": 14.35,
+        "textOnBackground": 16.76,
+        "accentOnSurface": 9.18
+      }
+    },
+    "forest": {
+      "label": "Forest",
+      "color": {
+        "background": "#111d19",
+        "surface": "#202c25",
+        "text": "#eff7f0",
+        "accent": "#a9d6b5"
+      },
+      "contrastRatio": {
+        "textOnSurface": 13.28,
+        "textOnBackground": 15.85,
+        "accentOnSurface": 8.96
+      }
+    },
+    "graphite": {
+      "label": "Graphite",
+      "color": {
+        "background": "#191b1b",
+        "surface": "#292d2e",
+        "text": "#fafafa",
+        "accent": "#d3e2df"
+      },
+      "contrastRatio": {
+        "textOnSurface": 13.33,
+        "textOnBackground": 16.57,
+        "accentOnSurface": 10.41
+      }
+    },
+    "rosewood": {
+      "label": "Rosewood",
+      "color": {
+        "background": "#27191b",
+        "surface": "#342427",
+        "text": "#fff7f3",
+        "accent": "#f0b4ad"
+      },
+      "contrastRatio": {
+        "textOnSurface": 13.9,
+        "textOnBackground": 15.99,
+        "accentOnSurface": 8.29
+      }
+    },
+    "apricot": {
+      "label": "Apricot",
+      "color": {
+        "background": "#fff5eb",
+        "surface": "#ffffff",
+        "text": "#3a2a1d",
+        "accent": "#975525"
+      },
+      "contrastRatio": {
+        "textOnSurface": 13.74,
+        "textOnBackground": 12.76,
+        "accentOnSurface": 5.77
+      }
+    },
+    "copper": {
+      "label": "Copper",
+      "color": {
+        "background": "#261b16",
+        "surface": "#3a2b22",
+        "text": "#fff7ea",
+        "accent": "#e3b48e"
+      },
+      "contrastRatio": {
+        "textOnSurface": 12.75,
+        "textOnBackground": 15.79,
+        "accentOnSurface": 7.22
+      }
+    },
+    "plum": {
+      "label": "Plum",
+      "color": {
+        "background": "#f6f0fa",
+        "surface": "#ffffff",
+        "text": "#33203e",
+        "accent": "#744b90"
+      },
+      "contrastRatio": {
+        "textOnSurface": 14.82,
+        "textOnBackground": 13.24,
+        "accentOnSurface": 6.66
+      }
+    },
+    "cypress": {
+      "label": "Cypress",
+      "color": {
+        "background": "#e8f2ef",
+        "surface": "#ffffff",
+        "text": "#17382e",
+        "accent": "#266c5a"
+      },
+      "contrastRatio": {
+        "textOnSurface": 12.79,
+        "textOnBackground": 11.2,
+        "accentOnSurface": 6.22
+      }
+    },
+    "paper": {
+      "label": "Paper",
+      "color": {
+        "background": "#fffdf7",
+        "surface": "#ffffff",
+        "text": "#282923",
+        "accent": "#575f38"
+      },
+      "contrastRatio": {
+        "textOnSurface": 14.67,
+        "textOnBackground": 14.42,
+        "accentOnSurface": 6.78
+      }
+    },
+    "lagoon": {
+      "label": "Lagoon",
+      "color": {
+        "background": "#102829",
+        "surface": "#193839",
+        "text": "#efffff",
+        "accent": "#9fdfd8"
+      },
+      "contrastRatio": {
+        "textOnSurface": 12.26,
+        "textOnBackground": 15.04,
+        "accentOnSurface": 8.42
+      }
+    },
+    "winter": {
+      "label": "Winter",
+      "color": {
+        "background": "#edf3fa",
+        "surface": "#ffffff",
+        "text": "#202f46",
+        "accent": "#315d96"
+      },
+      "contrastRatio": {
+        "textOnSurface": 13.49,
+        "textOnBackground": 12.08,
+        "accentOnSurface": 6.69
+      }
+    },
+    "sandstone": {
+      "label": "Sandstone",
+      "color": {
+        "background": "#f8f2e9",
+        "surface": "#fffdf8",
+        "text": "#392b24",
+        "accent": "#875532"
+      },
+      "contrastRatio": {
+        "textOnSurface": 13.37,
+        "textOnBackground": 12.21,
+        "accentOnSurface": 6.12
+      }
+    },
+    "contrast-light": {
+      "label": "Contrast Light",
+      "color": {
+        "background": "#ffffff",
+        "surface": "#ffffff",
+        "text": "#000000",
+        "accent": "#004b35"
+      },
+      "contrastRatio": {
+        "textOnSurface": 21.0,
+        "textOnBackground": 21.0,
+        "accentOnSurface": 10.2
+      }
+    },
+    "contrast-dark": {
+      "label": "Contrast Dark",
+      "color": {
+        "background": "#000000",
+        "surface": "#101010",
+        "text": "#ffffff",
+        "accent": "#aaffdc"
+      },
+      "contrastRatio": {
+        "textOnSurface": 19.03,
+        "textOnBackground": 21.0,
+        "accentOnSurface": 16.35
+      }
+    }
+  }
+}

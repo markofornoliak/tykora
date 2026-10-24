@@ -1,0 +1,1 @@
+const fs=require('node:fs');const path=require('node:path');const folder=path.join(__dirname,'..','.quality-check');fs.mkdirSync(folder,{recursive:true});fs.writeFileSync(path.join(folder,'package.json'),'{'+'"type":"commonjs"'+'}\n');

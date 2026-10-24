@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2022", "DOM", "ES2022.Intl"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "outDir": ".domain-check",
+    "rootDir": "src",
+    "declaration": false,
+    "esModuleInterop": true,
+    "noEmit": false,
+    "types": []
+  },
+  "include": ["src/domain/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

@@ -1,0 +1,13 @@
+const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
+const base=process.env.VITE_BASE_PATH||'/';
+const root=path.resolve(__dirname,'../dist');
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+assert.ok(html.includes('TYKORA'),'title missing');
+assert.ok(html.includes(`${base}assets/`),'Vite base path missing in index.html');
+const assets=fs.readdirSync(path.join(root,'assets'));
+assert.ok(assets.some(n=>n.endsWith('.js')),'JS bundle missing');
+assert.ok(assets.some(n=>n.endsWith('.css')),'CSS bundle missing');
+assert.ok(fs.existsSync(path.join(root,'manifest.webmanifest')),'PWA manifest missing');
+assert.ok(fs.existsSync(path.join(root,'sw.js')),'Service worker missing');
+for(const n of ['icon-192.png','icon-512.png'])assert.ok(fs.existsSync(path.join(root,n)),`Missing ${n}`);
+console.log('Built distribution gate passed for base',base);

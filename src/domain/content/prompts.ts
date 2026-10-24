@@ -1,0 +1,10 @@
+import type { TypingPrompt } from '../typing/contracts';
+/** All starter texts are newly written for TYKORA, not taken from competing products. */
+export const diagnostics:Record<'ru'|'en',TypingPrompt>={
+  ru:{id:'original-ru-diagnostic-01',mode:'quote',locale:'ru',layoutId:'ru-jcuken',license:'original',text:'Точный набор начинается с простого ритма. Сначала каждая буква требует внимания, а затем руки начинают двигаться свободнее. Спокойная практика помогает сохранять уверенность.'},
+  en:{id:'original-en-diagnostic-01',mode:'quote',locale:'en',layoutId:'en-qwerty',license:'original',text:'Good typing grows from a steady rhythm. Begin with careful movements, then let each word flow naturally. Real progress comes from calm practice and honest feedback.'}
+};
+export const words:Record<'ru'|'en',readonly string[]>={
+ ru:'скорость точность ритм слово строка клавиша действие внимание движение полезный привычка плавность уверенность результат практика тренировка печатать научиться буква текст пробел взгляд ошибка вернуться исправить запомнить терпение задача знание новый время день месяц уровень работа писать письмо таблица пример выбор цель сила навык фраза мысль число порядок ввод приложение расчёт учиться помогать продолжать дальше постепенно мягкий начало свободно учитель школа экран ежедневный свой период сложный быстрый медленно верный скорость книга мыслить проект видеть человек место вариант форма метод контроль смысл переход система случай структура'.split(' '),
+ en:'speed accuracy rhythm keyboard typing movement practice lesson repeat review careful steady gentle precise progress change improve beginner advanced skill focus timing interval letters words sentence stream correct mistake recover learn today tomorrow confident capable stable method exercise train goal measure analysis useful computer document office code bracket symbol number future quality result develop patient challenge personal growth natural reading writing idea work screen monitor sample random practice'.split(' ')
+};

@@ -1,0 +1,45 @@
+{
+  "name": "tykora",
+  "version": "0.8.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "benchmark:engine": "npm run check:domain && node scripts/benchmark-engine.cjs",
+    "check:workers": "tsc -p tsconfig.workers.json",
+    "check:quality": "tsc -p tsconfig.quality.json && node scripts/prepare-quality.cjs && node scripts/verify-quality.cjs",
+    "check:domain": "tsc -p tsconfig.domain.json && node scripts/prepare-domain.cjs && node scripts/verify-domain.cjs && node scripts/verify-social.cjs && node scripts/verify-stage7-domain.cjs",
+    "check:backup": "npm run check:domain && node scripts/verify-backup.cjs",
+    "test:e2e:production": "playwright test -c playwright.production.config.ts",
+    "check:dist": "node scripts/verify-dist.cjs",
+    "check:source": "node scripts/verify-source.cjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "dexie": "^4.0.11",
+    "i18next": "^25.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-i18next": "^16.0.0",
+    "react-router-dom": "^7.6.0",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0",
+    "vite-plugin-pwa": "^1.0.0",
+    "vitest": "^3.2.4"
+  }
+}

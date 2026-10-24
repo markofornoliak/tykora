@@ -1,0 +1,4 @@
+{
+ "compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","lib":["ES2022","DOM"],"strict":true,"skipLibCheck":true,"noUnusedLocals":true,"outDir":".quality-check","rootDir":"src","types":[]},
+ "include":["src/shared/i18n/catalog.ts","src/shared/i18n/pageCopy.ts","src/shared/theme/contrast.ts","src/shared/theme/palettes.ts","src/shared/theme/applyTheme.ts"]
+}

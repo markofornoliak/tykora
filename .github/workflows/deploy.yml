@@ -1,0 +1,52 @@
+name: Release to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: tykora-pages
+  cancel-in-progress: true
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      # Replace with npm ci after committing a generated package-lock.json.
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Domain + backup checks
+        run: npm run check:domain && npm run check:backup
+      - name: Theme and worker checks
+        run: npm run check:quality && npm run check:workers
+      - name: Unit tests and typecheck
+        run: npm run check && npm run test
+      - name: Build with GitHub Pages base path
+        env:
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+        run: npm run build
+      - name: Install browser for smoke tests
+        run: npx playwright install --with-deps chromium
+      # Test Vite dev mode at /; the built distribution is separately smoke-tested.
+      - name: Browser scenarios
+        run: npm run test:e2e
+      - name: Verify generated output
+        env:
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+        run: node scripts/verify-dist.cjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

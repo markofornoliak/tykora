@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const {summarizeProgress}=require('../.domain-check/domain/social/progression.js');
+const {raceText,botProgress,makeBots,raceProgress,stableSeed,sanitizeRoomId}=require('../.domain-check/domain/social/race.js');
+const {makeAssignment,readAssignment,readReport,csvReports}=require('../.domain-check/domain/social/classroom.js');
+let passed=0;
+function check(name,fn){fn();console.log('✔',name);passed++;}
+function session(date,wpm=42,accuracy=0.98,durationMs=60000){return {id:date,endedAt:date,mode:'words',locale:'en',layoutId:'en-qwerty',promptId:'test',schemaVersion:1,summary:{durationMs,netWpm:wpm,accuracy,rawWpm:wpm,correctedErrors:0,uncorrectedErrors:0,scoringVersion:'test'}};}
+check('Profile starts empty, never fabricates a record',()=>{let s=summarizeProgress([]);assert.equal(s.total,0);assert.equal(s.bestWpm,0);assert.equal(s.achievements.filter(a=>a.unlocked).length,0);});
+check('Personal best and unlocked awards use saved records',()=>{const s=summarizeProgress([session('2026-10-24T10:00:00.000Z',65),session('2026-10-25T10:00:00.000Z',80)],new Date('2026-10-25T11:00:00.000Z'));assert.equal(s.bestWpm,80);assert.ok(s.achievements.find(a=>a.id==='eighty')?.unlocked);assert.equal(s.currentStreak,2);});
+check('Streak does not fabricate days when missed',()=>{const s=summarizeProgress([session('2026-10-20T10:00:00.000Z')],new Date('2026-10-25T11:00:00.000Z'));assert.equal(s.currentStreak,0);});
+check('Deterministic room text and bot seed',()=>{assert.equal(raceText('a9','en'),raceText('a9','en'));assert.notEqual(raceText('a9','en'),raceText('b9','en'));assert.equal(stableSeed('a'),stableSeed('a'));assert.deepEqual(makeBots('abc','advanced'),makeBots('abc','advanced'));});
+check('Bot movement bounded and monotone on sample',()=>{const b=makeBots('abc','intermediate')[0],text=raceText('abc','en');let prev=0;for(let i=0;i<=120000;i+=1000){const p=botProgress(b,i,text);assert.ok(p>=0&&p<=1);assert.ok(p>=prev-0.00001);prev=p;}});
+check('Accurate race progress counts only matching positions',()=>{assert.equal(raceProgress('abc','abcd'),0.75);assert.equal(raceProgress('axy','abcd'),0.25);assert.equal(raceProgress('','abcd'),0);});
+check('Room names sanitized',()=>{assert.equal(sanitizeRoomId(' P2P ROOM!! '),'p2proom');});
+check('Assignment validation rejects unexpected schema and short texts',()=>{const a=makeAssignment('Urok','This is a longer custom lesson for students to type.', 'en',0.95);assert.deepEqual(readAssignment(JSON.parse(JSON.stringify(a))),a);assert.throws(()=>readAssignment({...a,kind:'script'}));assert.throws(()=>makeAssignment('X','short','en',0.9));});
+check('A real report schema can be imported but is never independently verified',()=>{const report={kind:'tykora-report',version:1,assignmentId:'a-1',assignmentTitle:'Lesson',alias:'Student',completedAt:new Date('2026-10-25T10:00:00Z').toISOString(),complete:true,score:{netWpm:53,accuracy:0.98,durationMs:40000}};assert.equal(readReport(report).alias,'Student');assert.throws(()=>readReport({...report,score:{...report.score,netWpm:Infinity}}));assert.throws(()=>readReport({...report,alias:''}));});
+check('CSV values are quoted and formula injection is escaped',()=>{const report={kind:'tykora-report',version:1,assignmentId:'a-1',assignmentTitle:'Lesson',alias:'=HYPERLINK("bad")',completedAt:'2026-10-25T10:00:00Z',complete:true,score:{netWpm:53,accuracy:0.98,durationMs:40000}};const csv=csvReports([report]);assert.ok(csv.includes("'=HYPERLINK"));assert.equal(csv.split('\r\n').length,2);});
+console.log(`${passed} Stage 6 domain checks passed.`);
