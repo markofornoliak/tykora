@@ -18,7 +18,7 @@ export function Academy(){
  const [dailyMinutes,setDailyMinutes]=useState<10|15|20>(15);
  const [plan,setPlan]=useState<TrainingPlan|undefined>();
  const [planStatus,setPlanStatus]=useState('');
- useEffect(()=>{let canceled=false;void repositories.progress.getRecentSessions(4000).then(rows=>{
+ useEffect(()=>{let canceled=false;void repositories.progress.getAllSessions().then(rows=>{
   if(!canceled){setCompleted(completionFromScores(rows,locale));setLessonProgress(lessonProgressFromScores(rows,locale));setReviewWait(new Map(curriculum.map(l=>[l.id,reviewAvailableAt(rows,l,locale)] as const).filter((x):x is readonly [string,number]=>x[1]!==null)));}
  }).catch(()=>{if(!canceled)setError('История недоступна: прогресс не может быть загружен.');});return()=>{canceled=true;};},[locale]);
  useEffect(()=>{let active=true;void repositories.plans.get().then(p=>{if(!active||!p)return;setPlan(p);setTargetWpm(p.targetWpm);setHorizonDays(p.horizonDays);setDailyMinutes(p.dailyMinutes);}).catch(()=>{});return()=>{active=false;};},[]);
