@@ -3,6 +3,7 @@ import {curriculum,lessonPrompt,completionFromScores,reviewAvailableAt,LESSON_RE
 import {generateLessonReview,historicalLessonVocabulary} from './review';
 import {skillId,type SkillNode,type SkillProfile} from '../skills/model';
 import {graphemes} from '../typing/graphemes';
+import {words as vocabulary} from '../content/prompts';
 
 const lesson=curriculum[0];
 const words=(text:string)=>new Set(text.normalize('NFC').toLowerCase().match(/[\p{L}\p{N}]+/gu)??[]);
@@ -44,10 +45,8 @@ describe('delayed adaptive holdout mastery',()=>{
   expect(p.id).toMatch(/-review2-\d+-77$/);
  });
  it('fails closed when prior-vocabulary exclusions exhaust the holdout bank',()=>{
-  const excluded=new Set('скорость точность ритм слово строка клавиша действие внимание движение полезный привычка плавность уверенность результат практика тренировка'.split(' '));
-  // The user's full known corpus may cover every bank entry; that must be an error, not reuse.
-  const all=new Set([ ...excluded, ...'скорость точность'.split(' ') ]);
-  const generated=generateLessonReview(lesson,'ru','ru-jcuken',{},all,13,13);
-  expect(generated.text.length).toBeGreaterThan(30);
+  // A fully consumed learning vocabulary must never leak back into a holdout.
+  const all=new Set(vocabulary.ru);
+  expect(()=>generateLessonReview(lesson,'ru','ru-jcuken',{},all,13,13)).toThrow(/Insufficient/);
  });
 });
