@@ -1,6 +1,6 @@
 # Metrics contract — TYKORA scoring v2 (candidate)
 
-Date: 2026-10-25. **Candidate implementation; not yet connected to the application.** Historical `tykora-1.0.0` session summaries remain stored verbatim. No automatic rescore of stored sessions.
+Date: 2026-10-25. **Integrated into ordinary Practice as a Beta v0.9 candidate via the scoring Worker and nullable UI.** Historical `tykora-1.0.0` session summaries remain stored verbatim. Race and Classroom still use legacy scoring pending separate compatibility work; do not claim universal v2 coverage. No automatic rescore of stored sessions.
 
 Definitions (grapheme = Unicode extended grapheme cluster, one word = five graphemes):
 
@@ -24,4 +24,4 @@ Event timestamps originate from the session engine and are treated as monotonic,
 
 Eligibility for skill model updates: finished session, at least 20 grapheme attempts and 8000 ms active time. Insufficient evidence is not a zero-speed result. Legacy summaries are not rewritten; any future user-triggered rescore must keep both versions auditable. Race and wall-clock timer continue to use actual elapsed time, not active time.
 
-Unit tests use hand-calculated fixtures and seeded property sweeps; `fast-check` requirement remains open. Performance and browser integration remain unverified until the new calculator is wired and corresponding acceptance gates pass.
+Unit tests use hand-calculated fixtures and seeded property sweeps; `fast-check` requirement remains open. Integration regression: `e2e/typing.spec.ts` exercises short-session nullable v2 speed, save and result display. GitHub Actions CI evidence must accompany this claim. Runtime performance, full browser/device coverage and production readiness remain unverified.
