@@ -1,0 +1,79 @@
+name: v0.8.0 immutable browser baseline
+on:
+  push:
+    branches: [feature/v0.9.0]
+    paths: ['.github/workflows/baseline-v0.8.0.yml']
+permissions:
+  contents: read
+jobs:
+  benchmark-original:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out immutable v0.8.0 source (do not measure v0.9 branch)
+        uses: actions/checkout@v4
+        with:
+          ref: 9fb97bce89b54d071e6344e7449e095d818f51be
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --no-audit --no-fund
+      - name: Production build at GitHub Pages path
+        run: VITE_BASE_PATH=/tykora/ npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start production preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/tykora-v08-preview.log 2>&1 &)
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4174/tykora/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/tykora-v08-preview.log
+          exit 1
+      - name: Audit Lighthouse mobile and desktop
+        run: |
+          mkdir -p baseline-v0.8.0
+          npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/tykora/ --chrome-flags="--headless --no-sandbox" --output=json --output-path=baseline-v0.8.0/lighthouse-mobile.json --quiet
+          npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/tykora/ --preset=desktop --chrome-flags="--headless --no-sandbox" --output=json --output-path=baseline-v0.8.0/lighthouse-desktop.json --quiet
+          node - <<'NODE'
+          const fs=require('node:fs');
+          for(const [kind,file] of [['mobile','lighthouse-mobile.json'],['desktop','lighthouse-desktop.json']]){
+            const data=JSON.parse(fs.readFileSync('baseline-v0.8.0/'+file,'utf8'));
+            const categories=Object.fromEntries(Object.entries(data.categories).map(([k,v])=>[k,Math.round(v.score*100)]));
+            console.log('BASELINE_LIGHTHOUSE '+JSON.stringify({kind,source:data.finalDisplayedUrl,version:data.lighthouseVersion,categories,
+            LCPms:data.audits['largest-contentful-paint']?.numericValue,CLS:data.audits['cumulative-layout-shift']?.numericValue,
+            benchmarkIndex:data.environment?.benchmarkIndex,screenEmulation:data.configSettings?.screenEmulation,
+            throttling:data.configSettings?.throttling,emulatedFormFactor:data.configSettings?.formFactor}));
+          }
+          NODE
+      - name: Audit axe-core and browser exceptions (production preview)
+        run: |
+          npm install --no-save --package-lock=false --no-audit --no-fund @axe-core/playwright@4.10.2
+          node --input-type=module <<'NODE'
+          import {chromium} from '@playwright/test';
+          import AxeBuilder from '@axe-core/playwright';
+          import fs from 'node:fs';
+          const browser=await chromium.launch({headless:true});
+          const rows=[];
+          for(const width of [320,768,1440]){
+            const page=await browser.newPage({viewport:{width,height:900}});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(e.message));
+            await page.goto('http://127.0.0.1:4174/tykora/#/practice');
+            await page.locator('#typing-input').waitFor({timeout:15000});
+            const axe=await new AxeBuilder({page}).analyze();
+            const critical=axe.violations.filter(x=>x.impact==='critical');
+            rows.push({width,violationCount:axe.violations.length,criticalCount:critical.length,violations:axe.violations.map(x=>({id:x.id,impact:x.impact,nodes:x.nodes.length})),errors});
+            await page.close();
+          }
+          fs.writeFileSync('baseline-v0.8.0/axe-practice.json',JSON.stringify(rows,null,2));
+          console.log('BASELINE_AXE '+JSON.stringify(rows));
+          await browser.close();
+          NODE
+      - name: Attach original baseline artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v0.8.0-immutable-baseline
+          path: baseline-v0.8.0/
+          if-no-files-found: warn
