@@ -1,6 +1,5 @@
 import type {TrainingPlanRepository} from '../../application/ports/TrainingPlanRepository';
-import type {TrainingPlan} from '../../domain/plans/plan';
-import {validatePlan} from '../../domain/plans/plan';
+import {validatePlan,type TrainingPlan} from '../../domain/plans/plan';
 import {db} from './db';
 export class IndexedDbTrainingPlanRepository implements TrainingPlanRepository {
  async get():Promise<TrainingPlan|undefined>{return db.plans.get('current');}
