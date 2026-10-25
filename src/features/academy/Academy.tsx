@@ -34,7 +34,7 @@ export function Academy(){
  };
  const lessonStatus=(lesson:CourseLesson)=>{
   const state=lessonProgress.get(lesson.id);
-  return state?.mastered?'Освоено':state?.practice&&Date.now()<(reviewWait.get(lesson.id)??Infinity)?'Повторение через 24 часа':state?.practice?'Ожидает контрольный текст':state?.review?'Ожидает первое прохождение':'Ещё не пройдено';
+  return state?.mastered?'Освоено':state?.practice&&Date.now()<(reviewWait.get(lesson.id)??Infinity)?'Повторение: через 2 часа или на следующую дату (UTC)':state?.practice?'Ожидает контрольный текст':state?.review?'Ожидает первое прохождение':'Ещё не пройдено';
  };
  return <section><PageHeader kicker="Обучение / Academy" title="Маленькие шаги. Большой навык.">124 доступных упражнения в 10 уровнях. Уроки открыты без аккаунтов и оплаты. Для освоения нужны два отдельных успешных прохождения (точность ≥ 95%) на разных текстах. Прежние занятия сохраняются как первый этап.</PageHeader>
  <div className="row" style={{gap:12,marginBottom:18,flexWrap:'wrap'}}>
