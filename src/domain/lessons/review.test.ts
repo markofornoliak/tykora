@@ -99,7 +99,7 @@ describe('delayed adaptive holdout mastery',()=>{
   const p=lessonPrompt(lesson,'en');
   const before=mk(p.id,'original','2026-10-20T00:00:00Z',graphemes(p.text).length);
   const generated=generateLessonReview(lesson,'en','en-qwerty',{},new Set(),90,90);
-  const oldPromptId=generated.id.replace(/-v-[0-9a-z.]+$/,'');
+  const oldPromptId=generated.id.replace(/-model-tykora-beta-1-v-[0-9a-z.]+$/,'');
   expect(oldPromptId).not.toBe(generated.id);
   const historic=mk(oldPromptId,'old-review','2026-10-22T00:00:00Z',graphemes(generated.text).length);
   expect(completionFromScores([before,historic],'en')).toEqual(new Set([lesson.id]));
