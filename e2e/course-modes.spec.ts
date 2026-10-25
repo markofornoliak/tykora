@@ -22,6 +22,7 @@ test('custom text can be prepared locally',async({page})=>{
 test('historical lesson success unlocks distinct review without awarding mastery',async({page})=>{
  await page.goto('/#/practice?lesson=L01-01&lang=ru');
  await expect(page.locator('#practice-mode')).toHaveValue('lesson');
+ await expect(page.locator('.target-text')).toContainText('ф ы в а');
  const initialText=await page.locator('.target-text').innerText();
  const targetLength=[...initialText].length;
  expect(targetLength).toBeGreaterThanOrEqual(30);
@@ -51,6 +52,7 @@ test('historical lesson success unlocks distinct review without awarding mastery
  await review.click();
  await expect(page).toHaveURL(/review=1/);
  await expect(page.getByText(/Контрольный текст/).first()).toBeVisible();
+ await expect.poll(()=>page.locator('.target-text').innerText()).not.toBe(initialText);
  const reviewText=await page.locator('.target-text').innerText();
- expect(reviewText).not.toBe(initialText);
+ expect(reviewText).not.toContain('ф ы в а');
 });
