@@ -1,6 +1,7 @@
 import type { TypingPrompt } from '../typing/contracts';
 import type { SupportedLocale } from '../content/library';
 import {graphemes} from '../typing/graphemes';
+import {recoverReviewLength} from './reviewIdentity';
 
 export const COURSE_VERSION='tykora-curriculum-1.0';
 export interface CourseLevel {id:string;number:number;titleRu:string;titleEn:string;count:number;goalRu:string;goalEn:string;}
@@ -121,6 +122,7 @@ export function lessonProgressFromScores(records:readonly CourseResult[],locale:
    ||score.netWpm<=0||!Number.isFinite(score.typedCharacters))continue;
   const dynamicLength=match[4]?Number(match[4]):null;
   if(dynamicLength!==null&&(!Number.isSafeInteger(dynamicLength)||dynamicLength<30||dynamicLength>600))continue;
+  if(record.promptId.includes('-model-')&&recoverReviewLength(record.promptId,locale)!==dynamicLength)continue;
   const expectedLength=dynamicLength??graphemes(lessonPrompt(lesson,locale,undefined,variant).text).length;
   if(score.typedCharacters<Math.max(LESSON_MASTERY_MIN_GRAPHEMES,expectedLength))continue;
   let current=attempts.get(lesson.id);
