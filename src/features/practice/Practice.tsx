@@ -55,7 +55,6 @@ export function Practice(){
  const [prompt,setPrompt]=useState<TypingPrompt>(diagnostics[initialLocale]);
  const sessionRef=useRef<EngineState>(createEngine(diagnostics[initialLocale]));
  const [session,setSession]=useState<EngineState>(sessionRef.current);
- const [compositionDraft,setCompositionDraft]=useState('');
  const [focus,setFocus]=useState(false);const [now,setNow]=useState(0);
  const [saveNotice,setSaveNotice]=useState('');
  const [persistence,setPersistence]=useState<'idle'|'saving'|'saved'|'failed'>('idle');
@@ -63,13 +62,20 @@ export function Practice(){
  const [lastCode,setLastCode]=useState('');
  const composing=useRef(false);const savedId=useRef('');
  const recentWords=useRef<string[]>([]);const inputRef=useRef<HTMLTextAreaElement>(null);
- const requestId=useRef(0);const navigate=useNavigate();
+ const requestId=useRef(0);const frameId=useRef<number|null>(null);const navigate=useNavigate();
+ const publishFrame=()=>{
+  if(frameId.current!==null)return;
+  frameId.current=requestAnimationFrame(()=>{frameId.current=null;setSession(sessionRef.current);});
+ };
+ useEffect(()=>()=>{if(frameId.current!==null)cancelAnimationFrame(frameId.current);},[]);
  const settings=useUiStore(s=>s.settings),updateSettings=useUiStore(s=>s.updateSettings);
 
  const reset=(nextPrompt:TypingPrompt=prompt)=>{
+  if(frameId.current!==null){cancelAnimationFrame(frameId.current);frameId.current=null;}
   const fresh=createEngine(nextPrompt);sessionRef.current=fresh;setSession(fresh);setPrompt(nextPrompt);
+  if(inputRef.current)inputRef.current.value='';
   savedId.current='';setNow(0);setSaveNotice('');setPersistence('idle');setFinalScore(null);
-  composing.current=false;setCompositionDraft('');
+  composing.current=false;
   requestAnimationFrame(()=>inputRef.current?.focus());
  };
  const prepare=async(nextMode:Selection,nextLanguage:SupportedLocale=language,nextLayout=layoutId,nextTrack=track,nextCount=count,nextDuration=duration,content=customText,chosenLesson=lessonId)=>{
@@ -115,16 +121,17 @@ export function Practice(){
   const fromEvent=nativeTimestampMs===undefined?receivedAt:normalizedEventTimestamp(nativeTimestampMs,receivedAt,performance.timeOrigin);
   const previous=sessionRef.current.attempts.at(-1)?.atMs??0;
   const at=Math.max(fromEvent,previous); // preserve monotonic order under delayed dispatch
-  let next=acceptInput(sessionRef.current,value,at,source);
+  const previousState=sessionRef.current;
+  let next=acceptInput(previousState,value,at,source);
   if(mode==='hardcore'&&!settings.gentleMode&&next.attempts.length>sessionRef.current.attempts.length&&next.attempts.slice(sessionRef.current.attempts.length).some(a=>!a.correct))next=finishEngine(next,at);
-  sessionRef.current=next;setSession(next);
+  sessionRef.current=next;if(next!==previousState)publishFrame();
  };
  const onInput=(event:FormEvent<HTMLTextAreaElement>)=>{
-  if(composing.current||(event.nativeEvent as InputEvent).isComposing){setCompositionDraft(event.currentTarget.value);return;}
+  if(composing.current||(event.nativeEvent as InputEvent).isComposing)return;
   commit(event.currentTarget.value,'keyboard',event.nativeEvent.timeStamp);
  };
  const onCompositionEnd=(event:CompositionEvent<HTMLTextAreaElement>)=>{
-  composing.current=false;commit(event.currentTarget.value,'composition',event.nativeEvent.timeStamp);setCompositionDraft('');
+  composing.current=false;commit(event.currentTarget.value,'composition',event.nativeEvent.timeStamp);
  };
  const onPaste=(event:ClipboardEvent<HTMLTextAreaElement>)=>{event.preventDefault();setSaveNotice('Вставка в тест отключена. В режиме «Свой текст» вставлять можно в поле подготовки.');};
  const onDrop=(event:DragEvent<HTMLTextAreaElement>)=>event.preventDefault();
@@ -224,9 +231,9 @@ export function Practice(){
   </div>
   <p className="sr-only" id="target-readable">{t('target')}: {targetChars.slice(pos,pos+110).join('')}</p>
   <label className="sr-only" htmlFor="typing-input">{t('input')}</label>
-  <textarea ref={inputRef} id="typing-input" className="typeinput" value={composing.current?compositionDraft:session.typed}
+  <textarea ref={inputRef} id="typing-input" className="typeinput" defaultValue=""
    onInput={onInput} onBeforeInput={beforeInput} onPaste={onPaste} onDrop={onDrop}
-   onCompositionStart={()=>{composing.current=true;setCompositionDraft(sessionRef.current.typed);}} onCompositionEnd={onCompositionEnd}
+   onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={onCompositionEnd}
    onKeyDown={event=>setLastCode(event.code)} disabled={finished} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
    aria-describedby="typing-help target-readable" aria-keyshortcuts="Tab" rows={2} placeholder={t('exerciseHelp')}/>
   <div className="inline-help" id="typing-help"><span>Обработка локальная · Вставка отключена · {mode==='hardcore'?'Первая ошибка завершает попытку':'Ошибки можно исправлять'}</span><span>Esc — выход из фокуса</span></div>
