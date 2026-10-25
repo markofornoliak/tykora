@@ -83,9 +83,10 @@ export function Practice(){
    let skillNodes={};
    try{skillNodes=await repositories.skills.byLayout(nextLayout,nextLanguage);}catch{setSaveNotice('История навыка недоступна.');}
    if(requestId.current!==thisRequest)return;
-   const text=generateDrill(skillNodes,words[nextLanguage],{locale:nextLanguage,layoutId:nextLayout,seed:Date.now(),wordCount:effectiveCount,recentWords:recentWords.current});
+   const seed=Date.now(); // model is sampled at the same instant as its deterministic seed
+   const text=generateDrill(skillNodes,words[nextLanguage],{locale:nextLanguage,layoutId:nextLayout,seed,nowMs:seed,wordCount:effectiveCount,recentWords:recentWords.current});
    recentWords.current=text.split(' ');
-   reset({...diagnostic,id:`adaptive-${nextLanguage}-${Date.now()}`,text,mode:'lesson'});return;
+   reset({...diagnostic,id:`adaptive-tykora-beta-1-${nextLanguage}-${seed}`,text,mode:'lesson'});return;
   }
   try{
    const d=new Date();
