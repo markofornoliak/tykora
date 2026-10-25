@@ -3,10 +3,9 @@ import type {SupportedLocale} from '../content/library';
 import {words,diagnostics} from '../content/prompts';
 import {lessonPrompt,findLesson,type CourseLesson} from './curriculum';
 import {generateDrill} from '../skills/generator';
-import type {SkillProfile} from '../skills/model';
+import {ESTIMATOR_VERSION,type SkillProfile} from '../skills/model';
 import {graphemes} from '../typing/graphemes';
-/** A deliberate 24-hour separation tests retention beyond immediate repetition; not a clinical claim. */
-export const REVIEW_DELAY_MS=24*60*60*1000;
+/** Course eligibility lives in curriculum.ts: two hours or next UTC date. */
 export const REVIEW_GENERATOR_VERSION=2;
 const tokens=(text:string):string[]=>text.normalize('NFC').toLowerCase().match(/[\p{L}\p{N}]+/gu)??[];
 export function historicalLessonVocabulary(promptIds:readonly string[],locale:SupportedLocale):Set<string>{
@@ -27,7 +26,7 @@ export function historicalLessonVocabulary(promptIds:readonly string[],locale:Su
   }
   // v2 review IDs include only indices into the shipped original word bank.
   // This is not raw user text; no user-provided prompts are exposed.
-  const generatedReview=/^course-L\d\d-\d\d-(ru|en)-review2-\d+-\d+-v-([0-9a-z]+(?:\.[0-9a-z]+)*)$/.exec(id);
+  const generatedReview=/^course-L\d\d-\d\d-(ru|en)-review2-\d+-\d+(?:-model-[a-z0-9-]+)?-v-([0-9a-z]+(?:\.[0-9a-z]+)*)$/.exec(id);
   const adaptiveDrill=/^adaptive-tykora-beta-1-(ru|en)-\d+-v-([0-9a-z]+(?:\.[0-9a-z]+)*)$/.exec(id);
   const generated=generatedReview??adaptiveDrill;
   if(!generated||generated[1]!==locale)continue;
@@ -59,6 +58,6 @@ export function generateLessonReview(lesson:CourseLesson,locale:SupportedLocale,
  const indices=text.split(' ').map(word=>words[locale].indexOf(word));
  if(indices.some(index=>index<0))throw new Error('Generated word is missing from the immutable source bank');
  const encoded=indices.map(index=>index.toString(36)).join('.');
- return {id:`course-${lesson.id}-${locale}-review2-${length}-${seed>>>0}-v-${encoded}`,
+ return {id:`course-${lesson.id}-${locale}-review2-${length}-${seed>>>0}-model-${ESTIMATOR_VERSION}-v-${encoded}`,
   text,locale,layoutId,mode:'lesson',license:'original',sourceAttribution:'TYKORA original adaptive holdout bank'};
 }
