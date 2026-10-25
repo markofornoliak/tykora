@@ -1,27 +1,34 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
-import { Layout } from '../shared/ui/Layout';
-import { Home } from '../features/home/Home';
-import { Practice } from '../features/practice/Practice';
-import { Academy } from '../features/academy/Academy';
-import { Analytics } from '../features/analytics/Analytics';
-import { Results } from '../features/results/Results';
-import { Themes } from '../features/themes/Themes';
-import {Race} from '../features/race/Race';
-import {Profile} from '../features/profile/Profile';
-import {Classroom} from '../features/classroom/Classroom';
-export function App() {
-  return <Routes>
-    <Route element={<Layout />}>
-      <Route path="/" element={<Home />} />
-      <Route path="/practice" element={<Practice />} />
-      <Route path="/academy" element={<Academy />} />
-      <Route path="/analytics" element={<Analytics />} />
-      <Route path="/result" element={<Results />} />
-      <Route path="/themes" element={<Themes />} />
-      <Route path="/race" element={<Race />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/classroom" element={<Classroom />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Route>
-  </Routes>;
+import {lazy,Suspense} from 'react';
+import {Navigate,Outlet,Route,Routes} from 'react-router-dom';
+import {Layout} from '../shared/ui/Layout';
+
+// Keep the application chrome responsive while large specialist sections load.
+// Vite produces route-specific chunks; the PWA precaches them for offline use.
+const Home=lazy(()=>import('../features/home/Home').then(m=>({default:m.Home})));
+const Practice=lazy(()=>import('../features/practice/Practice').then(m=>({default:m.Practice})));
+const Academy=lazy(()=>import('../features/academy/Academy').then(m=>({default:m.Academy})));
+const Analytics=lazy(()=>import('../features/analytics/Analytics').then(m=>({default:m.Analytics})));
+const Results=lazy(()=>import('../features/results/Results').then(m=>({default:m.Results})));
+const Themes=lazy(()=>import('../features/themes/Themes').then(m=>({default:m.Themes})));
+const Race=lazy(()=>import('../features/race/Race').then(m=>({default:m.Race})));
+const Profile=lazy(()=>import('../features/profile/Profile').then(m=>({default:m.Profile})));
+const Classroom=lazy(()=>import('../features/classroom/Classroom').then(m=>({default:m.Classroom})));
+
+export function App(){
+ return <Routes>
+  <Route element={<Layout/>}>
+   <Route element={<Suspense fallback={<div role="status" className="sr-only">Загрузка раздела…</div>}><Outlet/></Suspense>}>
+    <Route path="/" element={<Home/>}/>
+    <Route path="/practice" element={<Practice/>}/>
+    <Route path="/academy" element={<Academy/>}/>
+    <Route path="/analytics" element={<Analytics/>}/>
+    <Route path="/result" element={<Results/>}/>
+    <Route path="/themes" element={<Themes/>}/>
+    <Route path="/race" element={<Race/>}/>
+    <Route path="/profile" element={<Profile/>}/>
+    <Route path="/classroom" element={<Classroom/>}/>
+    <Route path="*" element={<Navigate to="/" replace/>}/>
+   </Route>
+  </Route>
+ </Routes>;
 }
