@@ -47,7 +47,7 @@ describe('delayed adaptive holdout mastery',()=>{
  it('round-trips only original word-bank indices, and excludes all earlier generated review words',()=>{
   const seed=117,clock=2026102500000;
   const first=generateLessonReview(lesson,'en','en-qwerty',{},new Set(),seed,clock);
-  expect(first.id).toMatch(/^course-L01-01-en-review2-\\d+-117-v-(?:[0-9a-z]+\\.)*[0-9a-z]+$/);
+  expect(first.id).toMatch(/^course-L01-01-en-review2-\d+-117-v-(?:[0-9a-z]+\.)*[0-9a-z]+$/);
   const reconstructed=historicalLessonVocabulary([first.id],'en');
   const observed=words(first.text);
   expect(reconstructed).toEqual(observed);
