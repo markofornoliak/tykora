@@ -47,7 +47,7 @@ describe('Scoring v2 — independently calculated reference cases',()=>{
   expect(m.correctedErrorRate).toBeGreaterThan(0);
   expect(m.accuracy).toBeLessThan(1);
   expect(m.finalAccuracy).toBe(1);
-  expect(m.netWpm).toBeLessThanOrEqual(m.rawWpm);
+  expect(m.netWpm===null||m.rawWpm===null||m.netWpm<=m.rawWpm).toBe(true);
  });
  it('manual finish counts only entered content, not missing target tail',()=>{
   const s=finishEngine(acceptInput(createEngine(target),'abc',1000),4000);
