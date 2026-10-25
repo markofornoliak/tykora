@@ -59,6 +59,8 @@ for(const legacyVersion of [1,2,3]){
 
   await page.goto('/#/profile');
   await expect(page.getByRole('heading',{name:/прогресс принадлежит вам/i})).toBeVisible();
+  // Wait for the profile repository to finish opening/upgrading Dexie.
+  await expect(page.locator('#profile-alias')).toBeEnabled();
   const result=await page.evaluate(async(version)=>{
    const connection=await new Promise<IDBDatabase>((resolve,reject)=>{
     const request=indexedDB.open('tykora-db');
