@@ -9,5 +9,5 @@ test('backup is exported from profile and can be imported on the same device',as
  const filepath=await download.path();
  expect(filepath).toBeTruthy();
  await page.locator('#backup-file').setInputFiles(filepath!);
- await expect(page.getByText(/Импортировано \d+ занятий/i)).toBeVisible();
+ await expect(page.getByRole('status').filter({hasText:/^Импортировано \d+ занятий/i})).toBeVisible();
 });

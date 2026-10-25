@@ -11,38 +11,39 @@ import {useUiStore} from '../../app/store/uiStore';
 export function Profile(){
  const [alias,setAlias]=useState('');
  const [sessions,setSessions]=useState<SessionRecord[]>([]);
- const [notice,setNotice]=useState('');
+ const [profileNotice,setProfileNotice]=useState('');
+ const [backupNotice,setBackupNotice]=useState('');
  const [backupBusy,setBackupBusy]=useState(false);
  const [importMode,setImportMode]=useState<'merge'|'replace'>('merge');
  useEffect(()=>{let live=true;
   void Promise.all([repositories.profile.get(),repositories.progress.getRecentSessions(10000)])
    .then(([p,s])=>{if(live){setAlias(p?.alias??'');setSessions(s);}})
-   .catch(()=>{if(live)setNotice('Не удалось открыть локальные данные.');});
+   .catch(()=>{if(live)setProfileNotice('Не удалось открыть локальные данные.');});
   return ()=>{live=false;};
  },[]);
  const stats=summarizeProgress(sessions);
- const save=(event:FormEvent)=>{event.preventDefault();void repositories.profile.save(alias).then(p=>{setAlias(p.alias);setNotice('Псевдоним сохранён только на устройстве.');}).catch(e=>setNotice(e instanceof Error?e.message:'Не удалось сохранить.'));};
+ const save=(event:FormEvent)=>{event.preventDefault();void repositories.profile.save(alias).then(p=>{setAlias(p.alias);setProfileNotice('Псевдоним сохранён только на устройстве.');}).catch(e=>setProfileNotice(e instanceof Error?e.message:'Не удалось сохранить.'));};
  const exportBackup=async()=>{
-  setBackupBusy(true);setNotice('');
+  setBackupBusy(true);setBackupNotice('');
   try{
    const data=await exportLocalBackup();
    downloadText(`tykora-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(data,null,2));
-   setNotice('Резервная копия сохранена в файл. Храните её в защищённом месте.');
-  }catch{setNotice('Не удалось создать резервную копию: проверьте разрешения хранилища.');}
+   setBackupNotice('Резервная копия сохранена в файл. Храните её в защищённом месте.');
+  }catch{setBackupNotice('Не удалось создать резервную копию: проверьте разрешения хранилища.');}
   finally{setBackupBusy(false);}
  };
  const restoreBackup=async(file:File|undefined)=>{
   if(!file)return;
   if(importMode==='replace'&&!window.confirm('ЗАМЕНИТЬ все локальные занятия, навыки и настройки данными файла? Это действие нельзя отменить без другой резервной копии.'))return;
-  setBackupBusy(true);setNotice('');
+  setBackupBusy(true);setBackupNotice('');
   try{
    const parsed=await parseBackupFile(file);
    const counts=await importLocalBackup(parsed,importMode);
    await useUiStore.getState().initialize();
    const [p,all]=await Promise.all([repositories.profile.get(),repositories.progress.getRecentSessions(10000)]);
    setAlias(p?.alias??'');setSessions(all);
-   setNotice(`Импортировано ${counts.sessions} занятий и ${counts.skills} записей навыков. Данные остаются на устройстве.`);
-  }catch(error){setNotice(error instanceof Error?`Импорт не выполнен: ${error.message}`:'Импорт не выполнен.');}
+   setBackupNotice(`Импортировано ${counts.sessions} занятий и ${counts.skills} записей навыков. Данные остаются на устройстве.`);
+  }catch(error){setBackupNotice(error instanceof Error?`Импорт не выполнен: ${error.message}`:'Импорт не выполнен.');}
   finally{setBackupBusy(false);}
  };
  const earned=stats.achievements.filter(a=>a.unlocked).length;
@@ -57,7 +58,7 @@ export function Profile(){
    <div className="surface card"><div className="eyebrow">Локальный профиль</div><h2>{alias||'Гость TYKORA'}</h2>
     <p className="small muted">Псевдоним не отправляется на сервер. Не используйте настоящее имя, если хотите сохранить анонимность.</p>
     <form onSubmit={save} className="social-form"><label htmlFor="profile-alias">Псевдоним</label><input id="profile-alias" maxLength={32} placeholder="Например, SilentFox" value={alias} onChange={e=>setAlias(e.target.value)}/><button type="submit" className="btn primary">Сохранить имя</button></form>
-    {notice&&<p role="status" className="small muted">{notice}</p>}
+    {profileNotice&&<p role="status" className="small muted">{profileNotice}</p>}
    </div>
    <div className="surface card"><div className="eyebrow">Персональный уровень</div><h2>{stats.tier}</h2><p className="small muted">Определяется лучшей сохранённой скоростью. Это не мировая лига и не официальный рейтинг.</p>
    <div className="social-stat-grid"><div><strong>{stats.bestWpm.toFixed(1)}</strong><span>Рекорд WPM</span></div><div><strong>{stats.total}</strong><span>Тестов</span></div><div><strong>{stats.minutes.toFixed(0)}</strong><span>Минут</span></div><div><strong>{stats.currentStreak}</strong><span>Дней подряд</span></div></div>
@@ -79,7 +80,7 @@ export function Profile(){
     <input id="backup-file" type="file" accept="application/json,.json" disabled={backupBusy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';void restoreBackup(file);}} />
    </div>
    <p className="small muted">В режиме «Объединить» записи с одинаковым ID из файла обновляют соответствующие локальные записи. При «Полностью заменить» появится отдельное подтверждение. Поддерживается формат резервной копии TYKORA v1, до 25 МБ.</p>
-   {notice&&<p role="status" className="small muted">{notice}</p>}
+   {backupNotice&&<p role="status" className="small muted">{backupNotice}</p>}
   </div>
   <div className="surface card" style={{marginTop:20}}><h3>Поделиться успехом</h3><p className="small muted">SVG-карточка создаётся локально. Она не является сертификатом и не подтверждает независимую проверку скорости.</p><div className="row" style={{gap:10,flexWrap:'wrap',marginTop:17}}><button className="btn primary" type="button" onClick={exportBadge}>Скачать карточку SVG</button><Link to="/race" className="btn secondary">Попробовать гонку →</Link><Link to="/classroom" className="btn secondary">Задания класса →</Link></div></div>
  </section>;

@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 
 test('the profile has no fabricated achievements and saves a local alias',async({page})=>{
  await page.goto('/#/profile');
- await expect(page.getByText('0 / 8')).toBeVisible();
+ await expect(page.getByText('0 / 8',{exact:true})).toBeVisible();
  await page.getByLabel('Псевдоним',{exact:true}).fill('QuietFox');
  await page.getByRole('button',{name:'Сохранить имя'}).click();
  await expect(page.getByRole('heading',{name:'QuietFox'})).toBeVisible();
