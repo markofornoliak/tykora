@@ -7,6 +7,8 @@ if (!/^\/(?:[a-zA-Z0-9._-]+\/)?$/.test(base)) throw new Error('Invalid VITE_BASE
 
 export default defineConfig({
   base,
+  // Opt-in instrumented production-style build; never enabled for published site.
+  resolve: { alias: process.env.TYKORA_PROFILE==='1' ? {'react-dom/client':'react-dom/profiling'} : {} },
   plugins: [
     react(),
     VitePWA({
