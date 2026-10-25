@@ -136,7 +136,6 @@ export function Practice(){
   const nextLayout=nextLang==='ru'?'ru-jcuken':'en-qwerty';
   void prepare('lesson',nextLang,nextLayout,track,count,duration,customText,lessonId);
   // Trigger only when academy link changes: other controls reset through prepare directly.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[lessonId,query.get('lang'),lessonVariant]);
  const stop=(at:number)=>{const s=finishEngine(sessionRef.current,at);sessionRef.current=s;setSession(s);};
  const commit=(value:string,source:InputSource='keyboard',nativeTimestampMs?:number)=>{
