@@ -1,4 +1,4 @@
-import {describe,it,expect} from 'vitest';
+import {describe,it,expect,vi} from 'vitest';
 import {isWeakSkill,wilsonInterval,weakestSkills,skillId,type SkillNode,type SkillProfile} from './model';
 import {generateDrill,wordPriority} from './generator';
 
@@ -26,6 +26,18 @@ describe('Adaptive evidence thresholds',()=>{
   expect(isWeakSkill(node('th',97,100))).toBe(false);
   const weak=node('th',60,100),rare=node('zx',0,2),good=node('in',97,100);
   expect(weakestSkills({[weak.id]:weak,[rare.id]:rare,[good.id]:good},'en-qwerty','en').map(n=>n.sequence)).toEqual(['th']);
+ });
+ it('produces identical seeded exercises even when the global clock changes',()=>{
+  const words=['there','think','weather','other','careful','fresh','summer','place','music','baking'];
+  const n=node('th',50,100),profile:SkillProfile={[n.id]:{...n,dueAtMs:5000}};
+  const options={locale:'en',layoutId:'en-qwerty',seed:101,wordCount:6};
+  const clock=vi.spyOn(Date,'now');
+  try{
+   clock.mockReturnValue(1000);
+   const first=generateDrill(profile,words,options);
+   clock.mockReturnValue(2000000000000);
+   expect(generateDrill(profile,words,options)).toBe(first);
+  }finally{clock.mockRestore();}
  });
  it('raises th priority with credible evidence while exploring unknown words',()=>{
   const bank=['there','think','other','weather','summer','place','music','baking','winter','lunar','quiet','safety'];
