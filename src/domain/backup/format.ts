@@ -20,8 +20,18 @@ function nonNeg(n:unknown):n is number{return finite(n)&&n>=0;}
 function nullableNum(n:unknown):boolean{return n===null||nonNeg(n);}
 function isScore(s:Record<string,unknown>):boolean{
  if(!obj(s.errorTypes))return false;
+ const v2=s.scoringVersion==='tykora-2.0.0';
  const speed=['netWpm','rawWpm','cpm'];
- return speed.every(k=>nonNeg(s[k])&&(s[k] as number)<=2000)
+ const validSpeed=speed.every(k=> (v2&&s[k]===null) || (nonNeg(s[k])&&(s[k] as number)<=2000));
+ const validV2=!v2||(
+  nonNeg(s.activeDurationMs)&&nonNeg(s.durationMs)&&s.activeDurationMs<=s.durationMs
+  &&(s.finalAccuracy===null||(finite(s.finalAccuracy)&&s.finalAccuracy>=0&&s.finalAccuracy<=1))
+  &&nonNeg(s.correctedErrorRate)&&nonNeg(s.uncorrectedErrorRate)
+  &&nullableNum(s.p90IntervalMs)&&nullableNum(s.rhythmStability)
+  &&finite(s.pauseThresholdMs)&&s.pauseThresholdMs>0
+  &&(s.consistency===null||(finite(s.consistency)&&s.consistency>=0&&s.consistency<=1))
+ );
+ return validSpeed && validV2
  &&finite(s.accuracy)&&s.accuracy>=0&&s.accuracy<=1
  &&['durationMs','correctedErrors','uncorrectedErrors','typedCharacters','correctAttempts','totalAttempts','deletions'].every(k=>nonNeg(s[k]))
  &&['insertion','omission','substitution','transposition'].every(k=>nonNeg((s.errorTypes as Record<string,unknown>)[k]))
