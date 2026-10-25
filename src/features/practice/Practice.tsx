@@ -219,7 +219,7 @@ export function Practice(){
   {finished&&<div className="finished-box" role="status"><div><strong>Завершено · {score.netWpm.toFixed(1)} WPM</strong><p className="small">Точность {(score.accuracy*100).toFixed(1)}% · Неисправленных ошибок {score.uncorrectedErrors}</p></div><button className="btn primary" type="button" disabled={persistence!=='saved'} onClick={()=>navigate('/result')}>{persistence==='saving'?'Сохранение…':'Полный результат ↗'}</button></div>}
   {saveNotice&&<p className="small muted" role="status" style={{marginTop:16}}>{saveNotice}</p>}
  </div>
- {!focus&&<div className="surface keyboard-card"><div className="row spread"><h3>Визуальная клавиатура</h3><label className="small row"><input checked={settings.showKeyboard} onChange={e=>void updateSettings({showKeyboard:e.target.checked})} type="checkbox"/> Показать</label></div>
+ {!focus&&<div className="surface keyboard-card"><div className="row spread"><h2 style={{fontSize:17,letterSpacing:'-.025em',fontWeight:700}}>Визуальная клавиатура</h2><label className="small row"><input checked={settings.showKeyboard} onChange={e=>void updateSettings({showKeyboard:e.target.checked})} type="checkbox"/> Показать</label></div>
   {settings.showKeyboard&&<KeyboardPreview next={targetChars[pos]??' '} locale={language} layoutId={layoutId} code={lastCode}/>}
  </div>}
  {!focus&&<div className="note" style={{marginTop:14}}>В курс входят {curriculum.length} упражнения RU/EN. Другие раскладки доступны как физические подсказки, но переведённые курсы для них пока не созданы. Результат не подтверждает, каким пальцем была нажата клавиша. Источники учебных и профессиональных текстов — собственный контент TYKORA.</div>}
