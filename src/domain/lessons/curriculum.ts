@@ -78,6 +78,10 @@ export function findLesson(id:string):CourseLesson|undefined{return curriculum.f
 
 export const LESSON_MASTERY_ACCURACY=0.95;
 export const LESSON_MASTERY_MIN_GRAPHEMES=30;
+/** Minimum attempt accuracy increases conservatively with course difficulty. */
+export function lessonMinimumAccuracy(lesson:CourseLesson):number {
+ return lesson.level<=2?LESSON_MASTERY_ACCURACY:lesson.level<=6?0.96:0.97;
+}
 export interface CourseResult {
  readonly id:string;
  readonly promptId:string;
@@ -100,7 +104,7 @@ export function lessonProgressFromScores(records:readonly CourseResult[],locale:
   const lesson=findLesson(match[1]);if(!lesson)continue;
   const variant:LessonVariant=match[3]?'review':'practice';
   const score=record.summary;
-  if(!Number.isFinite(score.accuracy)||score.accuracy<LESSON_MASTERY_ACCURACY
+  if(!Number.isFinite(score.accuracy)||score.accuracy<lessonMinimumAccuracy(lesson)
    ||score.accuracy>1||score.netWpm===null||!Number.isFinite(score.netWpm)
    ||score.netWpm<=0||!Number.isFinite(score.typedCharacters))continue;
   const expectedLength=graphemes(lessonPrompt(lesson,locale,undefined,variant).text).length;
