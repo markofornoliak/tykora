@@ -3,7 +3,7 @@ import {curriculum,lessonPrompt,completionFromScores,reviewAvailableAt,LESSON_RE
 import {generateLessonReview,historicalLessonVocabulary} from './review';
 import {skillId,type SkillNode,type SkillProfile} from '../skills/model';
 import {graphemes} from '../typing/graphemes';
-import {words as vocabulary} from '../content/prompts';
+import {words as vocabulary,diagnostics} from '../content/prompts';
 
 const lesson=curriculum[0];
 const words=(text:string)=>new Set(text.normalize('NFC').toLowerCase().match(/[\p{L}\p{N}]+/gu)??[]);
@@ -68,6 +68,13 @@ describe('delayed adaptive holdout mastery',()=>{
   const initial=mk(lessonPrompt(lesson,'en').id,'initial','2026-10-20T00:00:00Z',graphemes(lessonPrompt(lesson,'en').text).length);
   const completed=mk(first.id,'reviewed','2026-10-22T00:00:00Z',graphemes(first.text).length);
   expect(completionFromScores([initial,completed],'en')).toEqual(new Set([lesson.id]));
+ });
+ it('reconstructs historic diagnostics with original public texts but never personal input',()=>{
+  for(const locale of ['ru','en'] as const){
+   const actual=historicalLessonVocabulary([diagnostics[locale].id],locale);
+   expect(actual).toEqual(words(diagnostics[locale].text));
+  }
+  expect(historicalLessonVocabulary([diagnostics.en.id],'ru')).toEqual(new Set());
  });
  it('excludes learned words from previous adaptive exercises without storing personal text',()=>{
   const indices=['speed','accuracy','rhythm'].map(w=>vocabulary.en.indexOf(w));
