@@ -25,7 +25,7 @@ export function readReport(input:unknown):ClassReport {
  return r as ClassReport;
 }
 export function csvReports(reports:readonly ClassReport[]):string {
- const escape=(x:unknown)=>`"${String(x).replace(/^[=+@\t\r-]/,'\u0027$&').replace(/"/g,'""')}\"`;
+ const escape=(x:unknown)=>`"${String(x).replace(/^[=+@\t\r-]/,'\u0027$&').replace(/"/g,'""')}"`;
  const rows=[['Assignment','Alias','Completed At','WPM','Accuracy %','Completed'],...reports.map(r=>[r.assignmentTitle,r.alias,r.completedAt,r.score.netWpm.toFixed(1),(r.score.accuracy*100).toFixed(1),r.complete?'yes':'no'])];
  return '\ufeff'+rows.map(row=>row.map(escape).join(',')).join('\r\n');
 }
