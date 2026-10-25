@@ -121,7 +121,12 @@ export function Practice(){
    const seed=Date.now(); // model is sampled at the same instant as its deterministic seed
    const text=generateDrill(skillNodes,words[nextLanguage],{locale:nextLanguage,layoutId:nextLayout,seed,nowMs:seed,wordCount:effectiveCount,recentWords:recentWords.current});
    recentWords.current=text.split(' ');
-   reset({...diagnostic,id:`adaptive-${ESTIMATOR_VERSION}-${nextLanguage}-${seed}`,text,mode:'lesson'});return;
+   // Public-bank indices make future holdout checks aware of previous adaptive
+   // exercises without recording the user's personal typing or custom texts.
+   const ids=recentWords.current.map(word=>words[nextLanguage].indexOf(word));
+   if(ids.some(index=>index<0))throw new Error('Adaptive word not present in the original bank');
+   const publicVocabularyId=ids.map(index=>index.toString(36)).join('.');
+   reset({...diagnostic,id:`adaptive-${ESTIMATOR_VERSION}-${nextLanguage}-${seed}-v-${publicVocabularyId}`,text,mode:'lesson'});return;
   }
   try{
    const d=new Date();
