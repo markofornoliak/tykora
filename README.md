@@ -4,7 +4,7 @@
 
 TYKORA is an experimental typing-learning platform built with React, TypeScript and Vite. It includes 124 RU/EN lessons, 12 exercise modes, an adaptive model of individual keys and n-grams, local results, 24 themes, 10-language *UI shell*, bot races, a manual-code WebRTC prototype, a teacher assignment prototype, and portable IndexedDB backups.
 
-**Release status: source release candidate, not a verified production release.** The authoring environment cannot resolve `registry.npmjs.org`, so full dependency installation, Vite production build, browser E2E, Lighthouse, and WCAG audit are not verified. Do not publish it as independently validated until the checks in [docs/RELEASE.md](docs/RELEASE.md) pass.
+**Verified v0.8.0 deployment:** GitHub Actions [quality run 40145391299](https://github.com/markofornoliak/tykora/actions/runs/40145391299) and [Pages release run 40145391276](https://github.com/markofornoliak/tykora/actions/runs/40145391276) succeeded on 2026-10-25 at commit `9fb97bc`. This is source/build/Chromium E2E evidence, **not** a full accessibility, cross-browser or performance certification. Beta v0.9.0 is under development on `feature/v0.9.0`; do not label it released until the Definition of Done passes. See [v0.8 audit](docs/audit-v0.8.0.md) and [measured baseline](docs/PERF-BASELINE-v0.8.0.md).
 
 ## Quickstart
 
@@ -37,7 +37,7 @@ npm run test:e2e
 npm run test:e2e:production  # requires npm run build first
 ```
 
-**Reproducible installs:** generate and commit `package-lock.json` after a successful install, then change the CI steps from `npm install` to `npm ci`. A lockfile could not be generated while offline. Do not substitute a synthetic lockfile.
+**Reproducible installs:** the v0.9.0 development branch includes a real npm-generated `package-lock.json` and uses `npm ci` in quality CI; GitHub Actions must confirm this on every commit. The published v0.8.0 `main` revision originally used `npm install` without a committed lockfile.
 
 ## Directory structure
 
