@@ -5,6 +5,7 @@ test('the profile has no fabricated achievements and saves a local alias',async(
  await expect(page.getByText('0 / 8',{exact:true})).toBeVisible();
  await page.getByLabel('Псевдоним',{exact:true}).fill('QuietFox');
  await page.getByRole('button',{name:'Сохранить имя'}).click();
+ await expect(page.getByRole('status').filter({hasText:'Псевдоним сохранён только на устройстве.'})).toBeVisible();
  await expect(page.getByRole('heading',{name:'QuietFox'})).toBeVisible();
  await page.reload();
  await expect(page.getByRole('heading',{name:'QuietFox'})).toBeVisible();

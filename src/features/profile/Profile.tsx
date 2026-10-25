@@ -14,15 +14,27 @@ export function Profile(){
  const [profileNotice,setProfileNotice]=useState('');
  const [backupNotice,setBackupNotice]=useState('');
  const [backupBusy,setBackupBusy]=useState(false);
+ const [profileReady,setProfileReady]=useState(false);
+ const [savingAlias,setSavingAlias]=useState(false);
  const [importMode,setImportMode]=useState<'merge'|'replace'>('merge');
  useEffect(()=>{let live=true;
   void Promise.all([repositories.profile.get(),repositories.progress.getRecentSessions(10000)])
-   .then(([p,s])=>{if(live){setAlias(p?.alias??'');setSessions(s);}})
-   .catch(()=>{if(live)setProfileNotice('Не удалось открыть локальные данные.');});
+   .then(([p,s])=>{if(live){setAlias(p?.alias??'');setSessions(s);setProfileReady(true);}})
+   .catch(()=>{if(live){setProfileNotice('Не удалось открыть локальные данные.');setProfileReady(true);}});
   return ()=>{live=false;};
  },[]);
  const stats=summarizeProgress(sessions);
- const save=(event:FormEvent)=>{event.preventDefault();void repositories.profile.save(alias).then(p=>{setAlias(p.alias);setProfileNotice('Псевдоним сохранён только на устройстве.');}).catch(e=>setProfileNotice(e instanceof Error?e.message:'Не удалось сохранить.'));};
+ const save=async(event:FormEvent)=>{
+  event.preventDefault();
+  if(!profileReady||savingAlias)return;
+  setSavingAlias(true);setProfileNotice('');
+  try{
+   const saved=await repositories.profile.save(alias);
+   setAlias(saved.alias);
+   setProfileNotice('Псевдоним сохранён только на устройстве.');
+  }catch(e){setProfileNotice(e instanceof Error?e.message:'Не удалось сохранить.');}
+  finally{setSavingAlias(false);}
+ };
  const exportBackup=async()=>{
   setBackupBusy(true);setBackupNotice('');
   try{
@@ -39,7 +51,7 @@ export function Profile(){
   try{
    const parsed=await parseBackupFile(file);
    const counts=await importLocalBackup(parsed,importMode);
-   await useUiStore.getState().initialize();
+   await useUiStore.getState().initialize(true);
    const [p,all]=await Promise.all([repositories.profile.get(),repositories.progress.getRecentSessions(10000)]);
    setAlias(p?.alias??'');setSessions(all);
    setBackupNotice(`Импортировано ${counts.sessions} занятий и ${counts.skills} записей навыков. Данные остаются на устройстве.`);
@@ -57,7 +69,7 @@ export function Profile(){
   <div className="social-grid">
    <div className="surface card"><div className="eyebrow">Локальный профиль</div><h2>{alias||'Гость TYKORA'}</h2>
     <p className="small muted">Псевдоним не отправляется на сервер. Не используйте настоящее имя, если хотите сохранить анонимность.</p>
-    <form onSubmit={save} className="social-form"><label htmlFor="profile-alias">Псевдоним</label><input id="profile-alias" maxLength={32} placeholder="Например, SilentFox" value={alias} onChange={e=>setAlias(e.target.value)}/><button type="submit" className="btn primary">Сохранить имя</button></form>
+    <form onSubmit={save} className="social-form"><label htmlFor="profile-alias">Псевдоним</label><input id="profile-alias" disabled={!profileReady||savingAlias} maxLength={32} placeholder="Например, SilentFox" value={alias} onChange={e=>setAlias(e.target.value)}/><button type="submit" disabled={!profileReady||savingAlias} className="btn primary">Сохранить имя</button></form>
     {profileNotice&&<p role="status" className="small muted">{profileNotice}</p>}
    </div>
    <div className="surface card"><div className="eyebrow">Персональный уровень</div><h2>{stats.tier}</h2><p className="small muted">Определяется лучшей сохранённой скоростью. Это не мировая лига и не официальный рейтинг.</p>
