@@ -9,6 +9,18 @@ const lesson=curriculum[0];
 const words=(text:string)=>new Set(text.normalize('NFC').toLowerCase().match(/[\p{L}\p{N}]+/gu)??[]);
 const mk=(promptId:string,id:string,endedAt:string,characters:number)=>({id,promptId,endedAt,summary:{accuracy:.99,netWpm:35,typedCharacters:characters}});
 describe('delayed adaptive holdout mastery',()=>{
+ it('freezes public word-bank index order until a versioned migration exists',()=>{
+  // Review IDs reference dictionary indices; changing the order breaks history decoding.
+  const checksum=(bank:readonly string[]):number=>{
+   let h=2166136261;
+   for(const ch of bank.join('\\0')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}
+   return h>>>0;
+  };
+  expect(vocabulary.ru).toHaveLength(84);
+  expect(vocabulary.en).toHaveLength(68);
+  expect(checksum(vocabulary.ru)).toBe(1282728466);
+  expect(checksum(vocabulary.en)).toBe(1098720761);
+ });
  it('uses 24h interval and does not rewrite or promote historical first pass',()=>{
   expect(LESSON_REVIEW_DELAY_MS).toBe(24*60*60*1000);
   const practice=lessonPrompt(lesson,'ru'),review=lessonPrompt(lesson,'ru',undefined,'review');
