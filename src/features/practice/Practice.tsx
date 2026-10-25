@@ -34,6 +34,11 @@ const tracks:readonly {id:TrackId;label:string}[]=[
  {id:'finance',label:'Финансы'},{id:'medical',label:'Медицина'},{id:'legal',label:'Право'}
 ];
 export function Practice(){
+ // Opt-in benchmark probe only; no persistent event data or typing text.
+ if(typeof window!=='undefined'){
+  const p=(window as unknown as {__TYKORA_BENCHMARK__?:{practiceRenders:number;targetRenders:number}}).__TYKORA_BENCHMARK__;
+  if(p)p.practiceRenders++;
+ }
  const {t}=useTranslation();
  const interfaceLocale=useUiStore(s=>s.settings.uiLocale) as InterfaceLocale;
  const copy=pageCopy[interfaceLocale]??pageCopy.ru;
