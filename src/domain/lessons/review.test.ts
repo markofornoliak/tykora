@@ -42,7 +42,7 @@ describe('delayed adaptive holdout mastery',()=>{
   for(const w of words(p.text)){expect(practice.has(w)).toBe(false);expect(banned.has(w)).toBe(false);}
   expect(words(p.text).size).toBe(18);
   expect(generateLessonReview(lesson,'ru','ru-jcuken',profile,banned,77,100000).text).toBe(p.text);
-  expect(p.id).toMatch(/-review2-\d+-77$/);
+  expect(p.id).toMatch(/-review2-\d+-77-v-(?:[0-9a-z]+\.)*[0-9a-z]+$/);
  });
  it('round-trips only original word-bank indices, and excludes all earlier generated review words',()=>{
   const seed=117,clock=2026102500000;
