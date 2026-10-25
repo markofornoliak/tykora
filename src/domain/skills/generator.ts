@@ -33,7 +33,10 @@ export function generateDrill(profile:SkillProfile,wordBank:readonly string[],op
   if(!unique.length) throw new Error('A valid nonempty word bank is required');
   const rng=rand(options.seed);
   const recent=new Set(options.recentWords??[]);
-  const pool=unique.map(word=>({word,weight:wordPriority(word,profile,options.layoutId,options.locale,options.nowMs??Date.now())*(recent.has(word)?.13:1)}));
+  // Do not let an implicit wall clock change the output for the same seed and profile.
+  // For spaced repetition, callers pass the explicit as-of timestamp (also saved as seed).
+  const asOfMs=options.nowMs??0;
+  const pool=unique.map(word=>({word,weight:wordPriority(word,profile,options.layoutId,options.locale,asOfMs)*(recent.has(word)?.13:1)}));
   const result:string[]=[];
   for(let i=0;i<Math.min(count,pool.length);i++){
     const total=pool.reduce((acc,w)=>acc+w.weight,0);
