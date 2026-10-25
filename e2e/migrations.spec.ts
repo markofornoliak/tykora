@@ -18,7 +18,8 @@ for(const legacyVersion of [1,2,3]){
     request.onblocked=()=>reject(new Error('Legacy fixture deletion blocked'));
    });
    await new Promise<void>((resolve,reject)=>{
-    const request=indexedDB.open(dbName,version);
+    // Dexie multiplies declared schema versions by ten in native IndexedDB.
+    const request=indexedDB.open(dbName,version*10);
     request.onupgradeneeded=()=>{
      const database=request.result;
      database.createObjectStore('settings',{keyPath:'key'});
