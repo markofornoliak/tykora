@@ -1,6 +1,6 @@
 import type {TypingPrompt} from '../typing/contracts';
 import type {SupportedLocale} from '../content/library';
-import {words} from '../content/prompts';
+import {words,diagnostics} from '../content/prompts';
 import {lessonPrompt,findLesson,type CourseLesson} from './curriculum';
 import {generateDrill} from '../skills/generator';
 import type {SkillProfile} from '../skills/model';
@@ -12,6 +12,12 @@ const tokens=(text:string):string[]=>text.normalize('NFC').toLowerCase().match(/
 export function historicalLessonVocabulary(promptIds:readonly string[],locale:SupportedLocale):Set<string>{
  const encountered=new Set<string>();
  for(const id of promptIds){
+  // The diagnostic prompt is a versioned original text whose full text can be
+  // reconstructed without keeping the user's typed characters in history.
+  if(id===diagnostics[locale].id){
+   for(const word of tokens(diagnostics[locale].text))encountered.add(word);
+   continue;
+  }
   // Original/reordered v0.8 text is reconstructed from its stable prompt id.
   const legacy=/^course-(L\d\d-\d\d)-(ru|en)(-review)?$/.exec(id);
   if(legacy && legacy[2]===locale){
