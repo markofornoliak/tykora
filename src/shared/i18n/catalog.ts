@@ -27,7 +27,7 @@ const entries: Record<InterfaceLocale,readonly string[]> = {
 };
 export const resources = Object.fromEntries(uiLocales.map(locale => [locale, { translation: Object.fromEntries(keys.map((key,i)=>[key,entries[locale][i]])) }])) as Record<InterfaceLocale,{translation:Record<Key,string>}>;
 export function translate(locale: InterfaceLocale, key: Key): string {return resources[locale].translation[key];}
-const placeholders=(value:string)=>[...(value.matchAll(/\\{\\{\\s*([\\w.]+)\\s*\\}\\}|\\{([A-Za-z][A-Za-z0-9_]*)\\}/g))].map(m=>m[1]??m[2]).sort().join(',');
+const placeholders=(value:string)=>[...(value.matchAll(/\{\{\s*([\w.]+)\s*\}\}|\{([A-Za-z][A-Za-z0-9_]*)\}/g))].map(m=>m[1]??m[2]).sort().join(',');
 export function verifyCatalog(): string[] {
  const issues:string[]=[];
  if(new Set(keys).size!==keys.length)issues.push('Duplicate catalog keys');
