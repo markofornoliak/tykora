@@ -27,7 +27,7 @@ describe('delayed adaptive holdout mastery',()=>{
   const first=mk(practice.id,'historical-v08','2026-10-21T12:00:00.000Z',graphemes(practice.text).length);
   const tooSoon=mk(review.id,'review-1','2026-10-21T13:59:59.999Z',graphemes(review.text).length);
   const ready=mk(review.id,'review-2','2026-10-21T14:00:00.000Z',graphemes(review.text).length);
-  expect(reviewAvailableAt([first],lesson,'ru')).toBe(Date.parse('2026-10-22T12:00:00.000Z'));
+  expect(reviewAvailableAt([first],lesson,'ru')).toBe(Date.parse('2026-10-21T14:00:00.000Z'));
   expect(completionFromScores([first,tooSoon],'ru').size).toBe(0);
   expect(completionFromScores([first,tooSoon,ready],'ru')).toEqual(new Set([lesson.id]));
   expect(first.promptId).toBe(practice.id); // historical ID unchanged
