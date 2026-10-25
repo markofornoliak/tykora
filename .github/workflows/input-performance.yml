@@ -4,6 +4,8 @@ on:
     branches: [feature/v0.9.0]
     paths:
       - 'scripts/benchmark-input.mjs'
+      - 'src/shared/ui/TargetDisplay.tsx'
+      - 'src/features/practice/Practice.tsx'
       - '.github/workflows/input-performance.yml'
   workflow_dispatch:
 permissions:
