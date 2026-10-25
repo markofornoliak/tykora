@@ -69,6 +69,16 @@ describe('delayed adaptive holdout mastery',()=>{
   const completed=mk(first.id,'reviewed','2026-10-22T00:00:00Z',graphemes(first.text).length);
   expect(completionFromScores([initial,completed],'en')).toEqual(new Set([lesson.id]));
  });
+ it('excludes learned words from previous adaptive exercises without storing personal text',()=>{
+  const indices=['speed','accuracy','rhythm'].map(w=>vocabulary.en.indexOf(w));
+  expect(indices.every(i=>i>=0)).toBe(true);
+  const id=`adaptive-tykora-beta-1-en-20261025-v-${indices.map(i=>i.toString(36)).join('.')}`;
+  const known=historicalLessonVocabulary([id],'en');
+  expect(known).toEqual(new Set(['speed','accuracy','rhythm']));
+  expect(historicalLessonVocabulary([id],'ru')).toEqual(new Set());
+  const review=generateLessonReview(lesson,'en','en-qwerty',{},known,119,119);
+  for(const word of words(review.text))expect(known.has(word)).toBe(false);
+ });
  it('does not invent vocabulary from earlier review2 IDs that omitted word provenance',()=>{
   // Such pre-migration sessions never contained their target text or selected words.
   expect(historicalLessonVocabulary(['course-L01-01-en-review2-125-77'],'en').size).toBe(0);
