@@ -17,15 +17,15 @@ jobs:
         with:
           node-version: '24'
       - run: npm install --no-audit --no-fund
-      - name: Production build at GitHub Pages path
-        run: VITE_BASE_PATH=/tykora/ npm run build
+      - name: Production build for local preview at root
+        run: VITE_BASE_PATH=/ npm run build
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Start production preview
         run: |
           (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/tykora-v08-preview.log 2>&1 &)
           for i in $(seq 1 40); do
-            if curl --fail --silent http://127.0.0.1:4174/tykora/ > /dev/null; then exit 0; fi
+            if curl --fail --silent http://127.0.0.1:4174/ > /dev/null; then exit 0; fi
             sleep 1
           done
           cat /tmp/tykora-v08-preview.log
@@ -35,7 +35,7 @@ jobs:
           node --input-type=module <<'NODE'
           import {chromium} from '@playwright/test';
           const browser=await chromium.launch();
-          for(const path of ['/', '/tykora/']){
+          for(const path of ['/']){
             const page=await browser.newPage();
             const messages=[];
             page.on('pageerror',e=>messages.push('pageerror: '+e.message));
@@ -51,8 +51,8 @@ jobs:
       - name: Audit Lighthouse mobile and desktop
         run: |
           mkdir -p baseline-v0.8.0
-          npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/tykora/ --chrome-flags="--headless --no-sandbox" --output=json --output-path=baseline-v0.8.0/lighthouse-mobile.json --quiet
-          npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/tykora/ --preset=desktop --chrome-flags="--headless --no-sandbox" --output=json --output-path=baseline-v0.8.0/lighthouse-desktop.json --quiet
+          npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/ --chrome-flags="--headless --no-sandbox" --output=json --output-path=baseline-v0.8.0/lighthouse-mobile.json --quiet
+          npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/ --preset=desktop --chrome-flags="--headless --no-sandbox" --output=json --output-path=baseline-v0.8.0/lighthouse-desktop.json --quiet
           node - <<'NODE'
           const fs=require('node:fs');
           for(const [kind,file] of [['mobile','lighthouse-mobile.json'],['desktop','lighthouse-desktop.json']]){
@@ -78,7 +78,7 @@ jobs:
             const page=await browser.newPage({viewport:{width,height:900}});
             const errors=[];
             page.on('pageerror',e=>errors.push(e.message));
-            await page.goto('http://127.0.0.1:4174/tykora/#/practice');
+            await page.goto('http://127.0.0.1:4174/#/practice');
             await page.locator('#typing-input').waitFor({timeout:15000});
             const axe=await new AxeBuilder({page}).analyze();
             const critical=axe.violations.filter(x=>x.impact==='critical');
