@@ -14,4 +14,6 @@ export interface SessionRecord {
 export interface ProgressRepository {
   saveSession(session: SessionRecord): Promise<void>;
   getRecentSessions(limit: number): Promise<SessionRecord[]>;
+  /** Complete local history for durable lesson mastery and known-word exclusion. */
+  getAllSessions(): Promise<SessionRecord[]>;
 }
