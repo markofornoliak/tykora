@@ -76,7 +76,16 @@ export function lessonPrompt(lesson:CourseLesson,locale:SupportedLocale,layoutId
 }
 export function findLesson(id:string):CourseLesson|undefined{return curriculum.find(l=>l.id===id);}
 
-export const LESSON_REVIEW_DELAY_MS=24*60*60*1000;
+export const LESSON_REVIEW_DELAY_MS=2*60*60*1000;
+/** A review is eligible after 2h or the next UTC calendar date, whichever comes first. */
+export function nextReviewAt(firstMs:number):number {
+ if(!Number.isFinite(firstMs))throw new Error('Invalid practice timestamp');
+ const d=new Date(firstMs);
+ return Math.min(firstMs+LESSON_REVIEW_DELAY_MS,Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+1));
+}
+export function eligibleReviewPair(firstMs:number,secondMs:number):boolean {
+ return Number.isFinite(firstMs)&&Number.isFinite(secondMs)&&secondMs>=nextReviewAt(firstMs);
+}
 export const LESSON_MASTERY_ACCURACY=0.95;
 export const LESSON_MASTERY_MIN_GRAPHEMES=30;
 /** Minimum attempt accuracy increases conservatively with course difficulty. */
@@ -122,7 +131,7 @@ export function lessonProgressFromScores(records:readonly CourseResult[],locale:
  for(const [id,attempt] of attempts){
   const practice=attempt.practice.size>0,review=attempt.review.size>0;
   const mastered=practice&&review&&[...attempt.practice].some(([id,first])=>
-   Number.isFinite(first)&&[...attempt.review].some(([other,second])=>other!==id&&Number.isFinite(second)&&second-first>=LESSON_REVIEW_DELAY_MS));
+   Number.isFinite(first)&&[...attempt.review].some(([other,second])=>other!==id&&Number.isFinite(second)&&eligibleReviewPair(first,second)));
   progress.set(id,{practice,review,mastered});
  }
  return progress;
@@ -138,5 +147,5 @@ export function reviewAvailableAt(records:readonly CourseResult[],lesson:CourseL
   r.summary.accuracy>=lessonMinimumAccuracy(lesson) && r.summary.accuracy<=1 &&
   r.summary.netWpm!==null && Number.isFinite(r.summary.netWpm) && r.summary.netWpm>0 &&
   r.summary.typedCharacters>=required).map(r=>Date.parse(r.endedAt??'')).filter(Number.isFinite);
- return times.length?Math.min(...times)+LESSON_REVIEW_DELAY_MS:null;
+ return times.length?Math.min(...times.map(nextReviewAt)):null;
 }
