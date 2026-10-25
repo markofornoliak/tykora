@@ -19,6 +19,7 @@ import {calculateScoreV2,type ScoreV2} from '../../domain/metrics/metricsV2';
 import {displayWpm} from '../../shared/utils/formatMetrics';
 import {scoreAsync} from '../../infrastructure/workers/scoreAsync';
 import {generateDrill} from '../../domain/skills/generator';
+import {ESTIMATOR_VERSION} from '../../domain/skills/model';
 import {repositories} from '../../infrastructure/di/repositories';
 import type {TypingPrompt} from '../../domain/typing/contracts';
 
@@ -86,7 +87,7 @@ export function Practice(){
    const seed=Date.now(); // model is sampled at the same instant as its deterministic seed
    const text=generateDrill(skillNodes,words[nextLanguage],{locale:nextLanguage,layoutId:nextLayout,seed,nowMs:seed,wordCount:effectiveCount,recentWords:recentWords.current});
    recentWords.current=text.split(' ');
-   reset({...diagnostic,id:`adaptive-tykora-beta-1-${nextLanguage}-${seed}`,text,mode:'lesson'});return;
+   reset({...diagnostic,id:`adaptive-${ESTIMATOR_VERSION}-${nextLanguage}-${seed}`,text,mode:'lesson'});return;
   }
   try{
    const d=new Date();
