@@ -99,7 +99,7 @@ export function Practice(){
      const availableAt=reviewAvailableAt(history,l,nextLanguage);
      if(availableAt===null||Date.now()<availableAt){
       reset(lessonPrompt(l,nextLanguage,nextLayout));
-      setSaveNotice('Контрольный текст доступен спустя 24 часа после успешного первого прохождения.');
+      setSaveNotice('Контрольный текст доступен через 2 часа или в следующую календарную дату (UTC).');
       return;
      }
      const exclusions=historicalLessonVocabulary(history.map(x=>x.promptId),nextLanguage);
