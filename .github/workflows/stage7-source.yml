@@ -1,0 +1,18 @@
+name: Stage 7 Source Snapshot
+on:
+  push:
+    branches: [work/stage7-performance]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source archive
+        run: |
+          zip -qr TYKORA_Stage7_Source.zip . -x ".git/*" "node_modules/*" "dist/*"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TYKORA_Stage7_Source
+          path: TYKORA_Stage7_Source.zip
