@@ -19,7 +19,10 @@
     "check:backup": "npm run check:domain && node scripts/verify-backup.cjs",
     "test:e2e:production": "playwright test -c playwright.production.config.ts",
     "check:dist": "node scripts/verify-dist.cjs",
-    "check:source": "node scripts/verify-source.cjs"
+    "check:source": "node scripts/verify-source.cjs",
+    "lint": "eslint 'src/**/*.{ts,tsx}' 'e2e/**/*.{ts,tsx}' 'e2e-production/**/*.{ts,tsx}' 'scripts/**/*.mjs'",
+    "check:i18n": "vitest run src/shared/i18n/catalog.test.ts",
+    "test:property": "vitest run src/domain/metrics/metrics.property.test.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",
