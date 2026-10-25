@@ -4,7 +4,7 @@ import {graphemes} from '../typing/graphemes';
 const lesson=curriculum[0];
 function success(variant:'practice'|'review',id:string,locale:'ru'|'en'='ru'){
  const prompt=lessonPrompt(lesson,locale,undefined,variant);
- return {id,promptId:prompt.id,summary:{accuracy:LESSON_MASTERY_ACCURACY,netWpm:25,typedCharacters:graphemes(prompt.text).length}};
+ return {id,promptId:prompt.id,endedAt:variant==='practice'?'2026-10-21T00:00:00.000Z':'2026-10-23T00:00:00.000Z',summary:{accuracy:LESSON_MASTERY_ACCURACY,netWpm:25,typedCharacters:graphemes(prompt.text).length}};
 }
 describe('course mastery: repeated demonstration on different texts',()=>{
  it('has 124 ordered unique lessons across 10 levels',()=>{
@@ -53,8 +53,8 @@ describe('course mastery: repeated demonstration on different texts',()=>{
   expect(lessonMinimumAccuracy(curriculum.find(l=>l.level===10)!)).toBe(.97);
   const advanced=curriculum.find(l=>l.level===10)!;
   const p=lessonPrompt(advanced,'en'),r=lessonPrompt(advanced,'en',undefined,'review');
-  const a={id:'advanced-1',promptId:p.id,summary:{accuracy:.96,netWpm:60,typedCharacters:graphemes(p.text).length}};
-  const b={id:'advanced-2',promptId:r.id,summary:{accuracy:.96,netWpm:60,typedCharacters:graphemes(r.text).length}};
+  const a={id:'advanced-1',promptId:p.id,endedAt:'2026-10-21T00:00:00.000Z',summary:{accuracy:.96,netWpm:60,typedCharacters:graphemes(p.text).length}};
+  const b={id:'advanced-2',promptId:r.id,endedAt:'2026-10-23T00:00:00.000Z',summary:{accuracy:.96,netWpm:60,typedCharacters:graphemes(r.text).length}};
   expect(completionFromScores([a,b],'en').has(advanced.id)).toBe(false);
   expect(completionFromScores([{...a,summary:{...a.summary,accuracy:.98}},{...b,summary:{...b.summary,accuracy:.98}}],'en').has(advanced.id)).toBe(true);
  });
