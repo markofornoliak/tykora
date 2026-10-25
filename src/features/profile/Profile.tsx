@@ -46,10 +46,20 @@ export function Profile(){
  };
  const restoreBackup=async(file:File|undefined)=>{
   if(!file)return;
-  if(importMode==='replace'&&!window.confirm('ЗАМЕНИТЬ все локальные занятия, навыки и настройки данными файла? Это действие нельзя отменить без другой резервной копии.'))return;
   setBackupBusy(true);setBackupNotice('');
   try{
+   // Validate the incoming file before offering any destructive operation.
    const parsed=await parseBackupFile(file);
+   if(importMode==='replace'){
+    const snapshot=await exportLocalBackup();
+    const backupName=`tykora-before-replace-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+    downloadText(backupName,JSON.stringify(snapshot,null,2));
+    // The browser cannot prove that a download was saved; require explicit confirmation.
+    if(!window.confirm(`Перед заменой начато скачивание резервной копии "${backupName}". Проверьте, что файл сохранён и доступен. ЗАМЕНИТЬ все локальные занятия, навыки и настройки?`)){
+     setBackupNotice('Замена отменена. Исходные данные не изменены.');
+     return;
+    }
+   }
    const counts=await importLocalBackup(parsed,importMode);
    await useUiStore.getState().initialize(true);
    const [p,all]=await Promise.all([repositories.profile.get(),repositories.progress.getRecentSessions(10000)]);
