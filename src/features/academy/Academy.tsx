@@ -1,7 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import {Link} from 'react-router-dom';
 import {PageHeader} from '../../shared/ui/Layout';
-import {levels,curriculum,completionFromScores,lessonProgressFromScores,type LessonProgress,type CourseLesson} from '../../domain/lessons/curriculum';
+import {levels,curriculum,completionFromScores,lessonProgressFromScores,reviewAvailableAt,type LessonProgress,type CourseLesson} from '../../domain/lessons/curriculum';
 import {repositories} from '../../infrastructure/di/repositories';
 import type {SupportedLocale} from '../../domain/content/library';
 import {dailyRoutine,type TrainingPlan} from '../../domain/plans/plan';
@@ -11,6 +11,7 @@ export function Academy(){
  const [level,setLevel]=useState(1);
  const [completed,setCompleted]=useState<Set<string>>(new Set());
  const [lessonProgress,setLessonProgress]=useState<Map<string,LessonProgress>>(new Map());
+ const [reviewWait,setReviewWait]=useState<Map<string,number>>(new Map());
  const [error,setError]=useState('');
  const [targetWpm,setTargetWpm]=useState(80);
  const [horizonDays,setHorizonDays]=useState(60);
@@ -18,7 +19,7 @@ export function Academy(){
  const [plan,setPlan]=useState<TrainingPlan|undefined>();
  const [planStatus,setPlanStatus]=useState('');
  useEffect(()=>{let canceled=false;void repositories.progress.getRecentSessions(4000).then(rows=>{
-  if(!canceled){setCompleted(completionFromScores(rows,locale));setLessonProgress(lessonProgressFromScores(rows,locale));}
+  if(!canceled){setCompleted(completionFromScores(rows,locale));setLessonProgress(lessonProgressFromScores(rows,locale));setReviewWait(new Map(curriculum.map(l=>[l.id,reviewAvailableAt(rows,l,locale)] as const).filter((x):x is readonly [string,number]=>x[1]!==null)));}
  }).catch(()=>{if(!canceled)setError('История недоступна: прогресс не может быть загружен.');});return()=>{canceled=true;};},[locale]);
  useEffect(()=>{let active=true;void repositories.plans.get().then(p=>{if(!active||!p)return;setPlan(p);setTargetWpm(p.targetWpm);setHorizonDays(p.horizonDays);setDailyMinutes(p.dailyMinutes);}).catch(()=>{});return()=>{active=false;};},[]);
  const savePlan=async()=>{try{const next:TrainingPlan={id:'current',targetWpm,horizonDays,dailyMinutes,createdAt:new Date().toISOString(),locale};await repositories.plans.save(next);setPlan(next);setPlanStatus('Учебный план сохранён локально.');}catch{setPlanStatus('Не удалось сохранить план.');}};
@@ -28,12 +29,12 @@ export function Academy(){
  const pct=Math.round(completed.size/curriculum.length*100);
  const lessonLink=(lesson:CourseLesson)=>{
   const status=lessonProgress.get(lesson.id);
-  const review=!!status?.practice&&!status.review&&!status.mastered;
+  const review=!!status?.practice&&!status.review&&!status.mastered&&Date.now()>=(reviewWait.get(lesson.id)??Infinity);
   return `/practice?lesson=${encodeURIComponent(lesson.id)}&lang=${locale}${review?'&review=1':''}`;
  };
  const lessonStatus=(lesson:CourseLesson)=>{
   const state=lessonProgress.get(lesson.id);
-  return state?.mastered?'Освоено':state?.practice?'Ожидает контрольный текст':state?.review?'Ожидает первое прохождение':'Ещё не пройдено';
+  return state?.mastered?'Освоено':state?.practice&&Date.now()<(reviewWait.get(lesson.id)??Infinity)?'Повторение через 24 часа':state?.practice?'Ожидает контрольный текст':state?.review?'Ожидает первое прохождение':'Ещё не пройдено';
  };
  return <section><PageHeader kicker="Обучение / Academy" title="Маленькие шаги. Большой навык.">124 доступных упражнения в 10 уровнях. Уроки открыты без аккаунтов и оплаты. Для освоения нужны два отдельных успешных прохождения (точность ≥ 95%) на разных текстах. Прежние занятия сохраняются как первый этап.</PageHeader>
  <div className="row" style={{gap:12,marginBottom:18,flexWrap:'wrap'}}>
@@ -51,7 +52,7 @@ export function Academy(){
     {String(lesson.step).padStart(2,'0')}{completed.has(lesson.id)?' ✓':''}
   </Link>)}</div>
   <div className="section-title"><h3>Выбранный материал</h3></div>
-  <div className="lesson-items">{selection.map(lesson=><div className="lesson-line" key={lesson.id}><div><b>{locale==='ru'?lesson.titleRu:lesson.titleEn}</b><p className="small muted">{lesson.durationMinutes}–{lesson.durationMinutes+2} мин · {lessonStatus(lesson)}</p></div><Link className="btn secondary small-btn" to={lessonLink(lesson)}>{lessonProgress.get(lesson.id)?.practice&&!completed.has(lesson.id)?'Контрольный текст ↗':'Начать ↗'}</Link></div>)}</div>
+  <div className="lesson-items">{selection.map(lesson=><div className="lesson-line" key={lesson.id}><div><b>{locale==='ru'?lesson.titleRu:lesson.titleEn}</b><p className="small muted">{lesson.durationMinutes}–{lesson.durationMinutes+2} мин · {lessonStatus(lesson)}</p></div><Link className="btn secondary small-btn" to={lessonLink(lesson)}>{lessonProgress.get(lesson.id)?.practice&&!completed.has(lesson.id)&&Date.now()>=(reviewWait.get(lesson.id)??Infinity)?'Контрольный текст ↗':'Начать ↗'}</Link></div>)}</div>
  </div>
  <div className="surface card"><h3>Программа</h3><p className="small muted" style={{marginTop:9}}>Начинать можно с любого уровня. Для устойчивого навыка двигайтесь последовательно.</p>
   <div className="lesson-list">{levels.map(l=>{
