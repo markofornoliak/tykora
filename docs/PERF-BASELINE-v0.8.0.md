@@ -23,3 +23,11 @@ Measured on 2026-10-25 by [immutable-main browser-baseline run 40196542139](http
 | Playwright dev / production, Chromium | 18 / 2 passing | GitHub Actions, Ubuntu, Node 24, 2026-10-25 | not confirmed | test-run evidence |
 
 **Important:** the build-size measurements are not Lighthouse/latency results. The mobile Lighthouse performance baseline (93) is below the v0.9 target (95); mobile LCP (1995.10ms) is above the 1000ms target. The measurements are only one run and should be repeated. An unmeasured typing baseline cannot prove an interaction regression or improvement. Do not use synthetic benchmarks as end-user results.
+## Second immutable-source run and axe audit
+
+A repeat of the **unchanged v0.8.0 main commit** completed successfully on 2026-10-25:
+[Actions baseline run 40196865720](https://github.com/markofornoliak/tykora/actions/runs/40196865720), same Lighthouse 12.8.2 configuration and Chrome headless on GitHub-hosted Ubuntu. Measured mobile **87 / 100 / 100 / 100** (Performance / Accessibility / Best Practices / SEO), LCP **2055.85 ms**, CLS **0**; desktop **100 / 100 / 100 / 100**, LCP **483.47 ms**, CLS **0.0003314**. Host benchmarkIndex differed (mobile 1906 versus 2650.5 in the earlier run), so report the **observed mobile Performance range 87–93** rather than treating one run as a stable score.
+
+axe-core on the production **Practice** route at widths **320, 768 and 1440 CSS px** reported **one moderate heading-order violation** at each width, **zero critical**, and **zero pageerror events** in the instrumented scenario. These findings apply only to those audited views, not all screens or browser engines. Original JSON artifacts are attached to the Actions run.
+
+Remaining Phase-0 blockers: exact input-to-paint p95, React commits/keypress, visual dual-theme review, IndexedDB v1–v4 snapshots and a true production network data-exfiltration inspection are not confirmed.
