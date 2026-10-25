@@ -45,6 +45,7 @@ jobs:
               LCPms:d.audits['largest-contentful-paint']?.numericValue,
               CLS:d.audits['cumulative-layout-shift']?.numericValue,
               benchmarkIndex:d.environment?.benchmarkIndex,
+              lcpElement:d.audits['largest-contentful-paint-element']?.details?.items?.[0]?.node?.snippet??null,
               viewport:d.configSettings?.screenEmulation,
               throttling:d.configSettings?.throttling
             }));
