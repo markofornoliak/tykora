@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {curriculum,levels,lessonPrompt,completionFromScores,lessonProgressFromScores,LESSON_MASTERY_ACCURACY} from './curriculum';
+import {curriculum,levels,lessonPrompt,completionFromScores,lessonProgressFromScores,LESSON_MASTERY_ACCURACY,lessonMinimumAccuracy} from './curriculum';
 import {graphemes} from '../typing/graphemes';
 const lesson=curriculum[0];
 function success(variant:'practice'|'review',id:string,locale:'ru'|'en'='ru'){
@@ -46,6 +46,17 @@ describe('course mastery: repeated demonstration on different texts',()=>{
   expect(completionFromScores([first,success('review','id-3','en')],'ru').size).toBe(0);
   expect(completionFromScores([first,review],'ru')).toEqual(new Set([lesson.id]));
   expect(lessonProgressFromScores([first,review],'ru').get(lesson.id)).toEqual({practice:true,review:true,mastered:true});
+ });
+ it('progressively increases minimum accuracy by course level',()=>{
+  expect(lessonMinimumAccuracy(curriculum.find(l=>l.level===1)!)).toBe(.95);
+  expect(lessonMinimumAccuracy(curriculum.find(l=>l.level===5)!)).toBe(.96);
+  expect(lessonMinimumAccuracy(curriculum.find(l=>l.level===10)!)).toBe(.97);
+  const advanced=curriculum.find(l=>l.level===10)!;
+  const p=lessonPrompt(advanced,'en'),r=lessonPrompt(advanced,'en',undefined,'review');
+  const a={id:'advanced-1',promptId:p.id,summary:{accuracy:.96,netWpm:60,typedCharacters:graphemes(p.text).length}};
+  const b={id:'advanced-2',promptId:r.id,summary:{accuracy:.96,netWpm:60,typedCharacters:graphemes(r.text).length}};
+  expect(completionFromScores([a,b],'en').has(advanced.id)).toBe(false);
+  expect(completionFromScores([{...a,summary:{...a.summary,accuracy:.98}},{...b,summary:{...b.summary,accuracy:.98}}],'en').has(advanced.id)).toBe(true);
  });
  it('rejects low accuracy, missing speed and shortcuts that skip full text',()=>{
   const first=success('practice','id-1');
