@@ -18,7 +18,7 @@ jobs:
           node-version: '24'
       - run: npm ci --no-audit --no-fund
       - name: Install pinned quality tools and update the npm lock
-        run: npm install --save-dev --save-exact eslint@9.39.1 @eslint/js@9.39.1 typescript-eslint@8.46.4 fast-check@4.4.0 --no-audit --no-fund
+        run: npm install --save-dev --save-exact eslint@9.39.1 @eslint/js@9.39.1 typescript-eslint@8.46.4 fast-check@4.4.0 @axe-core/playwright@4.10.2 --no-audit --no-fund
       - name: Commit reproducible lockfile and manifest to feature branch only
         run: |
           git config user.name "github-actions[bot]"
