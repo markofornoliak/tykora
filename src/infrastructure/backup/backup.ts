@@ -7,10 +7,13 @@ import {makeBackup,parseBackup,MAX_BACKUP_BYTES,type BackupData,type PortableBac
 
 /** Every table is stored as plain JSON. This file stays on the user's device. */
 export async function exportLocalBackup():Promise<PortableBackup>{
- const [settings,sessions,skills,plans,profiles]=await Promise.all([
-  db.settings.toArray(),db.sessions.toArray(),db.skills.toArray(),db.plans.toArray(),db.profiles.toArray()
- ]);
- return makeBackup({settings,sessions,skills,plans,profiles} as unknown as BackupData);
+ // One readonly transaction prevents an inconsistent export during concurrent writes.
+ return db.transaction('r',db.settings,db.sessions,db.skills,db.plans,db.profiles,async()=>{
+  const [settings,sessions,skills,plans,profiles]=await Promise.all([
+   db.settings.toArray(),db.sessions.toArray(),db.skills.toArray(),db.plans.toArray(),db.profiles.toArray()
+  ]);
+  return makeBackup({settings,sessions,skills,plans,profiles} as unknown as BackupData);
+ });
 }
 export async function importLocalBackup(raw:unknown,mode:'merge'|'replace'='merge'):Promise<Record<TableName,number>>{
  const backup=parseBackup(raw);
