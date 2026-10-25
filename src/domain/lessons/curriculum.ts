@@ -57,21 +57,66 @@ export const curriculum:readonly CourseLesson[]=levels.flatMap((lvl)=>Array.from
 function repeatFocus(focus:string,steps:number):string {return Array.from({length:steps},(_,i)=>`${focus}${i%3===2?' .':''}`).join(' ').replace(/ \./g,'.');}
 const proseRu=['В начале тренировки сохраняйте ровную посадку и расслабленные плечи.','Следите за точностью, а не за случайным рекордом скорости.','Старайтесь не смотреть на руки и находить клавиши на ощупь.','После занятия проверьте ошибки и сделайте короткий перерыв.'];
 const proseEn=['Sit comfortably and keep your shoulders relaxed while typing.','Focus on accuracy rather than chasing a lucky speed record.','Try not to look at your hands while you locate each key.','Review your mistakes after the session and take a short break.'];
-export function lessonPrompt(lesson:CourseLesson,locale:SupportedLocale,layoutId?:string):TypingPrompt {
+/** Two stable original text variants. Legacy v0.8 prompts retain their original id. */
+export type LessonVariant='practice'|'review';
+export function lessonPrompt(lesson:CourseLesson,locale:SupportedLocale,layoutId?:string,variant:LessonVariant='practice'):TypingPrompt {
  const focus=locale==='ru'?lesson.focusRu:lesson.focusEn;
  const prose=locale==='ru'?proseRu:proseEn;
- const text=lesson.level<=2
-   ? `${repeatFocus(focus,5)} ${repeatFocus(focus.split(' ').reverse().join(' '),3)}`
-   : `${repeatFocus(focus,3)} ${prose[(lesson.index-1)%prose.length]} ${repeatFocus(focus,2)}`;
+ const reversed=focus.split(' ').reverse().join(' ');
+ const text=variant==='review'
+   ? lesson.level<=2
+     ? `${repeatFocus(reversed,4)} ${repeatFocus(focus,2)}`
+     : `${repeatFocus(reversed,2)} ${prose[lesson.index%prose.length]} ${repeatFocus(focus,2)} ${repeatFocus(reversed,1)}`
+   : lesson.level<=2
+     ? `${repeatFocus(focus,5)} ${repeatFocus(reversed,3)}`
+     : `${repeatFocus(focus,3)} ${prose[(lesson.index-1)%prose.length]} ${repeatFocus(focus,2)}`;
  if(graphemes(text).length<30) throw new Error('Course exercise too short');
- return {id:`course-${lesson.id}-${locale}`,text,mode:'lesson',locale,
+ return {id:`course-${lesson.id}-${locale}${variant==='review'?'-review':''}`,text,mode:'lesson',locale,
   layoutId:layoutId??(locale==='ru'?'ru-jcuken':'en-qwerty'),license:'original',sourceAttribution:'TYKORA original course'};
 }
 export function findLesson(id:string):CourseLesson|undefined{return curriculum.find(l=>l.id===id);}
-export function completionFromScores(records:readonly {promptId:string;summary:{accuracy:number;netWpm:number|null;typedCharacters:number}}[],locale:SupportedLocale){
- const completed=new Set<string>();
- for(const r of records){const match=/^course-(L\d\d-\d\d)-(ru|en)$/.exec(r.promptId);
-  const lesson=match?findLesson(match[1]):undefined;
-  if(match && lesson && match[2]===locale && r.summary.accuracy>=.9 && r.summary.netWpm!==null && r.summary.netWpm>0 && r.summary.typedCharacters>=graphemes(lessonPrompt(lesson,locale).text).length)completed.add(match[1]);}
- return completed;
+
+export const LESSON_MASTERY_ACCURACY=0.95;
+export const LESSON_MASTERY_MIN_GRAPHEMES=30;
+export interface CourseResult {
+ readonly id:string;
+ readonly promptId:string;
+ readonly summary:{readonly accuracy:number;readonly netWpm:number|null;readonly typedCharacters:number};
+}
+export interface LessonProgress {
+ readonly practice:boolean;
+ readonly review:boolean;
+ readonly mastered:boolean;
+}
+/** Historical sessions still count as the first practice, but never as both checks.
+ * A separate successfully finished unseen variant is required to claim mastery.
+ * Records are summaries only: personal typing text and keystroke events are not saved.
+ */
+export function lessonProgressFromScores(records:readonly CourseResult[],locale:SupportedLocale):Map<string,LessonProgress>{
+ const attempts=new Map<string,{practice:Set<string>;review:Set<string>}>();
+ for(const record of records){
+  const match=/^course-(L\d\d-\d\d)-(ru|en)(-review)?$/.exec(record.promptId);
+  if(!match||match[2]!==locale||typeof record.id!=='string'||!record.id)continue;
+  const lesson=findLesson(match[1]);if(!lesson)continue;
+  const variant:LessonVariant=match[3]?'review':'practice';
+  const score=record.summary;
+  if(!Number.isFinite(score.accuracy)||score.accuracy<LESSON_MASTERY_ACCURACY
+   ||score.accuracy>1||score.netWpm===null||!Number.isFinite(score.netWpm)
+   ||score.netWpm<=0||!Number.isFinite(score.typedCharacters))continue;
+  const expectedLength=graphemes(lessonPrompt(lesson,locale,undefined,variant).text).length;
+  if(score.typedCharacters<Math.max(LESSON_MASTERY_MIN_GRAPHEMES,expectedLength))continue;
+  let current=attempts.get(lesson.id);
+  if(!current){current={practice:new Set(),review:new Set()};attempts.set(lesson.id,current);}
+  current[variant].add(record.id);
+ }
+ const progress=new Map<string,LessonProgress>();
+ for(const [id,attempt] of attempts){
+  const practice=attempt.practice.size>0,review=attempt.review.size>0;
+  const mastered=practice&&review&&[...attempt.practice].some(id=>[...attempt.review].some(other=>other!==id));
+  progress.set(id,{practice,review,mastered});
+ }
+ return progress;
+}
+export function completionFromScores(records:readonly CourseResult[],locale:SupportedLocale):Set<string>{
+ return new Set([...lessonProgressFromScores(records,locale)].filter(([,status])=>status.mastered).map(([id])=>id));
 }
