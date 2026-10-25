@@ -36,6 +36,7 @@ export function Practice(){
  const interfaceLocale=useUiStore(s=>s.settings.uiLocale) as InterfaceLocale;
  const copy=pageCopy[interfaceLocale]??pageCopy.ru;
  const [query]=useSearchParams();const lessonId=query.get('lesson')??'';
+ const lessonVariant=query.get('review')==='1'?'review':'practice';
  const initialLocale=query.get('lang')==='en'?'en':'ru';
  const [language,setLanguage]=useState<SupportedLocale>(initialLocale);
  const [layoutId,setLayoutId]=useState(initialLocale==='ru'?'ru-jcuken':'en-qwerty');
@@ -74,8 +75,8 @@ export function Practice(){
   if(nextMode==='diagnostic'){reset(diagnostic);return;}
   if(nextMode==='lesson') {
    const l=findLesson(chosenLesson)??curriculum[0];
-   setLessonTitle(nextLanguage==='ru'?l.titleRu:l.titleEn);
-   reset(lessonPrompt(l,nextLanguage,nextLayout));return;
+   setLessonTitle(`${nextLanguage==='ru'?l.titleRu:l.titleEn} · ${lessonVariant==='review'?'Контрольный текст':'Практика'}`);
+   reset(lessonPrompt(l,nextLanguage,nextLayout,lessonVariant));return;
   }
   if(nextMode==='adaptive'){
    let skillNodes={};
@@ -99,7 +100,7 @@ export function Practice(){
   void prepare('lesson',nextLang,nextLayout,track,count,duration,customText,lessonId);
   // Trigger only when academy link changes: other controls reset through prepare directly.
   // eslint-disable-next-line react-hooks/exhaustive-deps
- },[lessonId,query.get('lang')]);
+ },[lessonId,query.get('lang'),lessonVariant]);
  const stop=(at:number)=>{const s=finishEngine(sessionRef.current,at);sessionRef.current=s;setSession(s);};
  const commit=(value:string,source:InputSource='keyboard')=>{
   const at=performance.now();let next=acceptInput(sessionRef.current,value,at,source);
