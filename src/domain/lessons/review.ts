@@ -12,10 +12,22 @@ const tokens=(text:string):string[]=>text.normalize('NFC').toLowerCase().match(/
 export function historicalLessonVocabulary(promptIds:readonly string[],locale:SupportedLocale):Set<string>{
  const encountered=new Set<string>();
  for(const id of promptIds){
-  const match=/^course-(L\d\d-\d\d)-(ru|en)(-review)?$/.exec(id);
-  if(!match||match[2]!==locale)continue;
-  const lesson=findLesson(match[1]);if(!lesson)continue;
-  for(const word of tokens(lessonPrompt(lesson,locale,undefined,match[3]?'review':'practice').text))encountered.add(word);
+  // Original/reordered v0.8 text is reconstructed from its stable prompt id.
+  const legacy=/^course-(L\d\d-\d\d)-(ru|en)(-review)?$/.exec(id);
+  if(legacy && legacy[2]===locale){
+   const lesson=findLesson(legacy[1]);
+   if(lesson)for(const word of tokens(lessonPrompt(lesson,locale,undefined,legacy[3]?'review':'practice').text))encountered.add(word);
+   continue;
+  }
+  // v2 review IDs include only indices into the shipped original word bank.
+  // This is not raw user text; no user-provided prompts are exposed.
+  const generated=/^course-L\d\d-\d\d-(ru|en)-review2-\d+-\d+-v-([0-9a-z]+(?:\.[0-9a-z]+)*)$/.exec(id);
+  if(!generated||generated[1]!==locale)continue;
+  for(const encoded of generated[2].split('.')){
+   const index=Number.parseInt(encoded,36);
+   const word=words[locale][index];
+   if(word!==undefined)for(const token of tokens(word))encountered.add(token);
+  }
  }
  return encountered;
 }
@@ -34,6 +46,11 @@ export function generateLessonReview(lesson:CourseLesson,locale:SupportedLocale,
  if(unique.size<12 || [...unique].some(w=>practiceWords.has(w)||excludedVocabulary.has(w)))throw new Error('Review word separation failed');
  const length=graphemes(text).length;
  if(length<30||length>600)throw new Error('Review length is invalid');
- return {id:`course-${lesson.id}-${locale}-review2-${length}-${seed>>>0}`,
+ // Preserve which *public-bank* words have already been used in generated reviews.
+ // No typed keystrokes or user-supplied/custom text are embedded in a session ID.
+ const indices=text.split(' ').map(word=>words[locale].indexOf(word));
+ if(indices.some(index=>index<0))throw new Error('Generated word is missing from the immutable source bank');
+ const encoded=indices.map(index=>index.toString(36)).join('.');
+ return {id:`course-${lesson.id}-${locale}-review2-${length}-${seed>>>0}-v-${encoded}`,
   text,locale,layoutId,mode:'lesson',license:'original',sourceAttribution:'TYKORA original adaptive holdout bank'};
 }
