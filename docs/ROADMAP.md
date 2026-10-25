@@ -11,7 +11,10 @@
 - [ ] Capture long-text exact event-to-paint p95, React commits per keypress and baseline repeatability. Event Timing APIs censor very-short inputs; a suitable trace method and device controls must be documented.
 - [ ] Complete engine event classification, IME/dead-key/AltGr, Unicode, pause/resume, alternative inputs and all cross-browser E2E.
 - [ ] Validate scoring v2 worker→session→save→restore→analytics end-to-end, introduce fast-check seeded invariants and keep explicit per-score version.
-- [ ] Adaptive 2.0 with credible Wilson/Bayesian uncertainty, spaced repetition and holdout text, test seed determinism; course content lint/education checks.
+- [x] Preserve historical course progress while requiring a second distinct text, separate session IDs and 95–97% accuracy for confirmed mastery (distinct texts are not independently validated holdout words).
+- [x] Use original browser input timestamps when credible, with epoch-time fallback and rapid/Unicode/multiline unit regressions (broader physical-keyboard/IME device matrix remains open).
+- [x] Make adaptive generation deterministic for a fixed profile/seed/content bank, including immunity to changes in implicit wall clock; runtime prompt IDs now retain estimator version and seed.
+- [ ] Finish Adaptive 2.0: principled individual latency baseline, spaced repetition validation, true holdout-word protocol and course content lint/education checks.
 - [ ] Full UI translations RU/EN/UK/DE/FR/ES/PT/PL/TR/IT and language/layout/content independence.
 - [ ] Precision Lab evidence-backed charts with accessible table alternatives.
 - [ ] WCAG 2.2 AA keyboard/VoiceOver or NVDA tests, 320px+200% zoom, both themes, axe on each route.
