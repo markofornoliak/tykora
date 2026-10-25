@@ -46,13 +46,15 @@ describe('long-form Unicode and rapid input regression',()=>{
   expect(state.endedAtMs).toBe(1500);
  });
  it('corrects an edit in the middle without shifting later graphemes',()=>{
-  let state=createEngine({...diagnostics.en,text:'abcde'});
+  let state=createEngine({...diagnostics.en,text:'abcde!'});
   state=acceptInput(state,'abxde',1000);
   state=acceptInput(state,'abcde',2000);
   expect(state.attempts.at(-1)).toMatchObject({char:'c',position:2,correct:true});
+  state=acceptInput(state,'abcde!',2500);
   expect(state.correctedErrors).toBe(1);
   expect(state.deletions).toBe(1);
-  expect(state.typed).toBe('abcde');
+  expect(state.typed).toBe('abcde!');
+  expect(state.endedAtMs).toBe(2500);
  });
  it('preserves newlines and Cyrillic/Latin text through insert and delete',()=>{
   const text='Да\nOK!🙌';
