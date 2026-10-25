@@ -14,9 +14,11 @@
 ## 2. Architecture changes
 
 - Ordinary Practice uses a separate, pure TypeScript `calculateScoreV2` and `score.worker.ts`; legacy `tykora-1.0.0` records are never rescored implicitly.
-- `ScoreV2` distinguishes unavailable speeds (null) from zero, separates wall and active time, calculates accurate final-character CPM, and emits rhythm and error metrics. Race/Classroom still use legacy scoring. State mutation/event timestamp architecture remains unfinished.
+- `ScoreV2` distinguishes unavailable speeds (null) from zero, separates wall and active time, calculates accurate final-character CPM, and emits rhythm and error metrics. Race/Classroom still use legacy scoring. Practice now normalizes native Event.timeStamp (including older epoch values) and clamps out-of-order events, but its React render/batching architecture remains unfinished.
 - React Router keeps the shared Layout eager, Home eager for initial LCP, and defers eight specialist screens using `React.lazy` and Suspense.
 - Existing Dexie schema version 4 is unchanged. Synthetic native IndexedDB versions 10/20/30 exercise upgrades to native 40. Real v1–v3 user profile snapshots are **not available** and therefore **not proven**.
+- Course mastery now requires two separately completed, distinct texts for each lesson with increasing accuracy criteria (95% on levels 1–2, 96% on levels 3–6, 97% on levels 7–10). Legacy records can satisfy the first stage, not both. The second text is a deterministic variation of learned material; independently validated holdout-word transfer is not implemented.
+- Adaptive exercise generation is deterministic given the same input profile, seed and content. Practice saves a seed and estimator version in the prompt id and explicitly uses the seed as its as-of clock. Generated content itself remains transient.
 
 ## 3. Data, privacy and security
 
@@ -36,7 +38,7 @@
 
 - Mobile LCP under 1 second is **not met** in the measured lab runs.
 - Input-to-paint p95 below 16ms, React commits per keystroke, full stable 60fps, and comparable field performance are **not confirmed**.
-- Full end-to-end i18n, curriculum mastery, entire Adaptive 2.0, Precision Lab visuals, proper lint, and fast-check property-based coverage remain unfinished.
+- Full end-to-end i18n, independent holdout-word transfer in course mastery, entire Adaptive 2.0, Precision Lab visuals, proper lint, and fast-check property-based coverage remain unfinished.
 - Comprehensive WCAG 2.2 AA audit (manual NVDA/VoiceOver), contrast and 200%-zoom across all screens and themes: **not confirmed**.
 - Real historical database migrations, long-lived storage durability, complete production network/privacy verification, installed PWA update lifecycle, and live v0.9 smoke test: **not confirmed**.
 - No release tag, version bump, or main-branch merge is made; user approval remains required before merging.
