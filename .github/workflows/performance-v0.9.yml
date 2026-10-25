@@ -1,0 +1,59 @@
+name: TYKORA v0.9.0 performance audit (measurement only)
+on:
+  push:
+    branches: [feature/v0.9.0]
+    paths:
+      - '.github/workflows/performance-v0.9.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install exact locked dependency graph
+        run: npm ci --no-audit --no-fund
+      - name: Build production app at /
+        run: VITE_BASE_PATH=/ npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start Vite production preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/tykora-perf-preview.log 2>&1 &)
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:4174/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/tykora-perf-preview.log
+          exit 1
+      - name: Lighthouse 12.8.2 — mobile and desktop
+        run: |
+          mkdir -p perf-v0.9.0
+          npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/ --chrome-flags="--headless --no-sandbox" --output=json --output-path=perf-v0.9.0/mobile.json --quiet
+          npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/ --preset=desktop --chrome-flags="--headless --no-sandbox" --output=json --output-path=perf-v0.9.0/desktop.json --quiet
+          node - <<'NODE'
+          const fs=require('node:fs');
+          for(const kind of ['mobile','desktop']){
+            const d=JSON.parse(fs.readFileSync('perf-v0.9.0/'+kind+'.json','utf8'));
+            console.log('TYKORA_V09_LIGHTHOUSE '+JSON.stringify({
+              kind,gitSha:process.env.GITHUB_SHA,
+              tool:'Lighthouse',version:d.lighthouseVersion,
+              categories:Object.fromEntries(Object.entries(d.categories).map(([key,item])=>[key,Math.round(item.score*100)])),
+              LCPms:d.audits['largest-contentful-paint']?.numericValue,
+              CLS:d.audits['cumulative-layout-shift']?.numericValue,
+              benchmarkIndex:d.environment?.benchmarkIndex,
+              viewport:d.configSettings?.screenEmulation,
+              throttling:d.configSettings?.throttling
+            }));
+          }
+          NODE
+      - name: Retain full raw measurement evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tykora-v0.9-lighthouse
+          path: perf-v0.9.0
+          if-no-files-found: warn
