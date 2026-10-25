@@ -9,7 +9,8 @@ import {pageCopy} from '../../shared/i18n/pageCopy';
 import type {InterfaceLocale} from '../../shared/i18n/catalog';
 import {diagnostics,words} from '../../domain/content/prompts';
 import {getPassages,type SupportedLocale,type TrackId} from '../../domain/content/library';
-import {curriculum,findLesson,lessonPrompt} from '../../domain/lessons/curriculum';
+import {curriculum,findLesson,lessonPrompt,reviewAvailableAt} from '../../domain/lessons/curriculum';
+import {generateLessonReview,historicalLessonVocabulary} from '../../domain/lessons/review';
 import {promptForMode,seedFromDate,modeLabels,type ModeId} from '../../domain/modes/modes';
 import {createEngine,acceptInput,currentPosition,finishEngine,type EngineState,type InputSource} from '../../domain/typing/engine';
 import {graphemes} from '../../domain/typing/graphemes';
@@ -89,7 +90,29 @@ export function Practice(){
   if(nextMode==='lesson') {
    const l=findLesson(chosenLesson)??curriculum[0];
    setLessonTitle(`${nextLanguage==='ru'?l.titleRu:l.titleEn} · ${lessonVariant==='review'?'Контрольный текст':'Практика'}`);
-   reset(lessonPrompt(l,nextLanguage,nextLayout,lessonVariant));return;
+   if(lessonVariant==='review'){
+    try{
+     const [history,profile]=await Promise.all([
+      repositories.progress.getRecentSessions(4000),repositories.skills.byLayout(nextLayout,nextLanguage)
+     ]);
+     if(requestId.current!==thisRequest)return;
+     const availableAt=reviewAvailableAt(history,l,nextLanguage);
+     if(availableAt===null||Date.now()<availableAt){
+      reset(lessonPrompt(l,nextLanguage,nextLayout));
+      setSaveNotice('Контрольный текст доступен спустя 24 часа после успешного первого прохождения.');
+      return;
+     }
+     const exclusions=historicalLessonVocabulary(history.map(x=>x.promptId),nextLanguage);
+     const seed=Date.now();
+     reset(generateLessonReview(l,nextLanguage,nextLayout,profile,exclusions,seed,seed));return;
+    }catch(error){
+     if(requestId.current!==thisRequest)return;
+     reset(lessonPrompt(l,nextLanguage,nextLayout));
+     setSaveNotice(error instanceof Error?error.message:'Не удалось сформировать контрольный текст.');
+     return;
+    }
+   }
+   reset(lessonPrompt(l,nextLanguage,nextLayout));return;
   }
   if(nextMode==='adaptive'){
    let skillNodes={};
