@@ -1,4 +1,4 @@
-import {lazy,Suspense} from 'react';
+import {lazy,Suspense,Profiler,type ProfilerOnRenderCallback} from 'react';
 import {Navigate,Outlet,Route,Routes} from 'react-router-dom';
 import {Layout} from '../shared/ui/Layout';
 import {Home} from '../features/home/Home';
@@ -15,12 +15,17 @@ const Race=lazy(()=>import('../features/race/Race').then(m=>({default:m.Race})))
 const Profile=lazy(()=>import('../features/profile/Profile').then(m=>({default:m.Profile})));
 const Classroom=lazy(()=>import('../features/classroom/Classroom').then(m=>({default:m.Classroom})));
 
+// Instrumented only when the benchmark opts in; Profiler is deliberately identical on both measurement branches.
+const onPracticeCommit:ProfilerOnRenderCallback=()=>{
+ const p=(window as unknown as {__TYKORA_BENCHMARK__?:{profilerCommits?:number}}).__TYKORA_BENCHMARK__;
+ if(p)p.profilerCommits=(p.profilerCommits??0)+1;
+};
 export function App(){
  return <Routes>
   <Route element={<Layout/>}>
    <Route element={<Suspense fallback={<div role="status" className="sr-only">Загрузка раздела…</div>}><Outlet/></Suspense>}>
     <Route path="/" element={<Home/>}/>
-    <Route path="/practice" element={<Practice/>}/>
+    <Route path="/practice" element={<Profiler id="Practice" onRender={onPracticeCommit}><Practice/></Profiler>}/>
     <Route path="/academy" element={<Academy/>}/>
     <Route path="/analytics" element={<Analytics/>}/>
     <Route path="/result" element={<Results/>}/>
