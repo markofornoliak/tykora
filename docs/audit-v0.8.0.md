@@ -25,7 +25,7 @@ Baseline commit: `9fb97bce89b54d071e6344e7449e095d818f51be`, branch `main`. Vers
 
 ## Phase-0 acceptance status
 
-Source structure, version, historical CI logs and existing tests inspected. Browser/manual journey, saved v0.8 profile, IndexedDB schema fixtures v1–v4, Lighthouse mobile/desktop, axe-core, React render count and input-to-paint trace are **not confirmed**. Phase 0 is *incomplete* until these are collected; later phases must not be called accepted on this evidence alone. See [baseline table](PERF-BASELINE-v0.8.0.md).
+Source structure, version, historical CI logs, existing tests, and single-run Home Lighthouse mobile/desktop measured (run 40196542139). The Home mobile score is 93 (LCP 1995.10ms), desktop score 100 (LCP 485.09ms). Browser/manual journey, saved v0.8 profile, IndexedDB schema fixtures v1–v4, axe-core, React render count and input-to-paint trace are **not confirmed**. Phase 0 is *incomplete* until these are collected; later phases must not be called accepted on this evidence alone. See [baseline table](PERF-BASELINE-v0.8.0.md).
 
 ## Safe continuation
 
