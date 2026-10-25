@@ -76,6 +76,7 @@ export function lessonPrompt(lesson:CourseLesson,locale:SupportedLocale,layoutId
 }
 export function findLesson(id:string):CourseLesson|undefined{return curriculum.find(l=>l.id===id);}
 
+export const LESSON_REVIEW_DELAY_MS=24*60*60*1000;
 export const LESSON_MASTERY_ACCURACY=0.95;
 export const LESSON_MASTERY_MIN_GRAPHEMES=30;
 /** Minimum attempt accuracy increases conservatively with course difficulty. */
@@ -85,6 +86,7 @@ export function lessonMinimumAccuracy(lesson:CourseLesson):number {
 export interface CourseResult {
  readonly id:string;
  readonly promptId:string;
+ readonly endedAt?:string;
  readonly summary:{readonly accuracy:number;readonly netWpm:number|null;readonly typedCharacters:number};
 }
 export interface LessonProgress {
@@ -97,26 +99,30 @@ export interface LessonProgress {
  * Records are summaries only: personal typing text and keystroke events are not saved.
  */
 export function lessonProgressFromScores(records:readonly CourseResult[],locale:SupportedLocale):Map<string,LessonProgress>{
- const attempts=new Map<string,{practice:Set<string>;review:Set<string>}>();
+ const attempts=new Map<string,{practice:Map<string,number>;review:Map<string,number>}>();
  for(const record of records){
-  const match=/^course-(L\d\d-\d\d)-(ru|en)(-review)?$/.exec(record.promptId);
+  const match=/^course-(L\d\d-\d\d)-(ru|en)(-review|-review2-(\d+)-(\d+))?$/.exec(record.promptId);
   if(!match||match[2]!==locale||typeof record.id!=='string'||!record.id)continue;
   const lesson=findLesson(match[1]);if(!lesson)continue;
   const variant:LessonVariant=match[3]?'review':'practice';
+  const finishedAt=typeof record.endedAt==='string'?Date.parse(record.endedAt):Number.NaN;
   const score=record.summary;
   if(!Number.isFinite(score.accuracy)||score.accuracy<lessonMinimumAccuracy(lesson)
    ||score.accuracy>1||score.netWpm===null||!Number.isFinite(score.netWpm)
    ||score.netWpm<=0||!Number.isFinite(score.typedCharacters))continue;
-  const expectedLength=graphemes(lessonPrompt(lesson,locale,undefined,variant).text).length;
+  const dynamicLength=match[4]?Number(match[4]):null;
+  if(dynamicLength!==null&&(!Number.isSafeInteger(dynamicLength)||dynamicLength<30||dynamicLength>600))continue;
+  const expectedLength=dynamicLength??graphemes(lessonPrompt(lesson,locale,undefined,variant).text).length;
   if(score.typedCharacters<Math.max(LESSON_MASTERY_MIN_GRAPHEMES,expectedLength))continue;
   let current=attempts.get(lesson.id);
-  if(!current){current={practice:new Set(),review:new Set()};attempts.set(lesson.id,current);}
-  current[variant].add(record.id);
+  if(!current){current={practice:new Map(),review:new Map()};attempts.set(lesson.id,current);}
+  current[variant].set(record.id,finishedAt);
  }
  const progress=new Map<string,LessonProgress>();
  for(const [id,attempt] of attempts){
   const practice=attempt.practice.size>0,review=attempt.review.size>0;
-  const mastered=practice&&review&&[...attempt.practice].some(id=>[...attempt.review].some(other=>other!==id));
+  const mastered=practice&&review&&[...attempt.practice].some(([id,first])=>
+   Number.isFinite(first)&&[...attempt.review].some(([other,second])=>other!==id&&Number.isFinite(second)&&second-first>=LESSON_REVIEW_DELAY_MS));
   progress.set(id,{practice,review,mastered});
  }
  return progress;
