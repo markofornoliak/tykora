@@ -21,7 +21,7 @@ const CRC32_TABLE=Array.from({length:256},(_,n)=>{
  for(let i=0;i<8;i++)v=(v&1)!==0?(v>>>1)^0xEDB88320:v>>>1;
  return v>>>0;
 });
-function checksumOf(input:{format:unknown;version:unknown;exportedAt:unknown;data:unknown}):string{
+function checksumOf(input:Record<string,unknown>):string{
  const bytes=new TextEncoder().encode(JSON.stringify({
   format:input.format,version:input.version,exportedAt:input.exportedAt,data:input.data
  }));
