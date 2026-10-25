@@ -36,7 +36,7 @@
 
 - Mobile LCP under 1 second is **not met** in the measured lab runs.
 - Input-to-paint p95 below 16ms, React commits per keystroke, full stable 60fps, and comparable field performance are **not confirmed**.
-- Full end-to-end i18n, curriculum mastery, entire Adaptive 2.0, Precison Lab visuals, proper lint, and fast-check property-based coverage remain unfinished.
+- Full end-to-end i18n, curriculum mastery, entire Adaptive 2.0, Precision Lab visuals, proper lint, and fast-check property-based coverage remain unfinished.
 - Comprehensive WCAG 2.2 AA audit (manual NVDA/VoiceOver), contrast and 200%-zoom across all screens and themes: **not confirmed**.
 - Real historical database migrations, long-lived storage durability, complete production network/privacy verification, installed PWA update lifecycle, and live v0.9 smoke test: **not confirmed**.
 - No release tag, version bump, or main-branch merge is made; user approval remains required before merging.
