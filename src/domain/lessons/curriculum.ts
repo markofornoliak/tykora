@@ -130,3 +130,13 @@ export function lessonProgressFromScores(records:readonly CourseResult[],locale:
 export function completionFromScores(records:readonly CourseResult[],locale:SupportedLocale):Set<string>{
  return new Set([...lessonProgressFromScores(records,locale)].filter(([,status])=>status.mastered).map(([id])=>id));
 }
+
+/** Earliest delayed-check time from a validated first pass, without rewriting history. */
+export function reviewAvailableAt(records:readonly CourseResult[],lesson:CourseLesson,locale:SupportedLocale):number|null{
+ const required=graphemes(lessonPrompt(lesson,locale).text).length;
+ const times=records.filter(r=>r.promptId===`course-${lesson.id}-${locale}` &&
+  r.summary.accuracy>=lessonMinimumAccuracy(lesson) && r.summary.accuracy<=1 &&
+  r.summary.netWpm!==null && Number.isFinite(r.summary.netWpm) && r.summary.netWpm>0 &&
+  r.summary.typedCharacters>=required).map(r=>Date.parse(r.endedAt??'')).filter(Number.isFinite);
+ return times.length?Math.min(...times)+LESSON_REVIEW_DELAY_MS:null;
+}
