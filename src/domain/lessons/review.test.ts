@@ -44,6 +44,23 @@ describe('delayed adaptive holdout mastery',()=>{
   expect(generateLessonReview(lesson,'ru','ru-jcuken',profile,banned,77,100000).text).toBe(p.text);
   expect(p.id).toMatch(/-review2-\d+-77$/);
  });
+ it('round-trips only original word-bank indices, and excludes all earlier generated review words',()=>{
+  const seed=117,clock=2026102500000;
+  const first=generateLessonReview(lesson,'en','en-qwerty',{},new Set(),seed,clock);
+  expect(first.id).toMatch(/^course-L01-01-en-review2-\\d+-117-v-(?:[0-9a-z]+\\.)*[0-9a-z]+$/);
+  const reconstructed=historicalLessonVocabulary([first.id],'en');
+  const observed=words(first.text);
+  expect(reconstructed).toEqual(observed);
+  const second=generateLessonReview(lesson,'en','en-qwerty',{},reconstructed,118,clock);
+  for(const w of words(second.text))expect(observed.has(w)).toBe(false);
+  const initial=mk(lessonPrompt(lesson,'en').id,'initial','2026-10-20T00:00:00Z',graphemes(lessonPrompt(lesson,'en').text).length);
+  const completed=mk(first.id,'reviewed','2026-10-22T00:00:00Z',graphemes(first.text).length);
+  expect(completionFromScores([initial,completed],'en')).toEqual(new Set([lesson.id]));
+ });
+ it('does not invent vocabulary from earlier review2 IDs that omitted word provenance',()=>{
+  // Such pre-migration sessions never contained their target text or selected words.
+  expect(historicalLessonVocabulary(['course-L01-01-en-review2-125-77'],'en').size).toBe(0);
+ });
  it('fails closed when prior-vocabulary exclusions exhaust the holdout bank',()=>{
   // A fully consumed learning vocabulary must never leak back into a holdout.
   const all=new Set(vocabulary.ru);
