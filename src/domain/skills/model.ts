@@ -81,8 +81,25 @@ export function updateSkillProfile(profile:SkillProfile,state:EngineState, nowWa
   return next;
 }
 
+/** A 95% Wilson binomial interval, without judging low-sample skills prematurely. */
+export function wilsonInterval(successes:number,samples:number):readonly [number,number] {
+ if(!Number.isFinite(samples)||!Number.isFinite(successes)||samples<=0||successes<0||successes>samples)return [0,1];
+ const z=1.959963984540054;
+ const proportion=successes/samples, z2=z*z;
+ const denominator=1+z2/samples;
+ const center=(proportion+z2/(2*samples))/denominator;
+ const margin=(z/denominator)*Math.sqrt((proportion*(1-proportion)/samples)+(z2/(4*samples*samples)));
+ return [Math.max(0,center-margin),Math.min(1,center+margin)];
+}
+export const MIN_CONFIDENT_SKILL_SAMPLES=20;
+export const TARGET_SKILL_ACCURACY=0.95;
+/** A problem requires evidence: the *entire* 95% CI lies below target accuracy. */
+export function isWeakSkill(node:SkillNode):boolean {
+ return node.samples>=MIN_CONFIDENT_SKILL_SAMPLES &&
+  wilsonInterval(node.successes,node.samples)[1]<TARGET_SKILL_ACCURACY;
+}
 export function weakestSkills(profile:SkillProfile,layoutId:string,locale:string,count=6, nowMs=Date.now()):SkillNode[] {
-  return Object.values(profile).filter(n=>n.layoutId===layoutId&&n.locale===locale&&n.samples>=2).sort((a,b)=>{
+  return Object.values(profile).filter(n=>n.layoutId===layoutId&&n.locale===locale&&isWeakSkill(n)).sort((a,b)=>{
     const score=(n:SkillNode)=> (1-n.mastery)*n.confidence + (n.dueAtMs<=nowMs?0.12:0);
     return score(b)-score(a) || b.samples-a.samples;
   }).slice(0,count);
