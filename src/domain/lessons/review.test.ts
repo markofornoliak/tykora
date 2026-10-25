@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {curriculum,lessonPrompt,completionFromScores,reviewAvailableAt,LESSON_REVIEW_DELAY_MS} from './curriculum';
+import {curriculum,lessonPrompt,completionFromScores,reviewAvailableAt,LESSON_REVIEW_DELAY_MS,nextReviewAt,eligibleReviewPair} from './curriculum';
 import {generateLessonReview,historicalLessonVocabulary} from './review';
 import {skillId,type SkillNode,type SkillProfile} from '../skills/model';
 import {graphemes} from '../typing/graphemes';
@@ -21,16 +21,25 @@ describe('delayed adaptive holdout mastery',()=>{
   expect(checksum(vocabulary.ru)).toBe(1282728466);
   expect(checksum(vocabulary.en)).toBe(1098720761);
  });
- it('uses 24h interval and does not rewrite or promote historical first pass',()=>{
-  expect(LESSON_REVIEW_DELAY_MS).toBe(24*60*60*1000);
+ it('applies two-hour or next UTC-date interval without changing historical IDs',()=>{
+  expect(LESSON_REVIEW_DELAY_MS).toBe(2*60*60*1000);
   const practice=lessonPrompt(lesson,'ru'),review=lessonPrompt(lesson,'ru',undefined,'review');
   const first=mk(practice.id,'historical-v08','2026-10-21T12:00:00.000Z',graphemes(practice.text).length);
-  const tooSoon=mk(review.id,'review-1','2026-10-22T11:59:59.999Z',graphemes(review.text).length);
-  const ready=mk(review.id,'review-2','2026-10-22T12:00:00.000Z',graphemes(review.text).length);
+  const tooSoon=mk(review.id,'review-1','2026-10-21T13:59:59.999Z',graphemes(review.text).length);
+  const ready=mk(review.id,'review-2','2026-10-21T14:00:00.000Z',graphemes(review.text).length);
   expect(reviewAvailableAt([first],lesson,'ru')).toBe(Date.parse('2026-10-22T12:00:00.000Z'));
   expect(completionFromScores([first,tooSoon],'ru').size).toBe(0);
   expect(completionFromScores([first,tooSoon,ready],'ru')).toEqual(new Set([lesson.id]));
   expect(first.promptId).toBe(practice.id); // historical ID unchanged
+ });
+ it('accepts a next UTC calendar date even under two hours, but rejects reversed order',()=>{
+  const start=Date.parse('2026-10-21T23:55:00Z');
+  const ready=Date.parse('2026-10-22T00:00:00Z');
+  expect(nextReviewAt(start)).toBe(ready);
+  expect(eligibleReviewPair(start,ready-1)).toBe(false);
+  expect(eligibleReviewPair(start,ready)).toBe(true);
+  expect(eligibleReviewPair(ready,start)).toBe(false);
+  expect(nextReviewAt(Date.parse('2026-10-21T01:00:00Z'))).toBe(Date.parse('2026-10-21T03:00:00Z'));
  });
  it('requires timestamps, distinct sessions, complete review and same language',()=>{
   const p=lessonPrompt(lesson,'en');
