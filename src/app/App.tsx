@@ -1,10 +1,11 @@
 import {lazy,Suspense} from 'react';
 import {Navigate,Outlet,Route,Routes} from 'react-router-dom';
 import {Layout} from '../shared/ui/Layout';
+import {Home} from '../features/home/Home';
 
 // Keep the application chrome responsive while large specialist sections load.
 // Vite produces route-specific chunks; the PWA precaches them for offline use.
-const Home=lazy(()=>import('../features/home/Home').then(m=>({default:m.Home})));
+// Home is eager to avoid a second network round-trip on cold mobile entry.
 const Practice=lazy(()=>import('../features/practice/Practice').then(m=>({default:m.Practice})));
 const Academy=lazy(()=>import('../features/academy/Academy').then(m=>({default:m.Academy})));
 const Analytics=lazy(()=>import('../features/analytics/Analytics').then(m=>({default:m.Analytics})));
