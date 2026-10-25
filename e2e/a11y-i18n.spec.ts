@@ -12,6 +12,9 @@ test('language switch updates document language and navigation',async({page})=>{
 
 test('skip link moves focus without corrupting hash route',async({page})=>{
  await page.goto('/#/academy');
+ // A navigation response may finish before the React app mounts in CI.
+ const skip=page.getByRole('link',{name:'Перейти к содержимому'});
+ await expect(skip).toBeVisible();
  await page.keyboard.press('Tab');
  await expect(page.getByRole('link',{name:'Перейти к содержимому'})).toBeFocused();
  await page.keyboard.press('Enter');
