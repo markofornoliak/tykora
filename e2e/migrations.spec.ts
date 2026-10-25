@@ -77,7 +77,8 @@ for(const legacyVersion of [1,2,3]){
    connection.close();
    return {saved,currentVersion};
   },legacyVersion);
-  expect(result.currentVersion).toBe(4);
+  // Dexie scales its schema version by 10 in native IndexedDB.
+  expect(result.currentVersion).toBe(40);
   expect(result.saved).toMatchObject({
    id:`legacy-session-v${legacyVersion}`,
    summary:{scoringVersion:'tykora-1.0.0',netWpm:28}
