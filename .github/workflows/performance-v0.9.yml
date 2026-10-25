@@ -17,6 +17,8 @@ jobs:
           node-version: '24'
       - name: Install exact locked dependency graph
         run: npm ci --no-audit --no-fund
+      - name: Verify scoring and backup domain invariants
+        run: npm run check:domain && npm run check:backup
       - name: Build production app at /
         run: VITE_BASE_PATH=/ npm run build
       - run: npx playwright install --with-deps chromium
