@@ -110,7 +110,7 @@ export interface LessonProgress {
 export function lessonProgressFromScores(records:readonly CourseResult[],locale:SupportedLocale):Map<string,LessonProgress>{
  const attempts=new Map<string,{practice:Map<string,number>;review:Map<string,number>}>();
  for(const record of records){
-  const match=/^course-(L\d\d-\d\d)-(ru|en)(-review|-review2-(\d+)-(\d+)(?:-v-[0-9a-z]+(?:\.[0-9a-z]+)*)?)?$/.exec(record.promptId);
+  const match=/^course-(L\d\d-\d\d)-(ru|en)(-review|-review2-(\d+)-(\d+)(?:-model-[a-z0-9-]+)?(?:-v-[0-9a-z]+(?:\.[0-9a-z]+)*)?)?$/.exec(record.promptId);
   if(!match||match[2]!==locale||typeof record.id!=='string'||!record.id)continue;
   const lesson=findLesson(match[1]);if(!lesson)continue;
   const variant:LessonVariant=match[3]?'review':'practice';
