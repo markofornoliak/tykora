@@ -68,10 +68,10 @@ export function lessonPrompt(lesson:CourseLesson,locale:SupportedLocale,layoutId
   layoutId:layoutId??(locale==='ru'?'ru-jcuken':'en-qwerty'),license:'original',sourceAttribution:'TYKORA original course'};
 }
 export function findLesson(id:string):CourseLesson|undefined{return curriculum.find(l=>l.id===id);}
-export function completionFromScores(records:readonly {promptId:string;summary:{accuracy:number;netWpm:number;typedCharacters:number}}[],locale:SupportedLocale){
+export function completionFromScores(records:readonly {promptId:string;summary:{accuracy:number;netWpm:number|null;typedCharacters:number}}[],locale:SupportedLocale){
  const completed=new Set<string>();
  for(const r of records){const match=/^course-(L\d\d-\d\d)-(ru|en)$/.exec(r.promptId);
   const lesson=match?findLesson(match[1]):undefined;
-  if(match && lesson && match[2]===locale && r.summary.accuracy>=.9 && r.summary.netWpm>0 && r.summary.typedCharacters>=graphemes(lessonPrompt(lesson,locale).text).length)completed.add(match[1]);}
+  if(match && lesson && match[2]===locale && r.summary.accuracy>=.9 && r.summary.netWpm!==null && r.summary.netWpm>0 && r.summary.typedCharacters>=graphemes(lessonPrompt(lesson,locale).text).length)completed.add(match[1]);}
  return completed;
 }
