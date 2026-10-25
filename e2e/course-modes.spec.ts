@@ -80,6 +80,7 @@ test('course review scans complete retained history beyond the old 4,000-session
   });db.close();
  },length);
  await page.goto('/#/academy');
+ await page.locator('#academy-language').selectOption('en'); // persisted course is English; Academy defaults to Russian
  const review=page.locator('a[href*="lesson=L01-01"][href*="review=1"]').first();
  await expect(review).toBeVisible();
  await review.click();
