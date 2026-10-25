@@ -13,6 +13,7 @@ import {curriculum,findLesson,lessonPrompt} from '../../domain/lessons/curriculu
 import {promptForMode,seedFromDate,modeLabels,type ModeId} from '../../domain/modes/modes';
 import {createEngine,acceptInput,currentPosition,finishEngine,type EngineState,type InputSource} from '../../domain/typing/engine';
 import {graphemes} from '../../domain/typing/graphemes';
+import {normalizedEventTimestamp} from '../../domain/typing/eventTime';
 import {elapsedMs} from '../../domain/metrics/metrics';
 import {calculateScoreV2,type ScoreV2} from '../../domain/metrics/metricsV2';
 import {displayWpm} from '../../shared/utils/formatMetrics';
@@ -102,17 +103,21 @@ export function Practice(){
   // eslint-disable-next-line react-hooks/exhaustive-deps
  },[lessonId,query.get('lang'),lessonVariant]);
  const stop=(at:number)=>{const s=finishEngine(sessionRef.current,at);sessionRef.current=s;setSession(s);};
- const commit=(value:string,source:InputSource='keyboard')=>{
-  const at=performance.now();let next=acceptInput(sessionRef.current,value,at,source);
+ const commit=(value:string,source:InputSource='keyboard',nativeTimestampMs?:number)=>{
+  const receivedAt=performance.now();
+  const fromEvent=nativeTimestampMs===undefined?receivedAt:normalizedEventTimestamp(nativeTimestampMs,receivedAt,performance.timeOrigin);
+  const previous=sessionRef.current.attempts.at(-1)?.atMs??0;
+  const at=Math.max(fromEvent,previous); // preserve monotonic order under delayed dispatch
+  let next=acceptInput(sessionRef.current,value,at,source);
   if(mode==='hardcore'&&!settings.gentleMode&&next.attempts.length>sessionRef.current.attempts.length&&next.attempts.slice(sessionRef.current.attempts.length).some(a=>!a.correct))next=finishEngine(next,at);
   sessionRef.current=next;setSession(next);
  };
  const onInput=(event:FormEvent<HTMLTextAreaElement>)=>{
   if(composing.current||(event.nativeEvent as InputEvent).isComposing){setCompositionDraft(event.currentTarget.value);return;}
-  commit(event.currentTarget.value);
+  commit(event.currentTarget.value,'keyboard',event.nativeEvent.timeStamp);
  };
  const onCompositionEnd=(event:CompositionEvent<HTMLTextAreaElement>)=>{
-  composing.current=false;commit(event.currentTarget.value,'composition');setCompositionDraft('');
+  composing.current=false;commit(event.currentTarget.value,'composition',event.nativeEvent.timeStamp);setCompositionDraft('');
  };
  const onPaste=(event:ClipboardEvent<HTMLTextAreaElement>)=>{event.preventDefault();setSaveNotice('Вставка в тест отключена. В режиме «Свой текст» вставлять можно в поле подготовки.');};
  const onDrop=(event:DragEvent<HTMLTextAreaElement>)=>event.preventDefault();
