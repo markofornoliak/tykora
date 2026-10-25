@@ -2,6 +2,8 @@ import {memo,useMemo} from 'react';
 import {graphemes} from '../../domain/typing/graphemes';
 /** Pure component: clock updates never require retokenizing a large prompt. */
 export const TargetDisplay=memo(function TargetDisplay({target,typed,position,finished,blur}:{target:string;typed:string;position:number;finished:boolean;blur:boolean}){
+ const probe=(typeof window!=='undefined'?(window as unknown as {__TYKORA_BENCHMARK__?:{practiceRenders:number;targetRenders:number}}).__TYKORA_BENCHMARK__:undefined);
+ if(probe)probe.targetRenders++;
  const targetChars=useMemo(()=>graphemes(target),[target]);const typedChars=useMemo(()=>graphemes(typed),[typed]);
  const start=Math.max(0,position-75),end=Math.min(targetChars.length,start+260);
  return <div className={`target-text ${blur?'blind-target':''}`} aria-hidden="true">
