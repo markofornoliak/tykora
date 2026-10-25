@@ -21,7 +21,9 @@ export function historicalLessonVocabulary(promptIds:readonly string[],locale:Su
   }
   // v2 review IDs include only indices into the shipped original word bank.
   // This is not raw user text; no user-provided prompts are exposed.
-  const generated=/^course-L\d\d-\d\d-(ru|en)-review2-\d+-\d+-v-([0-9a-z]+(?:\.[0-9a-z]+)*)$/.exec(id);
+  const generatedReview=/^course-L\d\d-\d\d-(ru|en)-review2-\d+-\d+-v-([0-9a-z]+(?:\.[0-9a-z]+)*)$/.exec(id);
+  const adaptiveDrill=/^adaptive-tykora-beta-1-(ru|en)-\d+-v-([0-9a-z]+(?:\.[0-9a-z]+)*)$/.exec(id);
+  const generated=generatedReview??adaptiveDrill;
   if(!generated||generated[1]!==locale)continue;
   for(const encoded of generated[2].split('.')){
    const index=Number.parseInt(encoded,36);
