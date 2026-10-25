@@ -30,6 +30,24 @@ jobs:
           done
           cat /tmp/tykora-v08-preview.log
           exit 1
+      - name: Diagnose Chromium rendering at root and base path
+        run: |
+          node --input-type=module <<'NODE'
+          import {chromium} from '@playwright/test';
+          const browser=await chromium.launch();
+          for(const path of ['/', '/tykora/']){
+            const page=await browser.newPage();
+            const messages=[];
+            page.on('pageerror',e=>messages.push('pageerror: '+e.message));
+            page.on('console',m=>{if(m.type()==='error')messages.push('console: '+m.text());});
+            page.on('requestfailed',r=>messages.push('request: '+r.url()+' '+r.failure()?.errorText));
+            const response=await page.goto('http://127.0.0.1:4174'+path,{waitUntil:'domcontentloaded'});
+            await page.waitForTimeout(1500);
+            console.log('BASELINE_PREFLIGHT '+JSON.stringify({path,status:response?.status(),title:await page.title(),bodyText:(await page.locator('body').innerText()).slice(0,200),errors:messages.slice(0,15)}));
+            await page.close();
+          }
+          await browser.close();
+          NODE
       - name: Audit Lighthouse mobile and desktop
         run: |
           mkdir -p baseline-v0.8.0
@@ -47,6 +65,7 @@ jobs:
           }
           NODE
       - name: Audit axe-core and browser exceptions (production preview)
+        if: success() || failure()
         run: |
           npm install --no-save --package-lock=false --no-audit --no-fund @axe-core/playwright@4.10.2
           node --input-type=module <<'NODE'
