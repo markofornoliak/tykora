@@ -55,3 +55,10 @@ test('typing field has an accessible name and focus mode can exit by touch',asyn
  await page.getByRole('button',{name:'Выйти из фокуса'}).click();
  await expect(page.locator('body')).not.toHaveClass(/focus-mode/);
 });
+
+test('practice keyboard panel has correct heading level',async({page})=>{
+ await page.goto('/#/practice');
+ const heading=page.getByRole('heading',{name:'Визуальная клавиатура'});
+ await expect(heading).toBeVisible();
+ expect(await heading.evaluate(node=>node.tagName)).toBe('H2');
+});
