@@ -13,7 +13,7 @@ describe('delayed adaptive holdout mastery',()=>{
   // Review IDs reference dictionary indices; changing the order breaks history decoding.
   const checksum=(bank:readonly string[]):number=>{
    let h=2166136261;
-   for(const ch of bank.join('\\0')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}
+   for(const ch of bank.join('\0')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}
    return h>>>0;
   };
   expect(vocabulary.ru).toHaveLength(84);
