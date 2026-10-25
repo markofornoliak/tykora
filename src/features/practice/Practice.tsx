@@ -93,7 +93,7 @@ export function Practice(){
    if(lessonVariant==='review'){
     try{
      const [history,profile]=await Promise.all([
-      repositories.progress.getRecentSessions(4000),repositories.skills.byLayout(nextLayout,nextLanguage)
+      repositories.progress.getAllSessions(),repositories.skills.byLayout(nextLayout,nextLanguage)
      ]);
      if(requestId.current!==thisRequest)return;
      const availableAt=reviewAvailableAt(history,l,nextLanguage);
