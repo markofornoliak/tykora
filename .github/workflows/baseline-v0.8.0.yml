@@ -75,7 +75,8 @@ jobs:
           const browser=await chromium.launch({headless:true});
           const rows=[];
           for(const width of [320,768,1440]){
-            const page=await browser.newPage({viewport:{width,height:900}});
+            const context=await browser.newContext({viewport:{width,height:900}});
+            const page=await context.newPage();
             const errors=[];
             page.on('pageerror',e=>errors.push(e.message));
             await page.goto('http://127.0.0.1:4174/#/practice');
@@ -83,7 +84,7 @@ jobs:
             const axe=await new AxeBuilder({page}).analyze();
             const critical=axe.violations.filter(x=>x.impact==='critical');
             rows.push({width,violationCount:axe.violations.length,criticalCount:critical.length,violations:axe.violations.map(x=>({id:x.id,impact:x.impact,nodes:x.nodes.length})),errors});
-            await page.close();
+            await context.close();
           }
           fs.writeFileSync('baseline-v0.8.0/axe-practice.json',JSON.stringify(rows,null,2));
           console.log('BASELINE_AXE '+JSON.stringify(rows));
