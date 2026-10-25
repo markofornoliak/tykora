@@ -8,9 +8,9 @@
 - [x] Introduce a scoring-v2 implementation + reference tests without modifying historical saved v1 scores; production integration and cross-version backup compatibility require separate evidence.
 - [x] Atomic readonly export snapshot, guarded replace with pre-replace download, no automatic destruction on parse error.
 - [ ] Obtain real pre-v4 IndexedDB snapshots and imported v0.8.0 profiles; synthetic schema fixtures only do not satisfy this.
-- [ ] Capture long-text exact event-to-paint p95, React commits per keypress and baseline repeatability. Event Timing APIs censor very-short inputs; a suitable trace method and device controls must be documented.
+- [x] Measure and document 4× CPU long-text native input Event Timing and two-rAF approximation, plus opt-in React render invocation counts; compare baseline and RAF-coalesced code at exact SHAs. Chromium Event Timing p95 stays 32 ms, so the original **sub-16ms timing target remains unmet**; true React commit counting and stable-device reruns remain open. See [iteration 3 performance evidence](ITERATION3-INPUT-PERFORMANCE.md).
 - [ ] Complete engine event classification, IME/dead-key/AltGr, Unicode, pause/resume, alternative inputs and all cross-browser E2E.
-- [ ] Validate scoring v2 worker→session→save→restore→analytics end-to-end, introduce fast-check seeded invariants and keep explicit per-score version.
+- [x] Add fast-check seeded invariants for v2 metrics (Net ≤ Raw, finite numbers, 0–1 accuracies, valid active duration); full worker→session→backup restore coverage and device validation remain open.
 - [x] Preserve historical course progress while requiring a second distinct text, separate session IDs and 95–97% accuracy for confirmed mastery (distinct texts are not independently validated holdout words).
 - [x] Use original browser input timestamps when credible, with epoch-time fallback and rapid/Unicode/multiline unit regressions (broader physical-keyboard/IME device matrix remains open).
 - [x] Make adaptive generation deterministic for a fixed profile/seed/content bank, including immunity to changes in implicit wall clock; runtime prompt IDs now retain estimator version and seed.
@@ -19,7 +19,8 @@
 - [ ] Precision Lab evidence-backed charts with accessible table alternatives.
 - [ ] WCAG 2.2 AA keyboard/VoiceOver or NVDA tests, 320px+200% zoom, both themes, axe on each route.
 - [ ] Complete offline PWA upgrade data retention, request-privacy trace, performance targets from production with detailed conditions.
-- [ ] Add real lint gate, release tagging / tested redeploy-tag rollback, docs/CHANGELOG/RELEASE_NOTES, user-approved merge, live smoke and version validation.
+- [x] Add pinned ESLint gate, fast-check property gate, i18n key/placeholder parity gate, and axe all nine routes in Chromium/Firefox/WebKit (limited to tags in test).
+- [ ] Release tagging / tested redeploy-tag rollback, user-approved merge, live smoke and version validation.
 
 ## P1 (only after P0)
 Extended heatmaps, data-supported personal forecasts, user layout editor, additional genuine content packs, better local classes and races, extended report exports.
