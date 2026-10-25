@@ -13,7 +13,9 @@ import {curriculum,findLesson,lessonPrompt} from '../../domain/lessons/curriculu
 import {promptForMode,seedFromDate,modeLabels,type ModeId} from '../../domain/modes/modes';
 import {createEngine,acceptInput,currentPosition,finishEngine,type EngineState,type InputSource} from '../../domain/typing/engine';
 import {graphemes} from '../../domain/typing/graphemes';
-import {calculateScore,elapsedMs,type Score} from '../../domain/metrics/metrics';
+import {elapsedMs} from '../../domain/metrics/metrics';
+import {calculateScoreV2,type ScoreV2} from '../../domain/metrics/metricsV2';
+import {displayWpm} from '../../shared/utils/formatMetrics';
 import {scoreAsync} from '../../infrastructure/workers/scoreAsync';
 import {generateDrill} from '../../domain/skills/generator';
 import {repositories} from '../../infrastructure/di/repositories';
@@ -49,7 +51,7 @@ export function Practice(){
  const [focus,setFocus]=useState(false);const [now,setNow]=useState(0);
  const [saveNotice,setSaveNotice]=useState('');
  const [persistence,setPersistence]=useState<'idle'|'saving'|'saved'|'failed'>('idle');
- const [finalScore,setFinalScore]=useState<Score|null>(null);
+ const [finalScore,setFinalScore]=useState<ScoreV2|null>(null);
  const [lastCode,setLastCode]=useState('');
  const composing=useRef(false);const savedId=useRef('');
  const recentWords=useRef<string[]>([]);const inputRef=useRef<HTMLTextAreaElement>(null);
@@ -147,7 +149,7 @@ export function Practice(){
    }
   }).catch(()=>{if(savedId.current===id){setPersistence('failed');setSaveNotice('Не удалось рассчитать или сохранить результат.');}});
  },[session]);
- const interimScore=useMemo(()=>calculateScore(session.endedAtMs===null?session:{...session,endedAtMs:null},now||session.endedAtMs||session.startedAtMs||0),[session,now]);
+ const interimScore=useMemo(()=>calculateScoreV2(session.endedAtMs===null?session:{...session,endedAtMs:null},now||session.endedAtMs||session.startedAtMs||0),[session,now]);
  const score=finalScore??interimScore;
  const targetChars=useMemo(()=>graphemes(prompt.text),[prompt.text]);
  const pos=currentPosition(session),finished=session.endedAtMs!==null;
@@ -201,7 +203,7 @@ export function Practice(){
  <div className="surface practice-stage">
   <div className="practice-stats"><div className="practice-numbers">
    <div><div className="label">{mode==='time'?'ОСТАЛОСЬ':'ВРЕМЯ'}</div><strong>{mode==='zen'&&!finished?'—':showElapsed}</strong></div>
-   <div><div className="label">NET WPM</div><strong>{session.startedAtMs===null||(mode==='zen'&&!finished)?'—':score.netWpm.toFixed(1)}</strong></div>
+   <div><div className="label">NET WPM</div><strong>{session.startedAtMs===null||(mode==='zen'&&!finished)?'—':displayWpm(score.netWpm)}</strong></div>
    <div><div className="label">ТОЧНОСТЬ</div><strong>{score.totalAttempts&&(mode!=='zen'||finished)?`${(score.accuracy*100).toFixed(1)}%`:'—'}</strong></div>
   </div><span className="chip accent">{finished?t('sessionDone'):session.startedAtMs===null?t('sessionReady'):t('sessionRunning')}</span></div>
   <div className="typearea" onClick={()=>!finished&&inputRef.current?.focus()}>
@@ -216,7 +218,7 @@ export function Practice(){
    aria-describedby="typing-help target-readable" aria-keyshortcuts="Tab" rows={2} placeholder={t('exerciseHelp')}/>
   <div className="inline-help" id="typing-help"><span>Обработка локальная · Вставка отключена · {mode==='hardcore'?'Первая ошибка завершает попытку':'Ошибки можно исправлять'}</span><span>Esc — выход из фокуса</span></div>
   {canEnd&&mode!=='time'&&<button type="button" className="btn secondary small-btn end-session" onClick={()=>stop(performance.now())}>{t('finish')}</button>}
-  {finished&&<div className="finished-box" role="status"><div><strong>Завершено · {score.netWpm.toFixed(1)} WPM</strong><p className="small">Точность {(score.accuracy*100).toFixed(1)}% · Неисправленных ошибок {score.uncorrectedErrors}</p></div><button className="btn primary" type="button" disabled={persistence!=='saved'} onClick={()=>navigate('/result')}>{persistence==='saving'?'Сохранение…':'Полный результат ↗'}</button></div>}
+  {finished&&<div className="finished-box" role="status"><div><strong>Завершено · {displayWpm(score.netWpm)} WPM</strong><p className="small">Точность {(score.accuracy*100).toFixed(1)}% · Неисправленных ошибок {score.uncorrectedErrors}</p></div><button className="btn primary" type="button" disabled={persistence!=='saved'} onClick={()=>navigate('/result')}>{persistence==='saving'?'Сохранение…':'Полный результат ↗'}</button></div>}
   {saveNotice&&<p className="small muted" role="status" style={{marginTop:16}}>{saveNotice}</p>}
  </div>
  {!focus&&<div className="surface keyboard-card"><div className="row spread"><h2 style={{fontSize:17,letterSpacing:'-.025em',fontWeight:700}}>Визуальная клавиатура</h2><label className="small row"><input checked={settings.showKeyboard} onChange={e=>void updateSettings({showKeyboard:e.target.checked})} type="checkbox"/> Показать</label></div>
