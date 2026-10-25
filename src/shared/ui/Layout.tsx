@@ -19,7 +19,7 @@ export function Layout(){
  const page=links.find(l=>l.href===pathname);
  const LinkItem=({link}:{link:typeof links[number]})=><NavLink end={link.href==='/'} className={({isActive})=>`navlink ${isActive?'active':''}`} to={link.href}><span className="navicon" aria-hidden="true">{link.icon}</span><span>{t(link.key)}</span></NavLink>;
  return <div className="app">
-  <a href="#main-content" className="skip-link" onClick={e=>{e.preventDefault();document.getElementById('main-content')?.focus();}}>{t('skip')}</a>
+  <a href="#main-content" className="skip-link" tabIndex={0} onClick={e=>{e.preventDefault();document.getElementById('main-content')?.focus();}}>{t('skip')}</a>
   <aside className="sidebar">
    <NavLink className="brand" to="/"><span className="logo" aria-hidden="true"><i/><i/><i/><i/></span>TYKORA</NavLink>
    <div className="navtitle">{t('navMain')}</div>
