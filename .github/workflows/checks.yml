@@ -10,14 +10,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npm run check:domain
       - run: npm run check:backup
       - run: npm run check:quality
       - run: npm run check:workers
       - run: npm run check
+      - run: npm run lint
+      - run: npm run check:i18n
+      - run: npm run test:property
       - run: npm run test
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
+      - run: npm run check:dist
+      - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:e2e
       - run: npm run test:e2e:production

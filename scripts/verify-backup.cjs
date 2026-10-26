@@ -14,4 +14,34 @@ check('Duplicate IDs blocked',()=>assert.throws(()=>makeBackup({...empty,session
 check('External active content cannot be a collection',()=>assert.throws(()=>makeBackup({...empty,profiles:'<script>alert(1)</script>'})));
 check('Missing metric fields rejected',()=>assert.throws(()=>makeBackup({...empty,sessions:[{...sampleSession,summary:{netWpm:60,rawWpm:70,accuracy:0.9,durationMs:30000}}]})));
 check('No executable code in format',()=>assert.equal(BACKUP_FORMAT,'tykora-local-backup'));
+const v2Summary={...sampleSession.summary,scoringVersion:'tykora-2.0.0',
+ rawWpm:null,netWpm:null,cpm:null,activeDurationMs:1200,finalAccuracy:1,
+ correctedErrorRate:0,uncorrectedErrorRate:0,p90IntervalMs:null,
+ rhythmStability:null,pauseThresholdMs:2000,consistency:null};
+check('V2 short-session null speeds roundtrip without fabricating zero',()=>{
+ const result=makeBackup({...empty,sessions:[{...sampleSession,summary:v2Summary}]});
+ assert.equal(parseBackup(JSON.parse(JSON.stringify(result))).data.sessions[0].summary.netWpm,null);
+});
+check('V1 cannot use nullable speeds',()=>assert.throws(()=>
+ makeBackup({...empty,sessions:[{...sampleSession,summary:{...sampleSession.summary,rawWpm:null}}]})));
+check('V2 rejects malformed active-duration fields',()=>assert.throws(()=>
+ makeBackup({...empty,sessions:[{...sampleSession,summary:{...v2Summary,activeDurationMs:999999}}]})));
+check('New backups carry a CRC32 corruption-detection checksum',()=>{
+ const backup=makeBackup(sample);
+ assert.equal(backup.checksumAlgorithm,'crc32');
+ assert.match(backup.checksum,/^[a-f0-9]{8}$/);
+ assert.deepEqual(parseBackup(JSON.parse(JSON.stringify(backup))).data,sample);
+});
+check('Tampering with stored history invalidates checksum before import',()=>{
+ const backup=makeBackup(sample);
+ const broken=JSON.parse(JSON.stringify(backup));
+ broken.data.sessions[0].summary.accuracy=.5;
+ assert.throws(()=>parseBackup(broken),/Контрольная сумма/);
+});
+check('Previously exported v1 files without checksum remain importable',()=>{
+ const backup=makeBackup(sample);
+ delete backup.checksum;
+ delete backup.checksumAlgorithm;
+ assert.deepEqual(parseBackup(backup).data,sample);
+});
 console.log(`${count} local backup format checks passed.`);

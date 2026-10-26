@@ -9,13 +9,18 @@ import {pageCopy} from '../../shared/i18n/pageCopy';
 import type {InterfaceLocale} from '../../shared/i18n/catalog';
 import {diagnostics,words} from '../../domain/content/prompts';
 import {getPassages,type SupportedLocale,type TrackId} from '../../domain/content/library';
-import {curriculum,findLesson,lessonPrompt} from '../../domain/lessons/curriculum';
+import {curriculum,findLesson,lessonPrompt,reviewAvailableAt} from '../../domain/lessons/curriculum';
+import {generateLessonReview,historicalLessonVocabulary} from '../../domain/lessons/review';
 import {promptForMode,seedFromDate,modeLabels,type ModeId} from '../../domain/modes/modes';
 import {createEngine,acceptInput,currentPosition,finishEngine,type EngineState,type InputSource} from '../../domain/typing/engine';
 import {graphemes} from '../../domain/typing/graphemes';
-import {calculateScore,elapsedMs,type Score} from '../../domain/metrics/metrics';
+import {normalizedEventTimestamp} from '../../domain/typing/eventTime';
+import {elapsedMs} from '../../domain/metrics/metrics';
+import {calculateScoreV2,type ScoreV2} from '../../domain/metrics/metricsV2';
+import {displayWpm} from '../../shared/utils/formatMetrics';
 import {scoreAsync} from '../../infrastructure/workers/scoreAsync';
 import {generateDrill} from '../../domain/skills/generator';
+import {ESTIMATOR_VERSION} from '../../domain/skills/model';
 import {repositories} from '../../infrastructure/di/repositories';
 import type {TypingPrompt} from '../../domain/typing/contracts';
 
@@ -30,10 +35,16 @@ const tracks:readonly {id:TrackId;label:string}[]=[
  {id:'finance',label:'Финансы'},{id:'medical',label:'Медицина'},{id:'legal',label:'Право'}
 ];
 export function Practice(){
+ // Opt-in benchmark probe only; no persistent event data or typing text.
+ if(typeof window!=='undefined'){
+  const p=(window as unknown as {__TYKORA_BENCHMARK__?:{practiceRenders:number;targetRenders:number}}).__TYKORA_BENCHMARK__;
+  if(p)p.practiceRenders++;
+ }
  const {t}=useTranslation();
  const interfaceLocale=useUiStore(s=>s.settings.uiLocale) as InterfaceLocale;
  const copy=pageCopy[interfaceLocale]??pageCopy.ru;
  const [query]=useSearchParams();const lessonId=query.get('lesson')??'';
+ const lessonVariant=query.get('review')==='1'?'review':'practice';
  const initialLocale=query.get('lang')==='en'?'en':'ru';
  const [language,setLanguage]=useState<SupportedLocale>(initialLocale);
  const [layoutId,setLayoutId]=useState(initialLocale==='ru'?'ru-jcuken':'en-qwerty');
@@ -45,21 +56,27 @@ export function Practice(){
  const [prompt,setPrompt]=useState<TypingPrompt>(diagnostics[initialLocale]);
  const sessionRef=useRef<EngineState>(createEngine(diagnostics[initialLocale]));
  const [session,setSession]=useState<EngineState>(sessionRef.current);
- const [compositionDraft,setCompositionDraft]=useState('');
  const [focus,setFocus]=useState(false);const [now,setNow]=useState(0);
  const [saveNotice,setSaveNotice]=useState('');
  const [persistence,setPersistence]=useState<'idle'|'saving'|'saved'|'failed'>('idle');
- const [finalScore,setFinalScore]=useState<Score|null>(null);
+ const [finalScore,setFinalScore]=useState<ScoreV2|null>(null);
  const [lastCode,setLastCode]=useState('');
  const composing=useRef(false);const savedId=useRef('');
  const recentWords=useRef<string[]>([]);const inputRef=useRef<HTMLTextAreaElement>(null);
- const requestId=useRef(0);const navigate=useNavigate();
+ const requestId=useRef(0);const frameId=useRef<number|null>(null);const navigate=useNavigate();
+ const publishFrame=()=>{
+  if(frameId.current!==null)return;
+  frameId.current=requestAnimationFrame(()=>{frameId.current=null;setSession(sessionRef.current);});
+ };
+ useEffect(()=>()=>{if(frameId.current!==null)cancelAnimationFrame(frameId.current);},[]);
  const settings=useUiStore(s=>s.settings),updateSettings=useUiStore(s=>s.updateSettings);
 
  const reset=(nextPrompt:TypingPrompt=prompt)=>{
+  if(frameId.current!==null){cancelAnimationFrame(frameId.current);frameId.current=null;}
   const fresh=createEngine(nextPrompt);sessionRef.current=fresh;setSession(fresh);setPrompt(nextPrompt);
+  if(inputRef.current)inputRef.current.value='';
   savedId.current='';setNow(0);setSaveNotice('');setPersistence('idle');setFinalScore(null);
-  composing.current=false;setCompositionDraft('');
+  composing.current=false;
   requestAnimationFrame(()=>inputRef.current?.focus());
  };
  const prepare=async(nextMode:Selection,nextLanguage:SupportedLocale=language,nextLayout=layoutId,nextTrack=track,nextCount=count,nextDuration=duration,content=customText,chosenLesson=lessonId)=>{
@@ -72,16 +89,44 @@ export function Practice(){
   if(nextMode==='diagnostic'){reset(diagnostic);return;}
   if(nextMode==='lesson') {
    const l=findLesson(chosenLesson)??curriculum[0];
-   setLessonTitle(nextLanguage==='ru'?l.titleRu:l.titleEn);
+   setLessonTitle(`${nextLanguage==='ru'?l.titleRu:l.titleEn} · ${lessonVariant==='review'?'Контрольный текст':'Практика'}`);
+   if(lessonVariant==='review'){
+    try{
+     const [history,profile]=await Promise.all([
+      repositories.progress.getAllSessions(),repositories.skills.byLayout(nextLayout,nextLanguage)
+     ]);
+     if(requestId.current!==thisRequest)return;
+     const availableAt=reviewAvailableAt(history,l,nextLanguage);
+     if(availableAt===null||Date.now()<availableAt){
+      reset(lessonPrompt(l,nextLanguage,nextLayout));
+      setSaveNotice('Контрольный текст доступен через 2 часа или в следующую календарную дату (UTC).');
+      return;
+     }
+     const exclusions=historicalLessonVocabulary(history.map(x=>x.promptId),nextLanguage);
+     const seed=Date.now();
+     reset(generateLessonReview(l,nextLanguage,nextLayout,profile,exclusions,seed,seed));return;
+    }catch(error){
+     if(requestId.current!==thisRequest)return;
+     reset(lessonPrompt(l,nextLanguage,nextLayout));
+     setSaveNotice(error instanceof Error?error.message:'Не удалось сформировать контрольный текст.');
+     return;
+    }
+   }
    reset(lessonPrompt(l,nextLanguage,nextLayout));return;
   }
   if(nextMode==='adaptive'){
    let skillNodes={};
    try{skillNodes=await repositories.skills.byLayout(nextLayout,nextLanguage);}catch{setSaveNotice('История навыка недоступна.');}
    if(requestId.current!==thisRequest)return;
-   const text=generateDrill(skillNodes,words[nextLanguage],{locale:nextLanguage,layoutId:nextLayout,seed:Date.now(),wordCount:effectiveCount,recentWords:recentWords.current});
+   const seed=Date.now(); // model is sampled at the same instant as its deterministic seed
+   const text=generateDrill(skillNodes,words[nextLanguage],{locale:nextLanguage,layoutId:nextLayout,seed,nowMs:seed,wordCount:effectiveCount,recentWords:recentWords.current});
    recentWords.current=text.split(' ');
-   reset({...diagnostic,id:`adaptive-${nextLanguage}-${Date.now()}`,text,mode:'lesson'});return;
+   // Public-bank indices make future holdout checks aware of previous adaptive
+   // exercises without recording the user's personal typing or custom texts.
+   const ids=recentWords.current.map(word=>words[nextLanguage].indexOf(word));
+   if(ids.some(index=>index<0))throw new Error('Adaptive word not present in the original bank');
+   const publicVocabularyId=ids.map(index=>index.toString(36)).join('.');
+   reset({...diagnostic,id:`adaptive-${ESTIMATOR_VERSION}-${nextLanguage}-${seed}-v-${publicVocabularyId}`,text,mode:'lesson'});return;
   }
   try{
    const d=new Date();
@@ -96,20 +141,24 @@ export function Practice(){
   const nextLayout=nextLang==='ru'?'ru-jcuken':'en-qwerty';
   void prepare('lesson',nextLang,nextLayout,track,count,duration,customText,lessonId);
   // Trigger only when academy link changes: other controls reset through prepare directly.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[lessonId,query.get('lang')]);
+ },[lessonId,query.get('lang'),lessonVariant]);
  const stop=(at:number)=>{const s=finishEngine(sessionRef.current,at);sessionRef.current=s;setSession(s);};
- const commit=(value:string,source:InputSource='keyboard')=>{
-  const at=performance.now();let next=acceptInput(sessionRef.current,value,at,source);
+ const commit=(value:string,source:InputSource='keyboard',nativeTimestampMs?:number)=>{
+  const receivedAt=performance.now();
+  const fromEvent=nativeTimestampMs===undefined?receivedAt:normalizedEventTimestamp(nativeTimestampMs,receivedAt,performance.timeOrigin);
+  const previous=sessionRef.current.attempts.at(-1)?.atMs??0;
+  const at=Math.max(fromEvent,previous); // preserve monotonic order under delayed dispatch
+  const previousState=sessionRef.current;
+  let next=acceptInput(previousState,value,at,source);
   if(mode==='hardcore'&&!settings.gentleMode&&next.attempts.length>sessionRef.current.attempts.length&&next.attempts.slice(sessionRef.current.attempts.length).some(a=>!a.correct))next=finishEngine(next,at);
-  sessionRef.current=next;setSession(next);
+  sessionRef.current=next;if(next!==previousState)publishFrame();
  };
  const onInput=(event:FormEvent<HTMLTextAreaElement>)=>{
-  if(composing.current||(event.nativeEvent as InputEvent).isComposing){setCompositionDraft(event.currentTarget.value);return;}
-  commit(event.currentTarget.value);
+  if(composing.current||(event.nativeEvent as InputEvent).isComposing)return;
+  commit(event.currentTarget.value,'keyboard',event.nativeEvent.timeStamp);
  };
  const onCompositionEnd=(event:CompositionEvent<HTMLTextAreaElement>)=>{
-  composing.current=false;commit(event.currentTarget.value,'composition');setCompositionDraft('');
+  composing.current=false;commit(event.currentTarget.value,'composition',event.nativeEvent.timeStamp);
  };
  const onPaste=(event:ClipboardEvent<HTMLTextAreaElement>)=>{event.preventDefault();setSaveNotice('Вставка в тест отключена. В режиме «Свой текст» вставлять можно в поле подготовки.');};
  const onDrop=(event:DragEvent<HTMLTextAreaElement>)=>event.preventDefault();
@@ -147,7 +196,7 @@ export function Practice(){
    }
   }).catch(()=>{if(savedId.current===id){setPersistence('failed');setSaveNotice('Не удалось рассчитать или сохранить результат.');}});
  },[session]);
- const interimScore=useMemo(()=>calculateScore(session.endedAtMs===null?session:{...session,endedAtMs:null},now||session.endedAtMs||session.startedAtMs||0),[session,now]);
+ const interimScore=useMemo(()=>calculateScoreV2(session.endedAtMs===null?session:{...session,endedAtMs:null},now||session.endedAtMs||session.startedAtMs||0),[session,now]);
  const score=finalScore??interimScore;
  const targetChars=useMemo(()=>graphemes(prompt.text),[prompt.text]);
  const pos=currentPosition(session),finished=session.endedAtMs!==null;
@@ -201,7 +250,7 @@ export function Practice(){
  <div className="surface practice-stage">
   <div className="practice-stats"><div className="practice-numbers">
    <div><div className="label">{mode==='time'?'ОСТАЛОСЬ':'ВРЕМЯ'}</div><strong>{mode==='zen'&&!finished?'—':showElapsed}</strong></div>
-   <div><div className="label">NET WPM</div><strong>{session.startedAtMs===null||(mode==='zen'&&!finished)?'—':score.netWpm.toFixed(1)}</strong></div>
+   <div><div className="label">NET WPM</div><strong>{session.startedAtMs===null||(mode==='zen'&&!finished)?'—':displayWpm(score.netWpm)}</strong></div>
    <div><div className="label">ТОЧНОСТЬ</div><strong>{score.totalAttempts&&(mode!=='zen'||finished)?`${(score.accuracy*100).toFixed(1)}%`:'—'}</strong></div>
   </div><span className="chip accent">{finished?t('sessionDone'):session.startedAtMs===null?t('sessionReady'):t('sessionRunning')}</span></div>
   <div className="typearea" onClick={()=>!finished&&inputRef.current?.focus()}>
@@ -209,17 +258,17 @@ export function Practice(){
   </div>
   <p className="sr-only" id="target-readable">{t('target')}: {targetChars.slice(pos,pos+110).join('')}</p>
   <label className="sr-only" htmlFor="typing-input">{t('input')}</label>
-  <textarea ref={inputRef} id="typing-input" className="typeinput" value={composing.current?compositionDraft:session.typed}
+  <textarea ref={inputRef} id="typing-input" className="typeinput" defaultValue=""
    onInput={onInput} onBeforeInput={beforeInput} onPaste={onPaste} onDrop={onDrop}
-   onCompositionStart={()=>{composing.current=true;setCompositionDraft(sessionRef.current.typed);}} onCompositionEnd={onCompositionEnd}
+   onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={onCompositionEnd}
    onKeyDown={event=>setLastCode(event.code)} disabled={finished} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
    aria-describedby="typing-help target-readable" aria-keyshortcuts="Tab" rows={2} placeholder={t('exerciseHelp')}/>
   <div className="inline-help" id="typing-help"><span>Обработка локальная · Вставка отключена · {mode==='hardcore'?'Первая ошибка завершает попытку':'Ошибки можно исправлять'}</span><span>Esc — выход из фокуса</span></div>
   {canEnd&&mode!=='time'&&<button type="button" className="btn secondary small-btn end-session" onClick={()=>stop(performance.now())}>{t('finish')}</button>}
-  {finished&&<div className="finished-box" role="status"><div><strong>Завершено · {score.netWpm.toFixed(1)} WPM</strong><p className="small">Точность {(score.accuracy*100).toFixed(1)}% · Неисправленных ошибок {score.uncorrectedErrors}</p></div><button className="btn primary" type="button" disabled={persistence!=='saved'} onClick={()=>navigate('/result')}>{persistence==='saving'?'Сохранение…':'Полный результат ↗'}</button></div>}
+  {finished&&<div className="finished-box" role="status"><div><strong>Завершено · {displayWpm(score.netWpm)} WPM</strong><p className="small">Точность {(score.accuracy*100).toFixed(1)}% · Неисправленных ошибок {score.uncorrectedErrors}</p></div><button className="btn primary" type="button" disabled={persistence!=='saved'} onClick={()=>navigate('/result')}>{persistence==='saving'?'Сохранение…':'Полный результат ↗'}</button></div>}
   {saveNotice&&<p className="small muted" role="status" style={{marginTop:16}}>{saveNotice}</p>}
  </div>
- {!focus&&<div className="surface keyboard-card"><div className="row spread"><h3>Визуальная клавиатура</h3><label className="small row"><input checked={settings.showKeyboard} onChange={e=>void updateSettings({showKeyboard:e.target.checked})} type="checkbox"/> Показать</label></div>
+ {!focus&&<div className="surface keyboard-card"><div className="row spread"><h2 style={{fontSize:17,letterSpacing:'-.025em',fontWeight:700}}>Визуальная клавиатура</h2><label className="small row"><input checked={settings.showKeyboard} onChange={e=>void updateSettings({showKeyboard:e.target.checked})} type="checkbox"/> Показать</label></div>
   {settings.showKeyboard&&<KeyboardPreview next={targetChars[pos]??' '} locale={language} layoutId={layoutId} code={lastCode}/>}
  </div>}
  {!focus&&<div className="note" style={{marginTop:14}}>В курс входят {curriculum.length} упражнения RU/EN. Другие раскладки доступны как физические подсказки, но переведённые курсы для них пока не созданы. Результат не подтверждает, каким пальцем была нажата клавиша. Источники учебных и профессиональных текстов — собственный контент TYKORA.</div>}

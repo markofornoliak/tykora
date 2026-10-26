@@ -12,6 +12,9 @@ test('language switch updates document language and navigation',async({page})=>{
 
 test('skip link moves focus without corrupting hash route',async({page})=>{
  await page.goto('/#/academy');
+ // A navigation response may finish before the React app mounts in CI.
+ const skip=page.getByRole('link',{name:'Перейти к содержимому'});
+ await expect(skip).toBeVisible();
  await page.keyboard.press('Tab');
  await expect(page.getByRole('link',{name:'Перейти к содержимому'})).toBeFocused();
  await page.keyboard.press('Enter');
@@ -54,4 +57,11 @@ test('typing field has an accessible name and focus mode can exit by touch',asyn
  await expect(page.getByRole('button',{name:'Выйти из фокуса'})).toBeVisible();
  await page.getByRole('button',{name:'Выйти из фокуса'}).click();
  await expect(page.locator('body')).not.toHaveClass(/focus-mode/);
+});
+
+test('practice keyboard panel has correct heading level',async({page})=>{
+ await page.goto('/#/practice');
+ const heading=page.getByRole('heading',{name:'Визуальная клавиатура'});
+ await expect(heading).toBeVisible();
+ expect(await heading.evaluate(node=>node.tagName)).toBe('H2');
 });

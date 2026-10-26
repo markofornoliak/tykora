@@ -1,14 +1,17 @@
 import {graphemes} from '../typing/graphemes';
-import {skillId,type SkillProfile,type Unit} from './model';
+import {skillId,isWeakSkill,MIN_CONFIDENT_SKILL_SAMPLES,type SkillProfile,type Unit} from './model';
 
 export interface DrillOptions {locale:string;layoutId:string;seed:number;wordCount?:number;recentWords?:readonly string[];nowMs?:number}
 function rand(seed:number){let x=(seed>>>0)||1234567;return ()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return (x>>>0)/2**32;};}
 function unitWeakness(profile:SkillProfile,layoutId:string,locale:string,unit:Unit,seq:string,nowMs:number):number {
   const node=profile[skillId(layoutId,locale,unit,seq)];
   if(!node) return .35; // Unknown skills get exploration budget.
+  // Exploration is distinct from a demonstrated weakness. Rare n-grams cannot
+  // dominate drills merely because their empirical accuracy is noisy.
+  if(node.samples<MIN_CONFIDENT_SKILL_SAMPLES)return .35;
   const latencyFactor=node.meanIntervalMs===null?0:Math.min(.35,Math.max(0,node.meanIntervalMs-250)/650);
   const dueBonus=node.dueAtMs<=nowMs?0.18:0;
-  return Math.max(.05,(1-node.mastery)*(.3+.7*node.confidence)+latencyFactor+dueBonus);
+  return Math.max(.05,(isWeakSkill(node)?1.25:0.12)+latencyFactor+dueBonus);
 }
 export function wordPriority(word:string,profile:SkillProfile,layoutId:string,locale:string,nowMs:number=Date.now()):number {
   const chars=graphemes(word.toLowerCase());
@@ -30,7 +33,10 @@ export function generateDrill(profile:SkillProfile,wordBank:readonly string[],op
   if(!unique.length) throw new Error('A valid nonempty word bank is required');
   const rng=rand(options.seed);
   const recent=new Set(options.recentWords??[]);
-  const pool=unique.map(word=>({word,weight:wordPriority(word,profile,options.layoutId,options.locale,options.nowMs??Date.now())*(recent.has(word)?.13:1)}));
+  // Do not let an implicit wall clock change the output for the same seed and profile.
+  // For spaced repetition, callers pass the explicit as-of timestamp (also saved as seed).
+  const asOfMs=options.nowMs??0;
+  const pool=unique.map(word=>({word,weight:wordPriority(word,profile,options.layoutId,options.locale,asOfMs)*(recent.has(word)?.13:1)}));
   const result:string[]=[];
   for(let i=0;i<Math.min(count,pool.length);i++){
     const total=pool.reduce((acc,w)=>acc+w.weight,0);

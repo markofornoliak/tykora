@@ -21,28 +21,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      # Replace with npm ci after committing a generated package-lock.json.
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Domain + backup checks
         run: npm run check:domain && npm run check:backup
       - name: Theme and worker checks
         run: npm run check:quality && npm run check:workers
-      - name: Unit tests and typecheck
-        run: npm run check && npm run test
-      - name: Build with GitHub Pages base path
+      - name: Typecheck, lint, i18n, property and unit tests
+        run: npm run check && npm run lint && npm run check:i18n && npm run test:property && npm run test
+      - name: Build for local production browser regression
+        run: npm run build
+      - name: Verify locally built output
+        run: npm run check:dist
+      - name: Install Chromium, Firefox and WebKit
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: All-browser production E2E and offline checks
+        run: npm run test:e2e && npm run test:e2e:production
+      - name: Rebuild for GitHub Pages subpath
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build
-      - name: Install browser for smoke tests
-        run: npx playwright install --with-deps chromium
-      # Test Vite dev mode at /; the built distribution is separately smoke-tested.
-      - name: Browser scenarios
-        run: npm run test:e2e
-      - name: Verify generated output
+      - name: Verify GitHub Pages artifact
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
-        run: node scripts/verify-dist.cjs
+        run: npm run check:dist
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
@@ -50,3 +52,15 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Live HTML smoke test
+        run: |
+          url="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          for attempt in $(seq 1 12); do
+            if curl --fail --location --silent --max-time 15 "$url" | grep -Fq '0.9.0-beta'; then
+              echo "Live Beta v0.9.0 marker verified: $url"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Pages version-specific smoke failed at $url"
+          exit 1

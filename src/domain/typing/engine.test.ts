@@ -25,3 +25,46 @@ describe('IME-safe text engine',()=>{
   expect(acceptInput(createEngine(prompt),'abxde',2000).endedAtMs).toBe(2000);
  });
 });
+
+describe('long-form Unicode and rapid input regression',()=>{
+ it('treats emoji with ZWJ and combining marks as single graphemes',()=>{
+  const prompt={...diagnostics.en,text:'A👨‍👩‍👧éБ中'};
+  const normalized='A👨‍👩‍👧éБ中';
+  const state=acceptInput(createEngine(prompt),normalized,1100);
+  expect(state.typed).toBe(normalized);
+  expect(state.attempts).toHaveLength(5);
+  expect(state.attempts.every(a=>a.correct)).toBe(true);
+ });
+ it('does not lose any of 500 accepted rapid sequential inputs',()=>{
+  const text='ab'.repeat(250);
+  let state=createEngine({...diagnostics.en,text});
+  for(let i=1;i<=text.length;i++) state=acceptInput(state,text.slice(0,i),1000+i);
+  expect(state.typed).toBe(text);
+  expect(state.attempts).toHaveLength(500);
+  expect(state.attempts[0].atMs).toBe(1001);
+  expect(state.attempts[499].atMs).toBe(1500);
+  expect(state.endedAtMs).toBe(1500);
+ });
+ it('corrects an edit in the middle without shifting later graphemes',()=>{
+  let state=createEngine({...diagnostics.en,text:'abcde!'});
+  state=acceptInput(state,'abxde',1000);
+  state=acceptInput(state,'abcde',2000);
+  expect(state.attempts.at(-1)).toMatchObject({char:'c',position:2,correct:true});
+  state=acceptInput(state,'abcde!',2500);
+  expect(state.correctedErrors).toBe(1);
+  expect(state.deletions).toBe(1);
+  expect(state.typed).toBe('abcde!');
+  expect(state.endedAtMs).toBe(2500);
+ });
+ it('preserves newlines and Cyrillic/Latin text through insert and delete',()=>{
+  const text='Да\nOK!🙌';
+  let state=createEngine({...diagnostics.en,text});
+  state=acceptInput(state,'Да\nOX',900);
+  state=acceptInput(state,'Да\nO',1000);
+  state=acceptInput(state,text,1200);
+  expect(state.typed).toBe(text);
+  expect(state.attempts.some(a=>a.char==='\n')).toBe(true);
+  expect(state.correctedErrors).toBe(1);
+  expect(state.endedAtMs).toBe(1200);
+ });
+});

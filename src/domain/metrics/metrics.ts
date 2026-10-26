@@ -1,6 +1,5 @@
-import type { EngineState } from '../typing/engine';
+import {targetGraphemes,typedGraphemes,type EngineState} from '../typing/engine';
 import { alignText } from './alignment';
-import {targetGraphemes,typedGraphemes} from '../typing/engine';
 import type { TypingSummary } from '../typing/contracts';
 
 export const SCORING_VERSION = 'tykora-1.0.0';

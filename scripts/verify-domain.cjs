@@ -80,11 +80,13 @@ check('Timed finish does not count unseen text as omissions',()=>{
  assert.equal(calculateScore(s,16000).uncorrectedErrors,0);
  assert.equal(calculateScore(s,16000).durationMs,15000);
 });
-check('Lesson mastery requires complete text, not a manual stop',()=>{
- const l=curriculum[0],p=lessonPrompt(l,'ru');
- const bad={promptId:p.id,summary:{accuracy:1,netWpm:30,typedCharacters:1}};
- assert.equal(completionFromScores([bad],'ru').size,0);
- assert.equal(completionFromScores([{...bad,summary:{...bad.summary,typedCharacters:p.text.length}}],'ru').size,1);
+check('Lesson mastery requires a completed practice and distinct review text',()=>{
+ const l=curriculum[0],p=lessonPrompt(l,'ru'),r=lessonPrompt(l,'ru',undefined,'review');
+ const base={id:'old-session',endedAt:'2026-10-21T00:00:00.000Z',promptId:p.id,summary:{accuracy:1,netWpm:30,typedCharacters:p.text.length}};
+ assert.equal(completionFromScores([{...base,summary:{...base.summary,typedCharacters:1}}],'ru').size,0);
+ assert.equal(completionFromScores([base],'ru').size,0);
+ assert.equal(completionFromScores([base,{...base,id:'again'}],'ru').size,0);
+ assert.equal(completionFromScores([base,{...base,id:'review',endedAt:'2026-10-23T00:00:00.000Z',promptId:r.id,summary:{...base.summary,typedCharacters:r.text.length}}],'ru').size,1);
 });
 console.log(`${passed} total independent domain checks passed.`);
 const {dailyRoutine}=require('../.domain-check/domain/plans/plan.js');

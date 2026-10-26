@@ -2,6 +2,7 @@ import { useEffect,useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader, Placeholder } from '../../shared/ui/Layout';
 import type { SessionRecord } from '../../application/ports/ProgressRepository';
+import {displayWpm} from '../../shared/utils/formatMetrics';
 import { repositories } from '../../infrastructure/di/repositories';
 import { weakestSkills,type SkillNode } from '../../domain/skills/model';
 export function Results() {
@@ -21,11 +22,11 @@ export function Results() {
   return <section><PageHeader kicker="Результат / Achievement" title="Хороший ритм. Чёткий результат.">Каждый показатель получен из реального набора и сохранён только на этом устройстве.</PageHeader>
     {!last ? <div className="surface card"><Placeholder>{loading?'Загрузка результата…':'Нет сохранённого результата. Сначала завершите тест.'}</Placeholder><Link to="/practice" className="btn primary" style={{marginTop:18}}>Перейти к практике</Link></div>:
       <div className="result-layout"><div className="share-card"><div className="row spread"><strong>▦ TYKORA</strong><span className="tiny">RESULT / {new Date(last.endedAt).getFullYear()}</span></div>
-        <div className="share-large">{last.summary.netWpm.toFixed(0)}</div><div>NET WORDS PER MINUTE</div>
-        <div className="share-metrics"><span>ТОЧНОСТЬ<br/><b>{(last.summary.accuracy*100).toFixed(1)}%</b></span><span>RAW WPM<br/><b>{last.summary.rawWpm.toFixed(1)}</b></span></div><span className="tiny">TYPE. UNDERSTAND. MASTER.</span>
+        <div className="share-large">{displayWpm(last.summary.netWpm,0)}</div><div>NET WORDS PER MINUTE</div>
+        <div className="share-metrics"><span>ТОЧНОСТЬ<br/><b>{(last.summary.accuracy*100).toFixed(1)}%</b></span><span>RAW WPM<br/><b>{displayWpm(last.summary.rawWpm)}</b></span></div><span className="tiny">TYPE. UNDERSTAND. MASTER.</span>
       </div><div className="surface card"><h3>Ваш разбор</h3>
-        <div className="lessonline"><span>Net WPM</span><b>{last.summary.netWpm.toFixed(1)}</b></div>
-        <div className="lessonline"><span>Raw WPM</span><b>{last.summary.rawWpm.toFixed(1)}</b></div>
+        <div className="lessonline"><span>Net WPM</span><b>{displayWpm(last.summary.netWpm)}</b></div>
+        <div className="lessonline"><span>Raw WPM</span><b>{displayWpm(last.summary.rawWpm)}</b></div>
         <div className="lessonline"><span>Точность всех попыток</span><b>{(last.summary.accuracy*100).toFixed(1)}%</b></div>
         <div className="lessonline"><span>Исправленные ошибки</span><b>{last.summary.correctedErrors}</b></div>
         <div className="lessonline"><span>Неисправленные ошибки</span><b>{last.summary.uncorrectedErrors}</b></div>

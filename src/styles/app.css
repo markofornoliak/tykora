@@ -76,7 +76,7 @@ select.chip{min-height:39px;cursor:pointer;font:600 12px var(--sans);background:
 .social-stat-grid>div{background:var(--panel);padding:18px;border-radius:12px;display:flex;flex-direction:column;gap:8px}
 .social-stat-grid strong{font-size:29px;font-variant-numeric:tabular-nums}.social-stat-grid span{font-size:11px;color:var(--muted)}
 .achievement-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.achievement{display:flex;gap:14px;padding:22px;border:1px solid var(--border);border-radius:14px;opacity:.77}.achievement.unlocked{opacity:1;border-color:var(--accent)}.achievement>div{width:100%}.achievement p{margin-top:6px;margin-bottom:12px}
+.achievement{display:flex;gap:14px;padding:22px;border:1px solid var(--border);border-radius:14px;opacity:1}.achievement.unlocked{opacity:1;border-color:var(--accent)}.achievement>div{width:100%}.achievement p{margin-top:6px;margin-bottom:12px}
 .achievement-icon{display:grid;place-items:center;flex-shrink:0;width:38px;height:38px;background:var(--accent-soft);border-radius:11px;color:var(--accent);font-size:22px}
 .achievement .progress{height:5px;margin-bottom:8px}.race-setup{margin-top:3px}.race-setup .mode-options{gap:12px;flex-wrap:wrap}
 .race-setup .mode-options>label{font-size:12px;color:var(--muted);font-weight:700}.race-setup .mode-options .short{max-width:160px}

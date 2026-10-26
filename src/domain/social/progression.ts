@@ -14,8 +14,9 @@ function daysBefore(date:Date,offset:number):string{
  return localDay(d.toISOString());
 }
 export function summarizeProgress(sessions:readonly SessionRecord[],now=new Date()):ProgressSummary {
- const valid=sessions.filter(s=>s.summary.durationMs>0 && Number.isFinite(s.summary.netWpm));
- const bestWpm=valid.length?Math.max(...valid.map(s=>s.summary.netWpm)):0;
+ const valid=sessions.filter(s=>s.summary.durationMs>0);
+ const speeds=valid.map(s=>s.summary.netWpm).filter((n):n is number=>typeof n==='number'&&Number.isFinite(n));
+ const bestWpm=speeds.length?Math.max(...speeds):0;
  const total=valid.length;
  const minutes=valid.reduce((a,s)=>a+s.summary.durationMs,0)/60000;
  const meanAccuracy=total?valid.reduce((a,s)=>a+s.summary.accuracy,0)/total:0;

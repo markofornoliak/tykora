@@ -11,6 +11,23 @@ export interface PortableBackup {
  version:typeof BACKUP_VERSION;
  exportedAt:string;
  data:BackupData;
+ /** Optional for legacy files; new files carry CRC32 for accidental corruption detection. */
+ checksumAlgorithm?:'crc32';
+ checksum?:string;
+}
+/** CRC32 detects accidental edits/corruption; it is NOT an authenticity signature. */
+const CRC32_TABLE=Array.from({length:256},(_,n)=>{
+ let v=n;
+ for(let i=0;i<8;i++)v=(v&1)!==0?(v>>>1)^0xEDB88320:v>>>1;
+ return v>>>0;
+});
+function checksumOf(input:Record<string,unknown>):string{
+ const bytes=new TextEncoder().encode(JSON.stringify({
+  format:input.format,version:input.version,exportedAt:input.exportedAt,data:input.data
+ }));
+ let crc=0xFFFFFFFF;
+ for(const byte of bytes)crc=(crc>>>8)^CRC32_TABLE[(crc^byte)&0xff];
+ return ((crc^0xFFFFFFFF)>>>0).toString(16).padStart(8,'0');
 }
 function obj(x:unknown):x is Record<string,unknown>{return x!==null&&typeof x==='object'&&!Array.isArray(x);}
 function str(x:unknown,max=250):x is string{return typeof x==='string'&&x.length>0&&x.length<=max;}
@@ -20,8 +37,18 @@ function nonNeg(n:unknown):n is number{return finite(n)&&n>=0;}
 function nullableNum(n:unknown):boolean{return n===null||nonNeg(n);}
 function isScore(s:Record<string,unknown>):boolean{
  if(!obj(s.errorTypes))return false;
+ const v2=s.scoringVersion==='tykora-2.0.0';
  const speed=['netWpm','rawWpm','cpm'];
- return speed.every(k=>nonNeg(s[k])&&(s[k] as number)<=2000)
+ const validSpeed=speed.every(k=> (v2&&s[k]===null) || (nonNeg(s[k])&&(s[k] as number)<=2000));
+ const validV2=!v2||(
+  nonNeg(s.activeDurationMs)&&nonNeg(s.durationMs)&&s.activeDurationMs<=s.durationMs
+  &&(s.finalAccuracy===null||(finite(s.finalAccuracy)&&s.finalAccuracy>=0&&s.finalAccuracy<=1))
+  &&nonNeg(s.correctedErrorRate)&&nonNeg(s.uncorrectedErrorRate)
+  &&nullableNum(s.p90IntervalMs)&&nullableNum(s.rhythmStability)
+  &&finite(s.pauseThresholdMs)&&s.pauseThresholdMs>0
+  &&(s.consistency===null||(finite(s.consistency)&&s.consistency>=0&&s.consistency<=1))
+ );
+ return validSpeed && validV2
  &&finite(s.accuracy)&&s.accuracy>=0&&s.accuracy<=1
  &&['durationMs','correctedErrors','uncorrectedErrors','typedCharacters','correctAttempts','totalAttempts','deletions'].every(k=>nonNeg(s[k]))
  &&['insertion','omission','substitution','transposition'].every(k=>nonNeg((s.errorTypes as Record<string,unknown>)[k]))
@@ -40,6 +67,11 @@ function checkRow(table:TableName,v:unknown):v is BackupRow {
 }
 export function parseBackup(raw:unknown):PortableBackup{
  if(!obj(raw)||raw.format!==BACKUP_FORMAT||raw.version!==BACKUP_VERSION||!iso(raw.exportedAt)||!obj(raw.data))throw new Error('Неподдерживаемый формат или версия резервной копии.');
+ if(raw.checksum!==undefined||raw.checksumAlgorithm!==undefined){
+  if(raw.checksumAlgorithm!=='crc32'||typeof raw.checksum!=='string'||!/^[a-f0-9]{8}$/.test(raw.checksum)
+   ||raw.checksum!==checksumOf(raw))
+   throw new Error('Контрольная сумма резервной копии не совпадает.');
+ }
  const data={} as BackupData;
  for(const table of TABLE_NAMES){
   const list=raw.data[table];
@@ -54,8 +86,10 @@ export function parseBackup(raw:unknown):PortableBackup{
   if((table==='settings'||table==='plans'||table==='profiles')&&list.length>1)throw new Error(`Лишние записи: ${table}`);
   data[table]=list as BackupRow[];
  }
- return {format:BACKUP_FORMAT,version:BACKUP_VERSION,exportedAt:raw.exportedAt,data};
+ return {format:BACKUP_FORMAT,version:BACKUP_VERSION,exportedAt:raw.exportedAt,data,
+  ...(raw.checksumAlgorithm==='crc32'?{checksumAlgorithm:'crc32' as const,checksum:raw.checksum as string}:{})};
 }
 export function makeBackup(data:BackupData,at=new Date().toISOString()):PortableBackup{
- return parseBackup({format:BACKUP_FORMAT,version:BACKUP_VERSION,exportedAt:at,data});
+ const envelope={format:BACKUP_FORMAT,version:BACKUP_VERSION,exportedAt:at,data};
+ return parseBackup({...envelope,checksumAlgorithm:'crc32',checksum:checksumOf(envelope)});
 }

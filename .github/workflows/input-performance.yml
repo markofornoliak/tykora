@@ -1,0 +1,61 @@
+name: Input-to-paint baseline (4x CPU)
+on:
+  push:
+    branches: [feature/v0.9.0]
+    paths:
+      - 'scripts/benchmark-input.mjs'
+      - 'src/shared/ui/TargetDisplay.tsx'
+      - 'src/features/practice/Practice.tsx'
+      - 'src/app/App.tsx'
+      - 'vite.config.ts'
+      - '.github/workflows/input-performance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: VITE_BASE_PATH=/ npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start production preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/tykora-input-preview.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4174/ > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/tykora-input-preview.log
+          exit 1
+      - name: Measure ordinary production build under CPU 4x
+        run: |
+          node scripts/benchmark-input.mjs
+          cp performance-artifacts/input-benchmark.json performance-artifacts/standard.json
+      - name: Build a separate instrumented React profiling distribution
+        run: VITE_BASE_PATH=/ TYKORA_PROFILE=1 npm run build -- --outDir dist-profile
+      - name: Start independent profiling preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4175 --outDir dist-profile > /tmp/tykora-profiler-preview.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4175/ > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/tykora-profiler-preview.log
+          exit 1
+      - name: Measure real React Profiler commits in separate build
+        run: |
+          BENCH_BASE_URL=http://127.0.0.1:4175 TYKORA_EXPECT_PROFILER=1 node scripts/benchmark-input.mjs
+          cp performance-artifacts/input-benchmark.json performance-artifacts/profiling.json
+      - name: Upload raw JSON measurement
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tykora-input-benchmark
+          path: performance-artifacts/*.json
+          if-no-files-found: warn

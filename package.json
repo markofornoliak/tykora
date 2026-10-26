@@ -1,6 +1,6 @@
 {
   "name": "tykora",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -19,7 +19,10 @@
     "check:backup": "npm run check:domain && node scripts/verify-backup.cjs",
     "test:e2e:production": "playwright test -c playwright.production.config.ts",
     "check:dist": "node scripts/verify-dist.cjs",
-    "check:source": "node scripts/verify-source.cjs"
+    "check:source": "node scripts/verify-source.cjs",
+    "lint": "eslint 'src/**/*.{ts,tsx}' 'e2e/**/*.{ts,tsx}' 'e2e-production/**/*.{ts,tsx}' 'scripts/**/*.mjs'",
+    "check:i18n": "vitest run src/shared/i18n/catalog.test.ts",
+    "test:property": "vitest run src/domain/metrics/metrics.property.test.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",
@@ -32,12 +35,17 @@
     "zustand": "^5.0.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@eslint/js": "9.39.1",
     "@playwright/test": "^1.55.0",
     "@types/node": "^22.15.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "eslint": "9.39.1",
+    "fast-check": "4.4.0",
     "jsdom": "^26.1.0",
     "typescript": "^5.8.3",
+    "typescript-eslint": "8.46.4",
     "vite": "^7.0.0",
     "vite-plugin-pwa": "^1.0.0",
     "vitest": "^3.2.4"
