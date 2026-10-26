@@ -26,7 +26,7 @@ export function Layout(){
    <nav className="nav" aria-label={t('navMain')}>{links.filter(l=>l.key!=='themes').map(l=><LinkItem link={l} key={l.key}/>)}</nav>
    <div className="navtitle" style={{marginTop:24}}>{t('navSettings')}</div>
    <nav className="nav" aria-label={t('navSettings')}><LinkItem link={links[8]}/></nav>
-   <div className="spacer"/><div className="sidefoot"><span className="green-dot"/><b>{t('local')}</b><p>{t('noAccount')}</p><p>Typing core · v0.8</p></div>
+   <div className="spacer"/><div className="sidefoot"><span className="green-dot"/><b>{t('local')}</b><p>{t('noAccount')}</p><p>Typing core · Beta v0.9.0</p></div>
   </aside>
   <main className="main" id="main-content" tabIndex={-1}>
    <div className="topbar"><span className="top-left">TYKORA / {t(page?.key??'home')}</span>
@@ -42,7 +42,7 @@ export function Layout(){
    </div>
    {notice&&<div className="note warning" role="status">{notice}</div>}
    <Outlet/>
-   <footer className="footer">TYKORA · {t('footer')} · v0.8</footer>
+   <footer className="footer">TYKORA · {t('footer')} · Beta v0.9.0</footer>
   </main>
   <nav className="bottom-nav" aria-label={t('navMain')}>{links.map(l=><LinkItem link={l} key={l.key}/>)}</nav>
  </div>;
