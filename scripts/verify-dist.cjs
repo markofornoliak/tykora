@@ -3,6 +3,8 @@ const base=process.env.VITE_BASE_PATH||'/';
 const root=path.resolve(__dirname,'../dist');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert.ok(html.includes('TYKORA'),'title missing');
+const version=require('../package.json').version;
+assert.ok(html.includes(`content="${version}-beta"`),`Deployment marker missing for Beta ${version}`);
 assert.ok(html.includes(`${base}assets/`),'Vite base path missing in index.html');
 const assets=fs.readdirSync(path.join(root,'assets'));
 assert.ok(assets.some(n=>n.endsWith('.js')),'JS bundle missing');
