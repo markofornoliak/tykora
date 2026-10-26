@@ -27,8 +27,8 @@ jobs:
         run: npm run check:domain && npm run check:backup
       - name: Theme and worker checks
         run: npm run check:quality && npm run check:workers
-      - name: Unit tests and typecheck
-        run: npm run check && npm run test
+      - name: Typecheck, lint, i18n, property and unit tests
+        run: npm run check && npm run lint && npm run check:i18n && npm run test:property && npm run test
       - name: Build for local production browser regression
         run: npm run build
       - name: Verify locally built output
@@ -56,11 +56,11 @@ jobs:
         run: |
           url="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
           for attempt in $(seq 1 12); do
-            if curl --fail --location --silent "$url" | grep -qi 'TYKORA'; then
-              echo "Live HTML reachable: $url"
+            if curl --fail --location --silent --max-time 15 "$url" | grep -Fq '0.9.0-beta'; then
+              echo "Live Beta v0.9.0 marker verified: $url"
               exit 0
             fi
             sleep 10
           done
-          echo "Pages smoke failed at $url"
+          echo "Pages version-specific smoke failed at $url"
           exit 1
