@@ -6,6 +6,7 @@ on:
       - '.github/workflows/iteration4-visual-audit.yml'
       - 'scripts/audit-screenshots.mjs'
       - 'scripts/audit-css.mjs'
+      - 'scripts/audit-network.mjs'
       - 'src/styles/app.css'
       - 'src/features/**'
   workflow_dispatch:
@@ -35,6 +36,8 @@ jobs:
           exit 1
       - name: Static CSS token inventory
         run: node scripts/audit-css.mjs
+      - name: Passive production network privacy trace
+        run: node scripts/audit-network.mjs
       - name: Route and palette screenshot audit
         run: node scripts/audit-screenshots.mjs
       - name: Measure candidate mobile Lighthouse — Home and Practice
@@ -63,5 +66,6 @@ jobs:
             docs/iteration4/audit/screens/
             docs/iteration4/audit/lighthouse/
             docs/iteration4/audit/css-metrics.json
+            docs/iteration4/audit/network.json
           if-no-files-found: warn
           retention-days: 30
