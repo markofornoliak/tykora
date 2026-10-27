@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/iteration4-visual-audit.yml'
       - 'scripts/audit-screenshots.mjs'
+      - 'src/styles/app.css'
+      - 'src/features/**'
   workflow_dispatch:
 permissions:
   contents: read
