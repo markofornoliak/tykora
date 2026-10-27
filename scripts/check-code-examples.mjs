@@ -7,7 +7,7 @@ const groups=[
  ['code-python','python3',['-c','import ast,sys;ast.parse(sys.stdin.read())']],
  ['code-js','node',['--check','--input-type=module','-']],
  ['code-cpp','g++',['-std=c++14','-fsyntax-only','-x','c++','-']],
- ['code-sql','python3',['-c','import sqlite3,sys;sqlite3.connect(\":memory:\").execute(sys.stdin.read()).fetchall()']]
+ ['code-sql','python3',['-c','import sqlite3,sys;sqlite3.connect(":memory:").execute(sys.stdin.read()).fetchall()']]
 ];
 const results=[];
 for(const [track,cmd,args] of groups){
