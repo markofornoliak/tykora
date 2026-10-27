@@ -1,0 +1,42 @@
+name: Iteration 4 visual evidence
+on:
+  push:
+    branches: [feature/iter4-design-content]
+    paths:
+      - '.github/workflows/iteration4-visual-audit.yml'
+      - 'scripts/audit-screenshots.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: VITE_BASE_PATH=/ npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start local-only production preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/tykora-iter4-preview.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4174/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/tykora-iter4-preview.log
+          exit 1
+      - name: Route and palette screenshot audit
+        run: node scripts/audit-screenshots.mjs
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iter4-visual-evidence
+          path: docs/iteration4/audit/screens/
+          if-no-files-found: warn
+          retention-days: 30
