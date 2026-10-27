@@ -6,7 +6,10 @@ import {calculateScore} from '../metrics/metrics';
 describe('stage 5 modes',()=>{
  const base={locale:'en' as const,layoutId:'en-qwerty',seed:34};
  it('has original provenance for curated text and no empty passages',()=>{
-  expect(passages).toHaveLength(44);
+  expect(passages).toHaveLength(92);
+  expect(passages.filter(p=>p.track==='code-sql'&&p.locale==='ru')).toHaveLength(24);
+  expect(passages.filter(p=>p.track==='code-sql'&&p.locale==='en')).toHaveLength(24);
+  expect(passages.filter(p=>p.id.startsWith('tykora-original-'))).toHaveLength(44);
   expect(passages.every(p=>p.license==='original'&&p.text.length>20)).toBe(true);
  });
  it('generates deterministic daily exercise',()=>{
