@@ -15,6 +15,7 @@ jobs:
       - run: npm run check:backup
       - run: npm run check:quality
       - run: npm run check:content
+      - run: npm run check:code
       - run: npm run check:workers
       - run: npm run check
       - run: npm run lint
