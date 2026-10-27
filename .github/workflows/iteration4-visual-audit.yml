@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/iteration4-visual-audit.yml'
       - 'scripts/audit-screenshots.mjs'
+      - 'scripts/audit-css.mjs'
       - 'src/styles/app.css'
       - 'src/features/**'
   workflow_dispatch:
@@ -32,6 +33,8 @@ jobs:
           done
           cat /tmp/tykora-iter4-preview.log
           exit 1
+      - name: Static CSS token inventory
+        run: node scripts/audit-css.mjs
       - name: Route and palette screenshot audit
         run: node scripts/audit-screenshots.mjs
       - name: Measure candidate mobile Lighthouse — Home and Practice
@@ -59,5 +62,6 @@ jobs:
           path: |
             docs/iteration4/audit/screens/
             docs/iteration4/audit/lighthouse/
+            docs/iteration4/audit/css-metrics.json
           if-no-files-found: warn
           retention-days: 30
