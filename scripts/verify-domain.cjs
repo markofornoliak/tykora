@@ -62,8 +62,8 @@ check('Localized lesson content: 124 unique exercises per language',()=>{
   assert.ok(prompts.every(p=>p.license==='original'&&p.text.length>=30));
  }
 });
-check('Licensed source library contains 44 passages',()=>{
- assert.equal(passages.length,44);
+check('Licensed source library contains 92 passages, including 48 SQL copies',()=>{
+ assert.equal(passages.length,92);
  assert.ok(passages.every(p=>p.license==='original'&&p.text.length>20));
 });
 check('Daily challenge is deterministic',()=>{
