@@ -31,7 +31,7 @@ const layouts:Record<SupportedLocale,readonly {id:string;label:string}[]>={
 type Selection=ModeId|'lesson';
 const tracks:readonly {id:TrackId;label:string}[]=[
  {id:'general',label:'Общие тексты'},{id:'code-python',label:'Python'},{id:'code-cpp',label:'C++'},
- {id:'code-js',label:'JavaScript'},{id:'business',label:'Деловые тексты'},
+ {id:'code-js',label:'JavaScript'},{id:'code-sql',label:'SQL'},{id:'business',label:'Деловые тексты'},
  {id:'finance',label:'Финансы'},{id:'medical',label:'Медицина'},{id:'legal',label:'Право'}
 ];
 export function Practice(){
