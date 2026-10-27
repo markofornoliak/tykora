@@ -32,9 +32,12 @@ Severity: S1 learning/accessibility/data failure; S2 material product defect; S3
 | S3 | No locally shipped licensed font subset `app.css` | M | Defer; maintain system-font fallback and prohibit external font requests |
 
 ## Execution selection and gates
-- **Take now:** SQL course-library expansion, deterministic per-lesson/per-passage diversity measurement, SQLite runtime syntax checks, CI, visual evidence capture, 10× input baseline workflow, stale document repair, provenance ledger.
+- **Take now:** SQL course-library expansion, deterministic per-lesson/per-passage diversity measurement, SQLite runtime syntax checks, four-language code-syntax validation, 30 RU/EN ergonomic hints with Academy surfacing, CI, visual evidence capture, 10× input baseline workflow, stale document repair, provenance ledger.
 - **Defer:** broad curriculum replacement, new languages, 120+ prose paragraphs, PD quote collection, comprehensive component redesign, CSS/palette rewrites, genuine v1–v3 user snapshots and manual screen-reader signoff. Reason: no safe migration protocol or complete measurement/rights evidence in this execution environment. Do not mark these as PASS.
 - Reproduce the content tables with `npm run audit:content` (Node 24; `npm run check:domain` runs first). Content diversity remains **audit-only** until new course texts use versioned IDs safely.
 - CI syntax and content gate: `npm run check:content` (Node 24 + Python 3 stdlib SQLite). Screenshots and axe evidence: workflow `Iteration 4 visual evidence`; file names encode route, width, light/dark and palette pair.
 - Input non-regression gate: `Iteration 4 ten-run input acceptance` workflow; ten separate `scripts/benchmark-input.mjs` invocations per immutable baseline and candidate, median+quartiles, fail on >10% p95 regression or missing data.
 - No automated score proves a WCAG 2.2 AA manual audit. No release, main merge, schema change or version bump in this branch.
+
+## Measured candidate evidence (27 Oct 2026)
+See [MEASUREMENTS](MEASUREMENTS.md) for date, tool, exact commit and run IDs. 10-run input p95 median remained 32 ms pre/post; Lighthouse performance and LCP vary across repeated runs and remain above product target. 30 language-specific ergonomic hints have been added but do not address the major curriculum gaps. No course-content S1 is resolved.

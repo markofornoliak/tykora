@@ -17,3 +17,8 @@ Time references UTC, date 2026-10-27. This log records actions actually complete
 | 22:19–22:22 | Added local result PNG export, editorial CSS, screenshot re-run triggers, Lighthouse/stylesheet inventory, ADR-017 and draft PR #2 | New evidence gates queued; no claim of full design/WCAG acceptance |
 
 Commands wired into CI: `npm run check:domain`, `npm run check:content`, `npm run check:quality`, `npm run check`, `npm run lint`, `npm run test`, `npm run test:e2e`, `npm run test:e2e:production`. Only exact completed GitHub Actions run results count as PASS. No local dependency install or graphical audit is asserted in this environment.
+
+| 22:21 | Paired post-CSS benchmark [run 40593650529](https://github.com/markofornoliak/tykora/actions/runs/40593650529) | 10+10 Chromium CPU×4 runs: median Event Timing p95 32→32 ms, ratio 1.000; target <16 ms unmet; no input-regression |
+| 22:21–22:23 | [Visual + mobile Lighthouse 40593999708](https://github.com/markofornoliak/tykora/actions/runs/40593999708) | 162 screenshots, no measured overflow/critical-serious axe; CSS 32,093 bytes; Home 86/LCP 1,905 ms, Practice 96/LCP 2,369 ms; both LCP targets unmet |
+| 22:23 | `scripts/check-code-examples.mjs` CI | 2 Python, 2 JS, 2 C++ with one synthetic wrapper, 24 SQL parsed/executed; ESLint detected unnecessary escapes, fixed at `8b826f47`, full final CI awaited |
+| 22:24 | Ergonomics tips module/test and Academy integration | Added 30 original hints per RU/EN, one compact deterministic per-level/day; no Dexie migrations or engine edits |

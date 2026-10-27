@@ -11,3 +11,5 @@ Updated: 2026-10-27 UTC.
 | Fonts | No new web/local font files added | System fallback stack in `src/styles/app.css` | OS-managed | No shipped font asset requires new OFL entry; do not fetch CDN fonts |
 
 Any imported text, font or translated quote requires a per-item source/license record before entering production content. Modern translations of public-domain originals are **not** presumed public domain. SQL examples contain no user data and refer only to inline literal tables.
+
+| Original ergonomic hints, 30 RU + 30 EN | `src/domain/content/ergonomics.ts` | Original TYKORA practical guidance authored for this iteration | Project MIT | Automated count, uniqueness, NFC and rotation unit test; not medical guidance |
