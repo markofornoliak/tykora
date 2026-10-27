@@ -1,6 +1,6 @@
-# TYKORA — evidence-gated roadmap (2026-10-25)
+# TYKORA — evidence-gated roadmap (updated 2026-10-27)
 
-**v0.9.0 development only.** The public GitHub Pages site and default `main` still represent v0.8.0; no one may treat this branch as a finished release solely because CI is green. Never skip a phase gate. See [baseline audit](audit-v0.8.0.md) and [performance](PERF-BASELINE-v0.8.0.md).
+**Published baseline: Beta v0.9.0 on `main` (`0a7d167`).** Iteration 4 development is isolated on `feature/iter4-design-content`; nothing in this draft is an approved release or an owner-authorized merge. CI alone does not prove pedagogical quality, WCAG compliance, input performance or licensing. See [v0.8 baseline audit](audit-v0.8.0.md), [v0.9 release notes](RELEASE_NOTES-v0.9.0.md), and [iteration 4 audit](iteration4/AUDIT.md).
 
 ## P0 — acceptance blockers (check only from logged evidence)
 - [x] Audit the v0.8.0 source and record reproducible, immutable-source Lighthouse Home / axe Practice observations (not a complete phase-0 gate).
@@ -21,6 +21,15 @@
 - [ ] Complete offline PWA upgrade data retention, request-privacy trace, performance targets from production with detailed conditions.
 - [x] Add pinned ESLint, fast-check metrics invariants, 10-locale i18n 49 chrome + 6 page-copy key/placeholder checks, and all nine routes axe in Chromium/Firefox/WebKit **at 320, 768 and 1440px**. Unregistered hardcoded UI is not translated; manual a11y remains open. [Coverage table](I18N-COVERAGE-v0.9.md).
 - [ ] Release tagging / tested redeploy-tag rollback, user-approved merge, live smoke and version validation.
+
+## Iteration 4 (isolated feature branch; not a released version)
+- [x] Add 24 original SQLite snippets per RU/EN track; keep previous IDs intact; run SQL execution syntax gate.
+- [x] Add deterministic content-diversity auditor and automated Chromium route screenshots/axe evidence collection.
+- [ ] Replace legacy lesson repetition with true restricted-alphabet words and versioned prompt IDs, preserving historic scoring.
+- [ ] Write and review 120+ connected original prose passages per language; 24 per track; independently verify public-domain quotes.
+- [ ] Complete theme/typography component redesign and WCAG keyboard/manual signoff.
+- [ ] Gather and accept 10-run input timing, all-browser E2E, Lighthouse and full offline data retention evidence.
+- [ ] Draft PR review; approval required before merging; no version bump.
 
 ## P1 (only after P0)
 Extended heatmaps, data-supported personal forecasts, user layout editor, additional genuine content packs, better local classes and races, extended report exports.
