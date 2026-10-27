@@ -14,10 +14,13 @@ jobs:
       - run: npm run check:domain
       - run: npm run check:backup
       - run: npm run check:quality
+      - run: npm run check:content
+      - run: npm run check:code
       - run: npm run check:workers
       - run: npm run check
       - run: npm run lint
       - run: npm run check:i18n
+      - run: node scripts/audit-i18n.mjs
       - run: npm run test:property
       - run: npm run test
       - run: npm run build

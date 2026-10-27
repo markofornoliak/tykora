@@ -1,0 +1,75 @@
+name: Iteration 4 ten-run input acceptance
+on:
+  push:
+    branches: [feature/iter4-design-content]
+    paths:
+      - '.github/workflows/iteration4-input-acceptance.yml'
+      - 'scripts/compare-input-iteration4.mjs'
+      - 'src/features/practice/Practice.tsx'
+      - 'src/shared/ui/TargetDisplay.tsx'
+      - 'src/styles/app.css'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0a7d167bc320b503a03dfe1247c96687526ca28b
+          path: baseline
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: cd baseline && npm ci --no-audit --no-fund && VITE_BASE_PATH=/ npm run build
+      - run: cd candidate && npm ci --no-audit --no-fund && VITE_BASE_PATH=/ npm run build
+      - run: cd candidate && npx playwright install --with-deps chromium
+      - name: Start baseline preview
+        run: |
+          (cd baseline && npm run preview -- --host 127.0.0.1 --port 4174 >/tmp/iter4-old.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4174/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/iter4-old.log
+          exit 1
+      - name: Start candidate preview
+        run: |
+          (cd candidate && npm run preview -- --host 127.0.0.1 --port 4175 >/tmp/iter4-new.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4175/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/iter4-new.log
+          exit 1
+      - name: Run baseline 10 times
+        run: |
+          mkdir -p candidate/performance-artifacts/baseline
+          cd baseline
+          for i in $(seq 1 10); do
+            BENCH_BASE_URL=http://127.0.0.1:4174 GITHUB_SHA=0a7d167bc320b503a03dfe1247c96687526ca28b node scripts/benchmark-input.mjs
+            cp performance-artifacts/input-benchmark.json "../candidate/performance-artifacts/baseline/run-$i.json"
+          done
+      - name: Run candidate 10 times
+        run: |
+          cd candidate
+          mkdir -p performance-artifacts/candidate
+          for i in $(seq 1 10); do
+            BENCH_BASE_URL=http://127.0.0.1:4175 node scripts/benchmark-input.mjs
+            cp performance-artifacts/input-benchmark.json "performance-artifacts/candidate/run-$i.json"
+          done
+      - name: Evaluate p95 regression limit
+        run: cd candidate && node scripts/compare-input-iteration4.mjs
+      - name: Keep inspectable run data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iter4-input-10x10
+          path: candidate/performance-artifacts/
+          if-no-files-found: warn
+          retention-days: 30

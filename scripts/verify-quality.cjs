@@ -17,7 +17,7 @@ check('Translated home and practice page headings',()=>{
 });
 check('24 themes remain defined',()=>assert.equal(palettes.length,24));
 check('Every theme meets 4.5:1 for normal text on body and surface',()=>{
- for(const p of palettes){assert.ok(contrastRatio(p.text,p.bg)>=4.5,`${p.name} body`);assert.ok(contrastRatio(p.text,p.surface)>=4.5,`${p.name} surface`)}
+ for(const p of palettes){assert.ok(contrastRatio(p.text,p.bg)>=4.5,`${p.name} body`);assert.ok(contrastRatio(p.text,p.surface)>=4.5,`${p.name} surface`);assert.ok(contrastRatio(p.accent,p.bg)>=4.5,`${p.name} accent/bg`);assert.ok(contrastRatio(p.accent,p.surface)>=4.5,`${p.name} accent/surface`)}
 });
 check('Palettes rejected on insufficient contrast',()=>{
  assert.ok(validatePalette({name:'Custom',bg:'#ffffff',surface:'#ffffff',text:'#b5b5b5',accent:'#ececec'}).length>0)

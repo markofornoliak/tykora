@@ -22,7 +22,10 @@
     "check:source": "node scripts/verify-source.cjs",
     "lint": "eslint 'src/**/*.{ts,tsx}' 'e2e/**/*.{ts,tsx}' 'e2e-production/**/*.{ts,tsx}' 'scripts/**/*.mjs'",
     "check:i18n": "vitest run src/shared/i18n/catalog.test.ts",
-    "test:property": "vitest run src/domain/metrics/metrics.property.test.ts"
+    "test:property": "vitest run src/domain/metrics/metrics.property.test.ts",
+    "check:content": "npm run check:domain && node scripts/content-audit.mjs --check",
+    "audit:content": "npm run check:domain && node scripts/content-audit.mjs --json",
+    "check:code": "npm run check:domain && node scripts/check-code-examples.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",

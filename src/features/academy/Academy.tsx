@@ -5,6 +5,7 @@ import {levels,curriculum,completionFromScores,lessonProgressFromScores,reviewAv
 import {repositories} from '../../infrastructure/di/repositories';
 import type {SupportedLocale} from '../../domain/content/library';
 import {dailyRoutine,type TrainingPlan} from '../../domain/plans/plan';
+import {ergonomicsTip} from '../../domain/content/ergonomics';
 
 export function Academy(){
  const [locale,setLocale]=useState<SupportedLocale>('ru');
@@ -62,6 +63,7 @@ export function Academy(){
    </button>;
   })}</div>
   <div className="note" style={{marginTop:15}}>Следующая рекомендация: {next.id}. Уровни не заблокированы: самостоятельный выбор важнее искусственных ограничений.</div>
+  <p className="small muted" style={{marginTop:14}}><strong>{locale==='ru'?'Подсказка для рук':'Comfort tip'}:</strong> {ergonomicsTip(locale,(level-1)*3+new Date().getUTCDate()%3)}</p>
   <Link to={lessonLink(next)} className="btn primary" style={{marginTop:16}}>Продолжить: {next.id} ↗</Link>
   <div className="section-title"><h3>Личный план занятий</h3></div>
   <div className="plan-controls">

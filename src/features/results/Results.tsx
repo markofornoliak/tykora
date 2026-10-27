@@ -19,6 +19,24 @@ export function Results() {
       }
     }).catch(()=>{}).finally(()=>{if(live)setLoading(false);});return ()=>{live=false;};
   },[]);
+  const exportPng=()=>{
+    if(!last)return;
+    const canvas=document.createElement('canvas');
+    canvas.width=1200;canvas.height=630;
+    const ctx=canvas.getContext('2d');if(!ctx)return;
+    ctx.fillStyle='#19231f';ctx.fillRect(0,0,1200,630);
+    ctx.fillStyle='#a5dfc9';ctx.font='bold 32px system-ui,sans-serif';ctx.fillText('TYKORA  /  RESULT',64,88);
+    ctx.fillStyle='#ffffff';ctx.font='bold 200px system-ui,sans-serif';
+    ctx.fillText(displayWpm(last.summary.netWpm,0),58,360);
+    ctx.font='28px system-ui,sans-serif';ctx.fillStyle='#c9d8d2';ctx.fillText('NET WORDS PER MINUTE',70,410);
+    ctx.font='bold 34px system-ui,sans-serif';ctx.fillStyle='#ffffff';
+    ctx.fillText('ACCURACY  '+(last.summary.accuracy*100).toFixed(1)+'%',70,515);
+    ctx.fillText('RAW WPM  '+displayWpm(last.summary.rawWpm),620,515);
+    ctx.fillStyle='#a5dfc9';ctx.font='22px system-ui,sans-serif';
+    ctx.fillText('Locally generated · No upload',70,585);
+    const anchor=document.createElement('a');
+    anchor.download='tykora-result.png';anchor.href=canvas.toDataURL('image/png');anchor.click();
+  };
   return <section><PageHeader kicker="Результат / Achievement" title="Хороший ритм. Чёткий результат.">Каждый показатель получен из реального набора и сохранён только на этом устройстве.</PageHeader>
     {!last ? <div className="surface card"><Placeholder>{loading?'Загрузка результата…':'Нет сохранённого результата. Сначала завершите тест.'}</Placeholder><Link to="/practice" className="btn primary" style={{marginTop:18}}>Перейти к практике</Link></div>:
       <div className="result-layout"><div className="share-card"><div className="row spread"><strong>▦ TYKORA</strong><span className="tiny">RESULT / {new Date(last.endedAt).getFullYear()}</span></div>
@@ -33,7 +51,8 @@ export function Results() {
         <div className="lessonline"><span>Перестановки символов</span><b>{last.summary.errorTypes.transposition}</b></div>
         <div className="lessonline"><span>Продолжительность</span><b>{(last.summary.durationMs/1000).toFixed(1)} с</b></div>
         <div className="thinrule"/>
-        <h3>Что тренировать дальше</h3><p className="small" style={{marginTop:9}}>{weak.length ? `Слабые сочетания: ${weak.map(x=>x.sequence).join(' · ')}. Попробуйте адаптивную практику.` : 'После нескольких полноценных сессий появятся рекомендации на основании наблюдений.'}</p>
+        <button type="button" className="btn secondary" onClick={exportPng}>Сохранить карточку PNG</button>
+        <h3 style={{marginTop:22}}>Что тренировать дальше</h3><p className="small" style={{marginTop:9}}>{weak.length ? `Слабые сочетания: ${weak.map(x=>x.sequence).join(' · ')}. Попробуйте адаптивную практику.` : 'После нескольких полноценных сессий появятся рекомендации на основании наблюдений.'}</p>
         <Link className="btn primary" style={{marginTop:22,width:'100%'}} to="/practice">Продолжить практику ↗</Link>
       </div></div>}
   </section>;

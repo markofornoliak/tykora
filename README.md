@@ -21,6 +21,7 @@ Open the local URL printed by Vite. For a production build:
 npm run check:domain
 npm run check:backup
 npm run check:quality
+npm run check:content # Iteration 4 SQL and content provenance gate
 npm run check:workers
 npm run check
 npm run test
@@ -55,6 +56,10 @@ npm run test:e2e:production  # requires npm run build first
 No account, cookies used for tracking, ad code, or external analytics. Completed sessions, settings, n-gram skill data, training plans, and optional pseudonym are stored in IndexedDB in the browser. **Profile → My data** exports/imports a portable JSON backup locally (25 MB maximum import). Import supports merge or destructive replace (with confirmation). The file contains personal learning history; store it privately. Offline storage can be evicted by the browser; keep backup files elsewhere.
 
 Experimental friend racing optionally uses Google STUN only with explicit opt-in and requires manual exchange of WebRTC SDP codes; the peer can learn your IP address. P2P is not guaranteed across restrictive NATs and has no independent anti-cheating verification. Certificates and server-verified leaderboards are not implemented.
+
+## Iteration 4 development (not published)
+
+The `feature/iter4-design-content` candidate includes an original SQL typing track (24 standalone snippets shared across RU/EN), a content-diversity auditor, local PNG Results export, and automated screenshot/input evidence workflows. The current `main` release remains Beta v0.9.0. See [iteration 4 audit](docs/iteration4/AUDIT.md), [provenance](docs/content/LICENSES.md) and [candidate notes](docs/iteration4/RELEASE_NOTES-DRAFT.md). No release, full course-content claim or owner-approved merge is implied.
 
 ## Known gaps
 

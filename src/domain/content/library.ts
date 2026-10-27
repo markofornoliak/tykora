@@ -1,8 +1,9 @@
 import type { TypingPrompt } from '../typing/contracts';
+import {sqlExamples} from './sql';
 
 /** All samples below were written for TYKORA. No scraped/third-party text. */
 export type SupportedLocale = 'ru' | 'en';
-export type TrackId = 'general'|'code-python'|'code-cpp'|'code-js'|'finance'|'business'|'medical'|'legal';
+export type TrackId = 'general'|'code-python'|'code-cpp'|'code-js'|'code-sql'|'finance'|'business'|'medical'|'legal';
 export interface Passage { id:string; locale:SupportedLocale; title:string; text:string; license:'original'; track:TrackId; }
 
 const entries:readonly [TrackId,string,string,string,string][] = [
@@ -32,7 +33,12 @@ const entries:readonly [TrackId,string,string,string,string][] = [
 export const passages:readonly Passage[] = [...entries.map(([track,titleRu,,ru],i)=>
   ({id:`tykora-original-${String(i+1).padStart(3,'0')}`, locale:'ru' as const,title:titleRu,text:ru,license:'original' as const,track})
 ), ...entries.map(([track,,titleEn,,en],i)=>
-  ({id:`tykora-original-${String(i+1).padStart(3,'0')}-en`, locale:'en' as const,title:titleEn,text:en,license:'original' as const,track}))];
+  ({id:`tykora-original-${String(i+1).padStart(3,'0')}-en`, locale:'en' as const,title:titleEn,text:en,license:'original' as const,track})),
+ ...sqlExamples.flatMap((entry,i)=>['ru','en'].map(locale=>({
+   id:`tykora-sql-${String(i+1).padStart(3,'0')}-${locale}`,
+   locale:locale as SupportedLocale,title:locale==='ru'?entry.titleRu:entry.titleEn,
+   text:entry.text,license:'original' as const,track:'code-sql' as const
+ })))];
 
 export function passagePrompt(p:Passage,layoutId:string):TypingPrompt {
  return {id:p.id,text:p.text,locale:p.locale,layoutId,mode:'quote',license:p.license,sourceAttribution:'TYKORA original content (MIT)'};

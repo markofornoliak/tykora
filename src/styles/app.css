@@ -127,3 +127,35 @@ textarea:focus-visible,[type=color]:focus-visible,[type=range]:focus-visible{out
 .target-text.blind-target span:not(.typed):not(.err){color:transparent!important}
 
 .focus-exit{position:fixed;right:25px;top:18px;z-index:9;min-height:44px}
+
+/* Iteration 4: Swiss-editorial rhythm. The input DOM, timing and caret remain unchanged. */
+:root{
+ --i4-space-1:4px;--i4-space-2:8px;--i4-space-3:12px;
+ --i4-space-4:16px;--i4-space-6:24px;--i4-space-8:32px;
+ --i4-radius-sm:8px;--i4-radius-md:12px;--i4-radius-lg:16px;
+ --i4-label:11px;--i4-body:14px;
+}
+.feature:after,.share-card:after{content:none;display:none}
+.surface,.kpi{border-radius:var(--i4-radius-lg)}
+.btn{border-radius:var(--i4-radius-sm)}
+.feature{border-radius:var(--i4-radius-lg)}
+.pagehead{padding-block:44px 31px}
+.eyebrow{letter-spacing:.13em;font-weight:750}
+h1{font-size:clamp(32px,4vw,54px);letter-spacing:-.045em;line-height:1.12}
+h2{letter-spacing:-.025em}
+.lessonnum{font-variant-numeric:tabular-nums}
+.share-large{font-variant-numeric:tabular-nums}
+.result-list,.levelhero,.overview-progress{padding:clamp(20px,2.4vw,32px)}
+.theme-choice:focus-visible{outline:3px solid var(--ring);outline-offset:3px}
+@media(max-width:520px){
+ .pagehead{padding-block:26px 20px}
+ .feature,.card,.keyboard-card{padding:20px}
+ .share-card{padding:25px;min-height:360px}
+ .share-metrics{gap:25px;flex-wrap:wrap}
+ .result-list,.levelhero,.overview-progress{padding:20px}
+ h1{font-size:clamp(30px,9vw,42px)}
+}
+@media(forced-colors:active){
+ .share-card,.feature{border:2px solid CanvasText}
+ .share-card:after,.feature:after{display:none}
+}
