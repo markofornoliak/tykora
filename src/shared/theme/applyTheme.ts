@@ -5,7 +5,8 @@ export function validatePalette(p: Palette): string[] {
   const errors: string[] = [];
   if (contrastRatio(p.text, p.bg) < 4.5) errors.push('Text/background contrast is below 4.5:1');
   if (contrastRatio(p.text, p.surface) < 4.5) errors.push('Text/surface contrast is below 4.5:1');
-  if (Math.max(contrastRatio(p.accent, p.bg), contrastRatio(p.accent, p.surface)) < 3) errors.push('Accent not visibly distinct');
+  if (contrastRatio(p.accent,p.bg) < 4.5 || contrastRatio(p.accent,p.surface) < 4.5)
+    errors.push('Accent contrast on body and surface must reach 4.5:1');
   return errors;
 }
 export function applyTheme(p: Palette) {

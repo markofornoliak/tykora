@@ -10,6 +10,9 @@ describe('theme contrast', () => {
     for (const p of palettes) {
       expect(contrastRatio(p.text, p.bg), p.name).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(p.text, p.surface), p.name).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(p.accent,p.bg), p.name+' accent/body').toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(p.accent,p.surface), p.name+' accent/surface').toBeGreaterThanOrEqual(4.5);
+      expect(validatePalette(p),p.name).toEqual([]);
     }
   });
   it('invalid palette is rejected', () => {
