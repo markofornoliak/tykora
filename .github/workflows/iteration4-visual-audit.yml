@@ -34,11 +34,30 @@ jobs:
           exit 1
       - name: Route and palette screenshot audit
         run: node scripts/audit-screenshots.mjs
+      - name: Measure candidate mobile Lighthouse — Home and Practice
+        run: |
+          mkdir -p docs/iteration4/audit/lighthouse
+          for route in home practice; do
+            if [ "$route" = "home" ]; then target='http://127.0.0.1:4174/'; else target='http://127.0.0.1:4174/#/practice'; fi
+            npm exec --yes --package=lighthouse@12.8.2 -- lighthouse "$target" --chrome-flags="--headless --no-sandbox" --output=json --output-path="docs/iteration4/audit/lighthouse/$route-mobile.json" --quiet
+          done
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          for(const route of ['home','practice']){
+            const d=JSON.parse(fs.readFileSync('docs/iteration4/audit/lighthouse/'+route+'-mobile.json','utf8'));
+            const scores=Object.fromEntries(Object.entries(d.categories).map(([k,v])=>[k,Math.round(v.score*100)]));
+            console.log('ITER4_LIGHTHOUSE '+JSON.stringify({route,version:d.lighthouseVersion,scores,
+              LCPms:d.audits['largest-contentful-paint']?.numericValue,CLS:d.audits['cumulative-layout-shift']?.numericValue,
+              throttling:d.configSettings?.throttling,formFactor:d.configSettings?.formFactor}));
+          }
+          NODE
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: iter4-visual-evidence
-          path: docs/iteration4/audit/screens/
+          path: |
+            docs/iteration4/audit/screens/
+            docs/iteration4/audit/lighthouse/
           if-no-files-found: warn
           retention-days: 30
