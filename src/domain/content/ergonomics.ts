@@ -1,0 +1,72 @@
+/** Original TYKORA ergonomics guidance; neutral suggestions, not a medical diagnosis. */
+export const ergonomicsTips: Record<'ru'|'en',readonly string[]> = {
+  "ru": [
+    "Расположите экран так, чтобы читать текст без наклона головы.",
+    "Поставьте обе стопы на устойчивую поверхность.",
+    "Держите плечи свободными, не поднимайте их при наборе.",
+    "Старайтесь не опираться всем весом на запястья.",
+    "Перед началом проверьте, что клавиатура не скользит.",
+    "Смотрите на текст, а не на расположение клавиш.",
+    "Печатайте с лёгким нажатием, без лишнего усилия.",
+    "После длинной серии сделайте короткую паузу.",
+    "Меняйте положение тела, если засиделись.",
+    "Если кисти устали, остановитесь и дайте им отдохнуть.",
+    "Подбирайте высоту стула так, чтобы сидеть устойчиво.",
+    "Оставляйте локтям достаточно места для свободного движения.",
+    "Не вытягивайте шею вперёд к экрану.",
+    "В начале занятия найдите удобное положение для рук.",
+    "Не удерживайте пальцы напряжёнными между нажатиями.",
+    "Попробуйте отпускать клавишу сразу после нажатия.",
+    "Сосредоточьтесь на последовательности символов, а не на спешке.",
+    "Возвращайтесь к домашнему ряду без взгляда на клавиатуру.",
+    "Делайте перерыв, если замечаете нарастающее напряжение.",
+    "Не игнорируйте боль, онемение или покалывание в руках.",
+    "Если неприятные ощущения повторяются, обратитесь к специалисту.",
+    "Не зажимайте мышь или края стола во время печати.",
+    "Отрегулируйте яркость экрана для комфортного чтения.",
+    "Периодически переводите взгляд вдаль от текста.",
+    "Чередуйте короткие упражнения и спокойный разбор ошибок.",
+    "Дайте рукам отдохнуть между продолжительными сессиями.",
+    "Поддерживайте ровное дыхание без задержки на сложных словах.",
+    "Выберите такой размер шрифта, который легко читать.",
+    "Следите, чтобы предплечья не были вынужденно подняты.",
+    "Закончите упражнение, если точный набор требует чрезмерного усилия."
+  ],
+  "en": [
+    "Place the screen where you can read without tilting your head.",
+    "Keep both feet supported on a stable surface.",
+    "Let your shoulders relax instead of raising them while typing.",
+    "Avoid resting your full body weight on your wrists.",
+    "Check that the keyboard does not slide before you begin.",
+    "Look at the text instead of hunting for keys.",
+    "Use a light touch instead of pressing keys forcefully.",
+    "Pause briefly after a long sequence of typing.",
+    "Change position when you have been sitting for a while.",
+    "If your hands feel tired, stop and give them a rest.",
+    "Choose a chair height that lets you sit comfortably.",
+    "Leave enough space for your elbows to move freely.",
+    "Avoid leaning your neck forward toward the screen.",
+    "Find a comfortable hand position before the session.",
+    "Try not to hold your fingers tense between keystrokes.",
+    "Release each key promptly after pressing it.",
+    "Focus on the sequence of characters instead of rushing.",
+    "Return to the home row without looking down.",
+    "Take a break when you notice increasing tension.",
+    "Do not ignore pain, numbness, or tingling in your hands.",
+    "If discomfort keeps returning, seek professional advice.",
+    "Avoid gripping the mouse or desk edge while typing.",
+    "Adjust screen brightness for comfortable reading.",
+    "Occasionally look away from the text at a distant object.",
+    "Alternate short exercises with a calm review of mistakes.",
+    "Let your hands rest between longer practice sessions.",
+    "Breathe comfortably during difficult words.",
+    "Choose a text size that is easy for you to read.",
+    "Avoid holding your forearms in an awkward raised position.",
+    "End the exercise if accurate typing demands excessive effort."
+  ]
+};
+export function ergonomicsTip(locale:'ru'|'en',ordinal:number):string {
+ const list=ergonomicsTips[locale];
+ if(!Number.isSafeInteger(ordinal)||ordinal<0)throw new Error('Invalid tip ordinal');
+ return list[ordinal%list.length];
+}
