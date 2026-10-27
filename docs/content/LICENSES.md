@@ -9,7 +9,7 @@ Updated: 2026-10-27 UTC.
 | Existing adaptive public word bank | `src/domain/content/prompts.ts` | Original declared starter vocabulary | Project MIT | Vocabulary breadth/word origins not independently licensed as a dictionary |
 | Public-domain quotation inventory | Not shipped | Not yet verified | N/A | **0 verified PD records; do not claim a quotes corpus** |
 | Fonts | No new web/local font files added | System fallback stack in `src/styles/app.css` | OS-managed | No shipped font asset requires new OFL entry; do not fetch CDN fonts |
+| Original ergonomic hints, 30 RU + 30 EN | `src/domain/content/ergonomics.ts` | Original TYKORA practical guidance authored for this iteration | Project MIT | Automated count, uniqueness, NFC and rotation unit test; not medical guidance |
 
 Any imported text, font or translated quote requires a per-item source/license record before entering production content. Modern translations of public-domain originals are **not** presumed public domain. SQL examples contain no user data and refer only to inline literal tables.
 
-| Original ergonomic hints, 30 RU + 30 EN | `src/domain/content/ergonomics.ts` | Original TYKORA practical guidance authored for this iteration | Project MIT | Automated count, uniqueness, NFC and rotation unit test; not medical guidance |
