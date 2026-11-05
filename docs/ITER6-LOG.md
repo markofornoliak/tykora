@@ -96,3 +96,8 @@
 - [Quality #42118769444](https://github.com/markofornoliak/tykora/actions/runs/42118769444) at `928f621b` FAILED Chromium `e2e/iter5-english.spec.ts`: `/#/themes` displayed selectable `#ui-locale` from *prerendered Home* before the asynchronous router chunk mounted. The test selected English, but that inert control was destroyed; final document language stayed Russian. This is a real UX bug, not a flaky test to ignore.
 - Root cause of P3: the refactored entry left unrelated Home DOM visible on deep links during JS import, whereas original code cleared immediately.
 - Minimal correction: `root.replaceChildren()` synchronously on every non-Home initial route before `bootstrap()`. The Home optimization remains untouched; deep links now have no wrong-route interactive HTML during load. Rerun all browsers and expected navigation behavior; no test weakening or static content hiding on Home.
+
+## 2026-11-05 · P3 regression coverage: real-module delayed navigation
+
+- New `e2e/iter6-bootstrap.spec.ts` holds the **real** hashed `bootstrap-*.js` request (no mocked app) to deterministically reproduce slow hydration on Chromium, Firefox, WebKit. Two scenarios: Home nav remains operable and reaches Classroom while chunk is withheld; direct `/#/themes` must never expose inert Home locale control before chunk completes, then actual language selection reaches English.
+- Explicitly release network request in a `finally` to avoid tainting following tests. This adds tests and does not lower existing assertions or snapshots. CI **pending**.
