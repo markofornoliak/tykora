@@ -48,6 +48,8 @@ if(homeAtBootstrap){
  window.addEventListener('hashchange',bootstrap);
  requestAnimationFrame(()=>requestAnimationFrame(bootstrap));
 }else{
- // Deep links do not have matching prerendered route markup.
+ // Deep links must never expose stale, unhydrated Home controls. Clear the
+ // wrong-route static DOM BEFORE dynamic module loading, not after it.
+ root.replaceChildren();
  bootstrap();
 }

@@ -90,3 +90,9 @@
 
 - Exact-name collision VERIFIED through public JXLabs recruitment and project listings: TYKORA DeFi prize vault on Rootstock, distinct from this typing product. Historical Canadian Class 5 application abandoned; Swiss secondary record deleted. `tykora.com` DNS record observed, registrar ownership and actual availability unverified.
 - Added `docs/NAMING.md` with primary citations, conflicting names, unknown social/domain statuses, three alternate name hypotheses and explicit owner-only decision gate. **No rename, purchases, contact, trademark clearance claim, or product configuration changes.**
+
+## 2026-11-05 · P3: deep-link inert static Home exposed a false control
+
+- [Quality #42118769444](https://github.com/markofornoliak/tykora/actions/runs/42118769444) at `928f621b` FAILED Chromium `e2e/iter5-english.spec.ts`: `/#/themes` displayed selectable `#ui-locale` from *prerendered Home* before the asynchronous router chunk mounted. The test selected English, but that inert control was destroyed; final document language stayed Russian. This is a real UX bug, not a flaky test to ignore.
+- Root cause of P3: the refactored entry left unrelated Home DOM visible on deep links during JS import, whereas original code cleared immediately.
+- Minimal correction: `root.replaceChildren()` synchronously on every non-Home initial route before `bootstrap()`. The Home optimization remains untouched; deep links now have no wrong-route interactive HTML during load. Rerun all browsers and expected navigation behavior; no test weakening or static content hiding on Home.
