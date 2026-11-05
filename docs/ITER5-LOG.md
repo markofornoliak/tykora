@@ -21,3 +21,10 @@
 - First matched runs: baseline `0ce60bc` ordinary keydown p95 **32ms**, candidate `e02aea1` **32ms**, both 500/500 inputs and CLS 0; ordinary/profiler commit count **514→4** in separately instrumented builds. Target <=16ms not reached.
 - Optimized imperative paint to inspect changed grapheme spans and caret only, instead of all 288 span nodes on every animation frame. Added idle scheduling for completed-session persistence with 1s timeout/fallback. No changes to scoring formulas or database shape.
 - Fresh performance and all-browser CI required. See run logs, not just source claims.
+
+## 2026-11-05 · Measured phase-A evidence
+
+- Performance runs: #42018802786 baseline (p95 32ms/514 commits), #42019118123 first candidate (p95 32ms/4 commits), #42019495329 second candidate (p95 32ms/5 commits); 500/500 accepted each, CLS=0 in benchmark scenario.
+- Baseline quality #42018802880 and first-candidate quality #42019118378 both completed SUCCESS; all-browser E2E runs on the first candidate are green. Earlier `main@0a7d167` quality run #42018469407 failed on one timeout in a 108-test axe E2E matrix; subsequent same-source baseline branch passed. Do not hide this runner variability.
+- Added five-run mobile Lighthouse evidence workflow; results were not yet available at this log entry.
+- Additional per-input JS handler and native paint timing diagnostics are opt-in through the benchmark object. They do not record typed strings; benchmark run is required.

@@ -151,6 +151,8 @@ export function Practice(){
   let next=acceptInput(previousState,value,at,source);
   if(mode==='hardcore'&&!settings.gentleMode&&next.attempts.length>previousState.attempts.length&&next.attempts.slice(previousState.attempts.length).some(a=>!a.correct))next=finishEngine(next,at);
   sessionStore.update(next);
+  const probe=(window as unknown as {__TYKORA_BENCHMARK__?:{handlerMs?:number[]}}).__TYKORA_BENCHMARK__;
+  probe?.handlerMs?.push(performance.now()-receivedAt);
  };
  const onInput=(event:FormEvent<HTMLTextAreaElement>)=>{
   if(composing.current||(event.nativeEvent as InputEvent).isComposing)return;

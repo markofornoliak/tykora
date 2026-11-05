@@ -36,6 +36,7 @@ export const TargetDisplay=memo(function TargetDisplay({target,store,blur}:{targ
   let previousTyped:readonly string[]=[];
   let previousPosition=-1;
   function redraw(){
+   const paintStart=performance.now();
    const state=store.current;
    const pos=currentPosition(state);
    const typed=typedGraphemes(state);
@@ -80,6 +81,8 @@ export const TargetDisplay=memo(function TargetDisplay({target,store,blur}:{targ
    }
    previousTyped=typed;
    previousPosition=pos;
+   const probe=(window as unknown as {__TYKORA_BENCHMARK__?:{paintMs?:number[]}}).__TYKORA_BENCHMARK__;
+   probe?.paintMs?.push(performance.now()-paintStart);
   }
   function schedule(){
    if(frame!==null)return;
