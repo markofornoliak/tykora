@@ -160,7 +160,7 @@ try{
  }));
  const summary={sha,browser:browser.version(),reference:runs.map(r=>({cpu:r.cpu,trial:r.trial,eventSamples:r.eventTimingSamples,p50:r.breakdown.total.p50,p95:r.breakdown.total.p95,p99:r.breakdown.total.p99,inputDelayP95:r.breakdown.delay.p95,processingTimeP95:r.breakdown.processing.p95,presentationDelayP95:r.breakdown.presentation.p95,oneRafP95:r.oneRaf.p95,twoRafUpperBoundP95:r.twoRafUpperBound.p95})),
   variability:{eventP50:compare(r=>r.breakdown.total.p50),eventP95:compare(r=>r.breakdown.total.p95),eventP99:compare(r=>r.breakdown.total.p99),oneRafP95:compare(r=>r.oneRaf.p95),twoRafP95:compare(r=>r.twoRafUpperBound.p95)},
-  experiments:candidates,cdpLatency:runs.map(r=>({cpu:r.cpu,trial:r.trial,raw:r.cdpLatency})),
+  experiments:candidates,cdpLatency:runs.map(r=>({cpu:r.cpu,trial:r.trial,eventSamples:r.eventTimingSamples,raw:r.cdpLatency})),
   sampleCaveat:'Five runs each throttle; Event Timing is quantized and only samples >=16ms; CDP EventLatency slices are unpaired unless event interaction ID can be verified. Physical presentation not certified.',
   excludedCandidates:{
    wordClass:'Per-word class replacement loses per-grapheme error/caret semantics without nested spans; not accepted without equivalent renderer and a11y regression.',
