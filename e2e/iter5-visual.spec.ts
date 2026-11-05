@@ -18,6 +18,20 @@ test('screen captures across 3 themes × 3 viewports × 4 routes',async({page,br
    await expect(page.locator('main h1,main h2').first()).toBeVisible();
    for(const width of [320,768,1440]){
     await page.setViewportSize({width,height:900});
+    // Fonts, theme hydration and responsive reflow must settle before a
+    // golden comparison. This is not a threshold relaxation or rebaseline.
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(async()=>{
+     await document.fonts.ready;
+     await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
+    });
+    const geometry=await page.locator('main').evaluate(el=>({
+     height:el.getBoundingClientRect().height,
+     documentHeight:document.documentElement.scrollHeight,
+     locale:document.documentElement.lang,
+     h1:el.querySelector('h1')?.textContent??null
+    }));
+    console.log('TYKORA_VISUAL_GEOMETRY '+JSON.stringify({theme,name,width,...geometry}));
     await page.screenshot({path:dir+'/'+theme.replaceAll(' ','_')+'-'+name+'-'+width+'.png',animations:'disabled',fullPage:true});
    }
   }
