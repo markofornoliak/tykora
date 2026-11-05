@@ -127,3 +127,9 @@ All earlier `ITER6_PHASE0_*` summaries used **nearest-rank p50**, the 5th ordere
 | iter6 `1c97ec25` | **946.2403 ms** | 88.5 ms | **99.5** (trial scores 99–100) | 0 | **152509 bytes** |
 
 LCP ranges unchanged: main 1952.9447–1968.6435ms, iter5 1805.3122–1958.6371ms, iter6 904.5901–952.3355ms. The corrected interpolating percentile/median function is committed to the harness for all subsequent runs (R type 7). This is a **calculation correction**, not a change of workload or acceptance target. Performance 100 remains **NOT MET on all runs**, since some scored 99. LCP/TBT pass their numerical *simulated* targets; JS fails.
+
+## Iteration 6 — verified Phase 0 at app SHA d5bd96ca (2026-11-05)
+
+The same-runner N=10 baseline [workflow #42125543917](https://github.com/markofornoliak/tykora/actions/runs/42125543917) measured main `0a7d167b` LCP 1955.3563ms / initial interactive gzip 150491B; iter5 `244c5060` LCP 1955.27845ms / 151870B; iter6 `d5bd96ca` LCP **908.2175ms** / **152568B**. Exact median CLS=0 for all, iter6 TBT median **110.5ms**, Lighthouse Performance median **99**. All runs simulated 412×823, CPU×4, RTT 150ms, Lighthouse 12.8.2, N=10, identical GitHub runner. Raw JSON and per-chunk map are available in run artifact. **LCP goal passed in simulator; full summit did not pass (TBT, Performance and interactive JS budget fail).**
+
+Skip-link race fix at `d5bd96ca`: full [quality #42125551475](https://github.com/markofornoliak/tykora/actions/runs/42125551475) passed 168 E2E / 30 existing skips and 9 offline PWA; supplementary 5-repeat Chromium focus [#42126592040](https://github.com/markofornoliak/tykora/actions/runs/42126592040) passed 45/45 tests at workflow-only commit `19a2ad7c`. No claim of exact physical keyboard-to-photon latency.

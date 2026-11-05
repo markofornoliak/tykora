@@ -1,4 +1,4 @@
-# Iteration 6 · matched Phase 0 baseline (pending)
+# Iteration 6 · matched Phase 0 baseline (measured)
 
 This protocol has now been **executed and verified** in [run #42114840487](https://github.com/markofornoliak/tykora/actions/runs/42114840487). The original iteration 5 ledger is `docs/PERF-v0.10-BASELINE.md`; its historical data must not be relabelled as current iteration 6 measurements.
 
@@ -31,3 +31,17 @@ All earlier `ITER6_PHASE0_*` summaries used **nearest-rank p50**, the 5th ordere
 | iter6 `1c97ec25` | **946.2403 ms** | 88.5 ms | **99.5** (trial scores 99–100) | 0 | **152509 bytes** |
 
 LCP ranges unchanged: main 1952.9447–1968.6435ms, iter5 1805.3122–1958.6371ms, iter6 904.5901–952.3355ms. The corrected interpolating percentile/median function is committed to the harness for all subsequent runs (R type 7). This is a **calculation correction**, not a change of workload or acceptance target. Performance 100 remains **NOT MET on all runs**, since some scored 99. LCP/TBT pass their numerical *simulated* targets; JS fails.
+
+### Latest same-runner, corrected N=10 comparison after the deep-link focus guard
+
+Run: [#42125543917](https://github.com/markofornoliak/tykora/actions/runs/42125543917); SHA `d5bd96ca5611d73c70298eda7c7fd369b8ff1315` (actual application fix).
+
+| Variant | LCP median (ms) | LCP range (ms) | TBT median (ms) | CLS | Perf median | Initial interactive JS gzip (bytes) |
+|---|---:|---:|---:|---:|---:|---:|
+| main `0a7d167b` | 1955.3563 | 1953.6182–1957.8569 | 23.0 | 0 | 98 | 150491 |
+| iter5 `244c5060` | 1955.27845 | 1953.8896–1958.8447 | 26.75 | 0 | 98 | 151870 |
+| iter6 `d5bd96ca` | **908.2175** | **905.1901–957.9961** | **110.5** | **0** | **99** | **152568** |
+
+Full interactive startup gzip includes the deferred React bootstrap. The 1511-byte eager entry is not the correct 90k/105k budget. Raw JSON is the source of truth; results are Lighthouse simulation, not device-level RUM or keyboard frame latency. The app candidate **does not** meet TBT/Perf/JS summit goals; this table cannot be used to claim full victory.
+
+[Quality #42125551475](https://github.com/markofornoliak/tykora/actions/runs/42125551475) passed 168 tests with 30 existing skips plus 9 PWA tests. [Five-repeat focus stress #42126592040](https://github.com/markofornoliak/tykora/actions/runs/42126592040) passed 45/45 Chromium runs on workflow-only SHA `19a2ad7c`. No original test or threshold was relaxed.
