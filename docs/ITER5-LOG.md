@@ -180,3 +180,8 @@ Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95
 ## 2026-11-05 · Hydration second failure, Suspense boundary
 
 - The direct text-node fix removed React's first text mismatch, but the next production React #418 had componentStack at `Suspense` inside Layout's Outlet (Actions #42089074900). The checked-in DOM was captured from a client-only tree and lacked real server-rendered Suspense boundary markers. Home imports eagerly; moving only the Home route outside the pathless Suspense route keeps lazy-load behavior for Practice and the other specialist routes while removing this unnecessary SSR hydration boundary. Must verify the exact-SHA hydration test across Chromium/Firefox/WebKit and all other route E2E before accepting.
+
+## 2026-11-05 · Pixel delta root cause (no rebaseline)
+
+- Inspected pinned reference PNGs and current screenshot diffs. The @layer critical CSS introduced `.welcome>*{margin-bottom:16px}` not present in responsive app CSS, shifting mobile Home layout by 2×16px, and `.brand{margin-bottom:30px}` not present in desktop app CSS, shifting sidebar links. These low-priority properties were not explicitly overridden and remained in the settled layout, explaining 5/36 screenshot failures at SHA 623ff3b8 even while CLS=0.
+- Removed only these excess CSS rules from the critical layer while retaining paint before React, fixed 1.5% golden threshold, and current 5-run mobile CLS goal. Exact-SHA visual and Lighthouse rerun required. No rebaseline.
