@@ -18,3 +18,12 @@
 2. Copy exact N=10 results into `docs/PERF-v0.10-BASELINE.md` with three-way comparison and regression statement.
 3. Before runtime optimisation, use LCP-element, request chain, JS graph and TBT breakdown to select one variable per experimental commit.
 4. Check quality gates and all-browser E2E before accepting any phase.
+
+## 2026-11-05 · Track F candidate: integrity and migration idempotence
+
+- Hypothesis F1: CRC backup corruption and 25 MiB limits reject malformed user input *before* mutation; a synthetic v1–v3 migration survives two additional document reloads without changing original v1 scores.
+- Experiment F1: new cross-browser Playwright tests in `e2e/backup.spec.ts` and a two-reopen extension of `e2e/migrations.spec.ts`.
+- The CRC test saves a real local profile, exports it through the UI, alters the saved JSON without updating the CRC32, attempts import, and checks the original alias after page reload.
+- The size-limit test uploads a 25 MiB + 1-byte file and requires rejection before parsing. The migration tests assert native IDB version 40 and the exact previous score after each restart.
+- No production code, schema, fixture truth labels, thresholds, or golden snapshots were changed. Synthetic legacy data is **not** claimed to be actual customer exports. Crash-in-the-middle and physical device behavior remain **UNTESTED**.
+- Status at commit authoring: candidate / **CI pending**, no green claim until full Chromium/Firefox/WebKit results.
