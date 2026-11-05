@@ -5,8 +5,12 @@ on:
     paths:
       - scripts/iter5-pixel-diff.py
       - .github/workflows/iter5-pixel-diff.yml
-      - src/features/home/**
-      - src/features/results/**
+      - index.html
+      - src/main.tsx
+      - src/app/**
+      - src/features/**
+      - src/shared/ui/**
+      - src/shared/i18n/**
       - src/styles/**
       - src/shared/theme/**
       - e2e/iter5-visual.spec.ts
