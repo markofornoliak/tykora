@@ -54,3 +54,9 @@
 - Calculated pre-change palette border role <3:1 against surface on 24/24 defaults.
 - Introduced semantic token CSS/TypeScript, deterministic role contrast resolver, 24×15 Vitest pair matrix and numeric audit document; added target typography / error underline / coarse touch / forced-colors / focus rules.
 - This is not a complete component-state review, visual baseline, or manual WCAG 2.2 AA pass. Await CI.
+
+## 2026-11-05 · C: a11y automation / manual evidence ledger
+
+- Added keyboard, forced-colors and theme-selection Playwright smoke tests; full 9 routes ×24 themes ×3 viewports axe Chromium matrix as a dedicated CI job, leaving default 3-browser audit intact.
+- Added visual capture job for 36 Chromium snapshots across 3 palettes and 3 widths; no image-golden acceptance claimed.
+- Manual VoiceOver, NVDA, actual zoom, IME/dead-key/AltGr, physical mobile and touch are NOT conducted.

@@ -1,0 +1,45 @@
+import {test,expect} from '@playwright/test';
+
+test('keyboard skip-link and typed-input focus are independently reachable',async({page})=>{
+ await page.goto('/#/practice');
+ await page.keyboard.press('Tab');
+ await expect(page.locator('.skip-link')).toBeFocused();
+ await page.keyboard.press('Enter');
+ await expect(page.locator('main#main-content')).toBeFocused();
+ const input=page.locator('#typing-input');
+ await input.focus();
+ await expect(input).toBeFocused();
+ await input.pressSequentially('Точный',{delay:15});
+ await expect(input).toHaveValue('Точный');
+ await expect(page.locator('[data-typing-window="bounded"]')).toHaveAttribute('aria-hidden','true');
+});
+
+test('24 themes can be selected from keyboard without losing selected state',async({page})=>{
+ await page.goto('/#/themes');
+ const buttons=page.locator('.theme-choice');
+ await expect(buttons).toHaveCount(24);
+ for(let i=0;i<24;i++){
+  const choice=buttons.nth(i);
+  await choice.focus();
+  await page.keyboard.press('Enter');
+  await expect(choice).toHaveAttribute('aria-pressed','true');
+  const props=await page.evaluate(()=>({
+   text:getComputedStyle(document.documentElement).getPropertyValue('--text').trim(),
+   ring:getComputedStyle(document.documentElement).getPropertyValue('--ring').trim(),
+   border:getComputedStyle(document.documentElement).getPropertyValue('--border').trim()
+  }));
+  expect(props.text).toMatch(/^#[0-9a-f]{6}$/i);
+  expect(props.ring).toMatch(/^#[0-9a-f]{6}$/i);
+  expect(props.border).toMatch(/^#[0-9a-f]{6}$/i);
+ }
+});
+
+test('reduced motion and forced colors retain visible focus affordance',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce',forcedColors:'active'});
+ await page.goto('/#/practice');
+ const input=page.locator('#typing-input');
+ await input.focus();
+ await expect(input).toBeFocused();
+ const style=await input.evaluate(el=>getComputedStyle(el).outlineStyle);
+ expect(style).not.toBe('none');
+});

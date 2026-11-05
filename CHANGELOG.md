@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- C: keyboard/reduced-motion/forced-colors Playwright tests, full theme × route Chromium axe workflow, 36 screenshot evidence workflow, and explicit manual audit ledger (not performed).
+
 - B: semantic CSS/TS tokens, runtime contrast resolver for 24 palette defaults, numerical 24×15 theme matrix, underline errors, focus/forced-colors/touch refinements. Manual visual/a11y acceptance remains open.
 
 - A2 diagnostics: new Chrome trace and 10-minute heap workflows; Home Dexie import made lazy and added static first-paint shell with local critical CSS. Results gated by CI and measured Lighthouse.
