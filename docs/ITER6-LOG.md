@@ -120,3 +120,8 @@
 
 - [Quality runs #42119991377 / #42119984730](https://github.com/markofornoliak/tykora/actions/runs/42119991377) failed in all 3 browsers only at the NEW test `iter6-bootstrap.spec.ts`: it expected a Classroom heading named “Класс” / “Classroom”, but actual full page title is “Обучение без аккаунтов.” / “Learning without accounts.” (verified in source). The prior assertion of exact hash route `/#/classroom` passed; no evidence of a navigation failure at this step.
 - Keep the forced real-module stall, navigation and hash assertions untouched; replace wrong heading expectation with the actual semantic h1 localized title and repeat cross-browser tests. No product runtime code changed in this experiment.
+
+## 2026-11-05 · Preact laboratory build repair after initial red CI
+
+- [Preact laboratory #42120761407](https://github.com/markofornoliak/tykora/actions/runs/42120761407) reached the experimental Preact build but Rollup rejected `src/app/App.tsx` import `Profiler` because `preact/compat` does not export it. This is genuine incompatibility (not a React product regression). Baseline React build/unit gate passed before that step.
+- For opt-in lab **only**, new `scripts/iter6-preact-compat.mjs` forwards the real Preact compat API and supplies a transparent Profiler pass-through component; the recorded practice profiling counters are **not comparable** under this shim. This is acceptable only for *non-profiler* comparison of visual and functional behavior, never to claim Profiler correctness. Production still imports React. Run all 3 browser tests, if functional mismatch found reject rather than silence.

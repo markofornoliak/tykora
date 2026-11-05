@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import {fileURLToPath} from 'node:url';
 
 const base = process.env.VITE_BASE_PATH || '/';
 if (!/^\/(?:[a-zA-Z0-9._-]+\/)?$/.test(base)) throw new Error('Invalid VITE_BASE_PATH. Use / or /repository/.');
@@ -14,7 +15,7 @@ export default defineConfig({
       {find:'react/jsx-runtime',replacement:'preact/jsx-runtime'},
       {find:'react/jsx-dev-runtime',replacement:'preact/jsx-dev-runtime'},
       {find:'react-dom',replacement:'preact/compat'},
-      {find:'react',replacement:'preact/compat'}
+      {find:'react',replacement:fileURLToPath(new URL('./scripts/iter6-preact-compat.mjs',import.meta.url))}
     ]
     : process.env.TYKORA_PROFILE==='1' ? {'react-dom/client':'react-dom/profiling'} : {} },
   plugins: [
