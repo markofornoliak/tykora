@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- D: versioned original review content for first three RU/EN lessons, four-gram practice/review lint with focus coverage, historical review ID/length compatibility tests.
+
 - C/B fix candidate: prevent transient theme-switch contrast failure by removing button background animation; WebKit link activation regression exercises explicit focus without claiming full Tab-order verification.
 
 - B Results: offline generated PNG share card, comparison with prior compatible scoring/layout sessions, top-five observed weak n-grams, explicit absence of unsupported time-series.

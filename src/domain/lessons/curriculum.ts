@@ -58,6 +58,19 @@ export const curriculum:readonly CourseLesson[]=levels.flatMap((lvl)=>Array.from
 function repeatFocus(focus:string,steps:number):string {return Array.from({length:steps},(_,i)=>`${focus}${i%3===2?' .':''}`).join(' ').replace(/ \./g,'.');}
 const proseRu=['В начале тренировки сохраняйте ровную посадку и расслабленные плечи.','Следите за точностью, а не за случайным рекордом скорости.','Старайтесь не смотреть на руки и находить клавиши на ощупь.','После занятия проверьте ошибки и сделайте короткий перерыв.'];
 const proseEn=['Sit comfortably and keep your shoulders relaxed while typing.','Focus on accuracy rather than chasing a lucky speed record.','Try not to look at your hands while you locate each key.','Review your mistakes after the session and take a short break.'];
+/** Original holdout variants for the first three lessons. Do not overwrite
+ * historical course-*-review IDs: old session scores must retain their original
+ * expected text lengths. */
+const firstThreeReviewV2:Record<SupportedLocale,readonly string[]>={"ru":["вафы афыв выфа ываф фавы вафы афыв выфа ываф фавы","лодж дожл жолд оджл лждо лодж дожл жолд оджл лждо","оадлфжвыоа длфжвыоадл фжвыоадлфж выоадлфжвы оадлфжвыоа длфжвыоадл"],"en":["fads dafs sfad fad asdf dasf fads dafs sfad fad asdf","ljk; ;lkj klj; j;lk ;jkl ljk; ;lkj klj; j;lk ;jkl","jflka;dsjf lka;dsjflk a;dsjflka; dsjflka;ds jflka;dsjf lka;dsjflk"]};
+function legacyReviewText(lesson:CourseLesson,locale:SupportedLocale):string{
+ const focus=locale==='ru'?lesson.focusRu:lesson.focusEn;
+ const prose=locale==='ru'?proseRu:proseEn;
+ const reversed=focus.split(' ').reverse().join(' ');
+ return lesson.level<=2
+  ? `${repeatFocus(reversed,4)} ${repeatFocus(focus,2)}`
+  : `${repeatFocus(reversed,2)} ${prose[lesson.index%prose.length]} ${repeatFocus(focus,2)} ${repeatFocus(reversed,1)}`;
+}
+
 /** Two stable original text variants. Legacy v0.8 prompts retain their original id. */
 export type LessonVariant='practice'|'review';
 export function lessonPrompt(lesson:CourseLesson,locale:SupportedLocale,layoutId?:string,variant:LessonVariant='practice'):TypingPrompt {
@@ -65,14 +78,12 @@ export function lessonPrompt(lesson:CourseLesson,locale:SupportedLocale,layoutId
  const prose=locale==='ru'?proseRu:proseEn;
  const reversed=focus.split(' ').reverse().join(' ');
  const text=variant==='review'
-   ? lesson.level<=2
-     ? `${repeatFocus(reversed,4)} ${repeatFocus(focus,2)}`
-     : `${repeatFocus(reversed,2)} ${prose[lesson.index%prose.length]} ${repeatFocus(focus,2)} ${repeatFocus(reversed,1)}`
+   ? lesson.index<=3?firstThreeReviewV2[locale][lesson.index-1]:legacyReviewText(lesson,locale)
    : lesson.level<=2
      ? `${repeatFocus(focus,5)} ${repeatFocus(reversed,3)}`
      : `${repeatFocus(focus,3)} ${prose[(lesson.index-1)%prose.length]} ${repeatFocus(focus,2)}`;
  if(graphemes(text).length<30) throw new Error('Course exercise too short');
- return {id:`course-${lesson.id}-${locale}${variant==='review'?'-review':''}`,text,mode:'lesson',locale,
+ return {id:`course-${lesson.id}-${locale}${variant==='review'?(lesson.index<=3?'-review-v2':'-review'):''}`,text,mode:'lesson',locale,
   layoutId:layoutId??(locale==='ru'?'ru-jcuken':'en-qwerty'),license:'original',sourceAttribution:'TYKORA original course'};
 }
 export function findLesson(id:string):CourseLesson|undefined{return curriculum.find(l=>l.id===id);}
@@ -111,7 +122,7 @@ export interface LessonProgress {
 export function lessonProgressFromScores(records:readonly CourseResult[],locale:SupportedLocale):Map<string,LessonProgress>{
  const attempts=new Map<string,{practice:Map<string,number>;review:Map<string,number>}>();
  for(const record of records){
-  const match=/^course-(L\d\d-\d\d)-(ru|en)(-review|-review2-(\d+)-(\d+)(?:-model-[a-z0-9-]+)?(?:-v-[0-9a-z]+(?:\.[0-9a-z]+)*)?)?$/.exec(record.promptId);
+  const match=/^course-(L\d\d-\d\d)-(ru|en)(-review(?:-v2)?|-review2-(\d+)-(\d+)(?:-model-[a-z0-9-]+)?(?:-v-[0-9a-z]+(?:\.[0-9a-z]+)*)?)?$/.exec(record.promptId);
   if(!match||match[2]!==locale||typeof record.id!=='string'||!record.id)continue;
   const lesson=findLesson(match[1]);if(!lesson)continue;
   const variant:LessonVariant=match[3]?'review':'practice';
@@ -123,7 +134,10 @@ export function lessonProgressFromScores(records:readonly CourseResult[],locale:
   const dynamicLength=match[4]?Number(match[4]):null;
   if(dynamicLength!==null&&(!Number.isSafeInteger(dynamicLength)||dynamicLength<30||dynamicLength>600))continue;
   if(record.promptId.includes('-model-')&&recoverReviewLength(record.promptId,locale)!==dynamicLength)continue;
-  const expectedLength=dynamicLength??graphemes(lessonPrompt(lesson,locale,undefined,variant).text).length;
+  const historicReview=record.promptId.endsWith('-review')&&lesson.index<=3;
+  const expectedLength=dynamicLength??graphemes(historicReview
+   ?legacyReviewText(lesson,locale)
+   :lessonPrompt(lesson,locale,undefined,variant).text).length;
   if(score.typedCharacters<Math.max(LESSON_MASTERY_MIN_GRAPHEMES,expectedLength))continue;
   let current=attempts.get(lesson.id);
   if(!current){current={practice:new Map(),review:new Map()};attempts.set(lesson.id,current);}

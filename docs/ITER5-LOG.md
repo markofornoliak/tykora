@@ -78,3 +78,8 @@
 - Full Chromium 9-route ×24-palette ×3-width axe CI #42024285880 failed at Nightfall /themes / 320px, `color-contrast` on `.btn`. Other route tests completed without reported violations.
 - Browser computed style during theme selection had background `rgb(39,109,93)` but resolved final accent `#9bdbc3`; 150ms `background` transition created a temporary text/background mismatch. Replaced `.btn` transition with transform-only; re-run required.
 - WebKit first-Tab skip-link expectation failed in E2E; fallback uses explicit link focus followed by keyboard Enter. This does NOT verify link discovery via first Tab in WebKit; manual check remains open.
+
+## 2026-11-05 · D versioned holdout content
+
+- First three course lesson practice/review variants receive original, character-focused disjoint review text. **Existing practice IDs and legacy -review expected lengths remain compatible**; new built-in review prompts use -review-v2 IDs. Prior personal sessions are never rewritten.
+- Added strict four-gram intersection limit 10% plus focus glyph coverage/length/forbidden character checks and migration regression. CI needs to validate all six locales/lesson pairs before claiming PASS.
