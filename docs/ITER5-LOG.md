@@ -94,3 +94,8 @@
 - Eight SHA comparison #42035312314 five trials each identified first regression at ab8e9d9 (~1954→~2276ms).
 - 8 isolated 5× single-file revert comparisons #42036088912: restoring either Home eager repository import or uiStore eager repository import recovered ~1955ms; index-only and Layout-only reverts retained ~2270ms. Root boundary is lazy storage import graph, not static shell alone.
 - Selected minimal repair: restore eager repository facade import in uiStore while **actual IndexedDB initialize remains scheduled after first paint**. Initial gzip size budget ≤105kB remains unmet. Needs head SHA Lighthouse and all-browser CI before acceptance.
+
+## 2026-11-05 · B: optional real per-second aggregates
+
+- Added optional `SessionRecord.timeline` (schemaVersion stays 1) with sampled WPM/accuracy/attempt counts once per real second, no characters/key codes. Old sessions and JSON backups lack the field and continue to render an explicit empty state. Per-second Results chart is backed only by real saved samples and has an accessible table alternative.
+- Unit + real IndexedDB E2E added; CI required. This is not synthetic interpolation. No stored character-by-character input history.

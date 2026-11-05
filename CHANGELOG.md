@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- B: optional per-second local aggregate timeline for new sessions and accessible chart/table in Results, without raw keystroke storage or history migration.
+
 - D: versioned original review content for first three RU/EN lessons, four-gram practice/review lint with focus coverage, historical review ID/length compatibility tests.
 
 - C/B fix candidate: prevent transient theme-switch contrast failure by removing button background animation; WebKit link activation regression exercises explicit focus without claiming full Tab-order verification.

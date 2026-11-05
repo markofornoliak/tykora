@@ -17,6 +17,8 @@ import {createEngine,acceptInput,currentPosition,finishEngine,type InputSource} 
 import {graphemes} from '../../domain/typing/graphemes';
 import {normalizedEventTimestamp} from '../../domain/typing/eventTime';
 import {elapsedMs} from '../../domain/metrics/metrics';
+import {timelineSample,appendTimelineSample} from '../../domain/metrics/timeline';
+import type {SessionTimelineSample} from '../../application/ports/ProgressRepository';
 import {calculateScoreV2,type ScoreV2} from '../../domain/metrics/metricsV2';
 import {displayWpm} from '../../shared/utils/formatMetrics';
 import {scoreAsync} from '../../infrastructure/workers/scoreAsync';
@@ -66,6 +68,7 @@ export function Practice(){
  const [lastCode,setLastCode]=useState('');
  const lastCodeRef=useRef('');
  const composing=useRef(false);const savedId=useRef('');
+ const timelineRef=useRef<SessionTimelineSample[]>([]);
  const recentWords=useRef<string[]>([]);const inputRef=useRef<HTMLTextAreaElement>(null);
  const requestId=useRef(0);const navigate=useNavigate();
  useEffect(()=>()=>sessionStore.dispose(),[sessionStore]);
@@ -74,7 +77,7 @@ export function Practice(){
  const reset=(nextPrompt:TypingPrompt=prompt)=>{
   const fresh=createEngine(nextPrompt);sessionStore.update(fresh,true);setPrompt(nextPrompt);
   if(inputRef.current)inputRef.current.value='';
-  savedId.current='';setNow(0);setSaveNotice('');setPersistence('idle');setFinalScore(null);
+  timelineRef.current=[];savedId.current='';setNow(0);setSaveNotice('');setPersistence('idle');setFinalScore(null);
   composing.current=false;
   requestAnimationFrame(()=>inputRef.current?.focus());
  };
@@ -171,6 +174,12 @@ export function Practice(){
   if(session.startedAtMs===null||session.endedAtMs!==null)return;
   const id=window.setInterval(()=>{
    const at=performance.now();setNow(at);setLastCode(lastCodeRef.current);
+   const latest=sessionStore.current;
+   const sec=latest.startedAtMs===null?null:Math.floor((at-latest.startedAtMs)/1000);
+   if(sec!==null&&sec>=(timelineRef.current.at(-1)?.second??-1)){
+    const sample=timelineSample(latest,at);
+    if(sample)timelineRef.current=appendTimelineSample(timelineRef.current,sample);
+   }
    if(mode==='time'&&at-sessionStore.current.startedAtMs!>=duration*1000)stop(at);
   },250);
   return()=>window.clearInterval(id);
@@ -185,10 +194,13 @@ export function Practice(){
   const id=`${session.prompt.id}-${session.startedAtMs}`;
   if(savedId.current===id)return;savedId.current=id;
   setPersistence('saving');
+  const lastPoint=timelineSample(session,session.endedAtMs);
+  if(lastPoint)timelineRef.current=appendTimelineSample(timelineRef.current,lastPoint);
+  const storedTimeline=[...timelineRef.current];
   // Completed alignments can be quadratic. Never run them synchronously in render.
   void scoreAsync(session,session.endedAtMs).then(async summary=>{
    const record={id:crypto.randomUUID(),endedAt:new Date().toISOString(),mode:session.prompt.mode,
-    locale:session.prompt.locale,layoutId:session.prompt.layoutId,promptId:session.prompt.id,summary,schemaVersion:1 as const};
+    locale:session.prompt.locale,layoutId:session.prompt.layoutId,promptId:session.prompt.id,summary,schemaVersion:1 as const,timeline:storedTimeline};
    if(savedId.current===id)setFinalScore(summary);
    // Persistence is never performed by an input handler or animation frame.
    // Resolve within 1s even in a busy tab; fall back when idle callbacks are absent.

@@ -40,6 +40,12 @@ export function Results() {
       }
     }).catch(()=>{}).finally(()=>{if(live)setLoading(false);});return ()=>{live=false;};
   },[]);
+  const timeline=(last?.timeline??[]).filter(p=>Number.isInteger(p.second)&&p.second>=0
+   &&p.netWpm!==null&&Number.isFinite(p.netWpm)&&p.netWpm>=0&&p.netWpm<=2000
+   &&Number.isFinite(p.accuracy)&&p.accuracy>=0&&p.accuracy<=1).slice(0,3600);
+  const maxWpm=Math.max(10,...timeline.map(p=>p.netWpm??0));
+  const maxSecond=Math.max(1,...timeline.map(p=>p.second));
+  const points=timeline.map(p=>`${20+p.second/maxSecond*560},${155-(p.netWpm??0)/maxWpm*130}`).join(' ');
   return <section><PageHeader kicker="Результат / Achievement" title="Хороший ритм. Чёткий результат.">Каждый показатель получен из реального набора и сохранён только на этом устройстве.</PageHeader>
     {!last ? <div className="surface card"><Placeholder>{loading?'Загрузка результата…':'Нет сохранённого результата. Сначала завершите тест.'}</Placeholder><Link to="/practice" className="btn primary" style={{marginTop:18}}>Перейти к практике</Link></div>:
       <div className="result-layout"><div className="share-card"><div className="row spread"><strong>▦ TYKORA</strong><span className="tiny">RESULT / {new Date(last.endedAt).getFullYear()}</span></div>
@@ -57,7 +63,17 @@ export function Results() {
         <div className="lessonline"><span>Продолжительность</span><b>{(last.summary.durationMs/1000).toFixed(1)} с</b></div>
         <div className="thinrule"/>
         <h3>Что тренировать дальше</h3><p className="small" style={{marginTop:9}}>{weak.length ? `Наблюдаемые сложные сочетания (до пяти): ${weak.slice(0,5).map(x=>x.sequence).join(' · ')}. Попробуйте адаптивную практику.` : 'После нескольких полноценных сессий появятся рекомендации на основании наблюдений.'}</p>
-        <p className="small muted" style={{marginTop:10}}>График по секундам недоступен: текущий формат истории хранит итоговые показатели, а не временной ряд. Значения не реконструируются искусственно.</p>
+        {timeline.length>=2?<section aria-label="Скорость набора по секундам">
+          <h3>Наблюдаемая скорость по секундам</h3>
+          <svg className="chart" viewBox="0 0 600 180" role="img" aria-label="Наблюдаемые значения Net WPM по прошедшим секундам">
+            <line x1="20" y1="155" x2="580" y2="155" stroke="var(--border)"/>
+            <polyline points={points} fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinejoin="round"/>
+          </svg>
+          <details><summary>Таблица наблюдений по секундам ({timeline.length})</summary>
+          <div style={{overflowX:'auto'}}><table className="social-table"><caption>Фактические сохранённые интервальные значения, а не восстановление итогового WPM.</caption>
+          <thead><tr><th scope="col">Секунда</th><th scope="col">Net WPM</th><th scope="col">Точность</th><th scope="col">Попыток</th></tr></thead>
+          <tbody>{timeline.map(point=><tr key={point.second}><th scope="row">{point.second}</th><td>{point.netWpm?.toFixed(1)??'—'}</td><td>{(point.accuracy*100).toFixed(1)}%</td><td>{point.attempts}</td></tr>)}</tbody></table></div></details>
+         </section>:<p className="small muted" style={{marginTop:10}}>Нет достоверного временного ряда: он доступен только для новых сессий с достаточной длительностью, без реконструкции старых данных.</p>}
         <Link className="btn primary" style={{marginTop:22,width:'100%'}} to="/practice">Продолжить практику ↗</Link>
       </div></div>}
   </section>;
