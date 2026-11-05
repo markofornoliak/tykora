@@ -16,9 +16,10 @@ if(homeAtBootstrap&&root.dataset.tykoraHomePrerender==='1'){
   // The checked-in markup is an exact clean-profile Home DOM capture, not
   // decorative placeholder text. Hydrate to retain the existing LCP heading.
   ReactDOM.hydrateRoot(root,app,{
-    onRecoverableError:(error)=>{
-      // Never suppress or silently mask a hydration mismatch.
-      console.error('TYKORA_HOME_HYDRATION_RECOVERABLE',error);
+    onRecoverableError:(error,info)=>{
+      // Never suppress or silently mask a hydration mismatch; the React
+      // component stack identifies the first inconsistent subtree in CI.
+      console.error('TYKORA_HOME_HYDRATION_RECOVERABLE',error,'componentStack',info.componentStack);
     }
   });
 }else{
