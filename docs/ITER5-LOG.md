@@ -35,3 +35,9 @@
 - Mobile Lighthouse ×5 run #42019720034 at `38c25928`: LCP trials 1827.67/1956.52/1954.20/1957.90/1954.24ms; **median 1954.24ms** (objective ≤1000ms FAILED); median performance score 98, CLS 0.
 - Build entry chunk 150.37 kB gzip; this is not a fully modelled initial-network JS budget.
 - 10-minute memory profile, hardware IME, physical mobile Lighthouse and manually verified WCAG are **not performed**. Phases B–G remain unstarted because A is not accepted.
+
+## 2026-11-05 · A2 one-block trace evidence gate
+
+- Added Chrome CDP Tracing experiment (3 runs CPU×1 and 3 runs CPU×4) with event-part breakdown, next-rAF and double-rAF probes, task aggregate and one-variable CSS candidates. These are workflow *definitions* until run log exists.
+- Added dedicated ten-minute memory exercise with CDP JS heap snapshots before/after forced GC and DOM node counts. Requires full ten-minute workflow completion, not inferred from source.
+- Intentionally do not call an Event Timing sub-16ms result precise input-to-presentation; PerformanceObserver is thresholded.

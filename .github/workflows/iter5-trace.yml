@@ -1,0 +1,68 @@
+name: Iteration 5 A2 - Chrome trace and 10-minute heap
+on:
+  push:
+    branches: [feature/iter5-quality-design]
+    paths:
+      - 'scripts/iter5-trace.mjs'
+      - 'scripts/iter5-memory.mjs'
+      - '.github/workflows/iter5-trace.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chrome-trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: VITE_BASE_PATH=/ npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/iter5-trace.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4174/ > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/iter5-trace.log
+          exit 1
+      - run: node scripts/iter5-trace.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter5-a2-cdp-trace
+          path: performance-artifacts/iter5-traces/*
+          if-no-files-found: warn
+  heap-10min:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: VITE_BASE_PATH=/ npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/iter5-memory.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4174/ > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/iter5-memory.log
+          exit 1
+      - run: node scripts/iter5-memory.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter5-a2-heap-10min
+          path: performance-artifacts/iter5-memory/*
+          if-no-files-found: warn
