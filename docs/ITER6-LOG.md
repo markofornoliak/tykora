@@ -146,3 +146,9 @@
 
 - The first Phase0 script incorrectly implemented `p50` as nearest-rank fifth sample for even N=10. User requires honest median, so corrected to linear interpolation (average fifth/sixth) with unchanged N and strict configurations; source JSON is unaltered. This is a documented calculation repair, **not** threshold weakening.
 - Corrected matched [#42119203944](https://github.com/markofornoliak/tykora/actions/runs/42119203944): main LCP 1955.0003ms, iter5 1956.1089ms, iter6 **946.2403ms**; TBT **88.5ms**, Perf median 99.5 (99 and 100 in 10 runs), full JS **152509 gzip**. Previous five-value nearest-rank numbers left in historical ledger and superseded by this section; next workflow uses corrected method.
+
+## 2026-11-05 · Failing occasional Firefox native anchor navigation: fix true hydration commit race
+
+- [Quality #42121655509](https://github.com/markofornoliak/tykora/actions/runs/42121655509) at `0762caa9` reported only a Firefox mobile nav failure where a bottom-nav Classroom link left the URL `/`. This is intermittent and must not be mislabeled successful based on another run.
+- Root cause hypothesis: `ReactDOM.hydrateRoot()` **returns before hydration commits**, yet `src/main.tsx` had immediately marked `mounted=true` and removed the temporary capture listener. A click in that transition could be swallowed by React event replay or race with dead prerender links.
+- Small repair: retain real native hash delegation until `App`'s first `useEffect` after its React commit dispatches `tykora:hydrated`; only then remove listener. No test change. StrictMode effect repeats harmlessly due once listener. Must prove on repeated cross-browser CI; candidate until green.

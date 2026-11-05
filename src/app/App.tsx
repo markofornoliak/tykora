@@ -1,4 +1,4 @@
-import {lazy,Suspense,Profiler,type ProfilerOnRenderCallback} from 'react';
+import {lazy,Suspense,Profiler,useEffect,type ProfilerOnRenderCallback} from 'react';
 import {Navigate,Outlet,Route,Routes} from 'react-router-dom';
 import {Layout} from '../shared/ui/Layout';
 import {Home} from '../features/home/Home';
@@ -21,6 +21,7 @@ const onPracticeCommit:ProfilerOnRenderCallback=()=>{
  if(p)p.profilerCommits=(p.profilerCommits??0)+1;
 };
 export function App(){
+ useEffect(()=>{window.dispatchEvent(new Event('tykora:hydrated'));},[]);
  return <Routes>
   <Route element={<Layout/>}>
    {/* Home is eager and intentionally outside Suspense: a captured client-only

@@ -13,6 +13,12 @@ const homeAtBootstrap=(!hash||hash==='#'||hash==='#/')
   &&root.dataset.tykoraHomePrerender==='1';
 let scheduled=false;
 let mounted=false;
+// hydrateRoot schedules hydration and returns before React has committed it.
+// Keep native hash-link delegation until React actually commits App.
+window.addEventListener('tykora:hydrated',()=>{
+ mounted=true;
+ window.removeEventListener('click',prerenderNavigation,true);
+},{once:true});
 /** Keep links functional while the initial Home is still awaiting React.
  * A capture handler commits user navigation synchronously; the matching
  * React Router route mounts once the normal runtime finishes loading.
@@ -36,8 +42,6 @@ function bootstrap(){
  window.removeEventListener('hashchange',bootstrap);
  void import('./app/bootstrap').then(({mountApp})=>{
   mountApp();
-  mounted=true;
-  window.removeEventListener('click',prerenderNavigation,true);
  }).catch(error=>{
   console.error('TYKORA_BOOTSTRAP_FAILED',error);
  });
