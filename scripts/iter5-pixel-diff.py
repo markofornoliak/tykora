@@ -14,12 +14,20 @@ for path in files:
     if not actual.exists():raise SystemExit(f'Missing current screenshot: {actual}')
     a=Image.open(path).convert('RGBA')
     b=Image.open(actual).convert('RGBA')
-    if a.size!=b.size:raise SystemExit(f'Image dimensions differ: {path.name} {a.size}→{b.size}')
-    diff=ImageChops.difference(a,b)
+    dimensionMismatch=a.size!=b.size
+    if dimensionMismatch:
+        canvasSize=(max(a.width,b.width),max(a.height,b.height))
+        aa=Image.new('RGBA',canvasSize,(255,255,255,255))
+        bb=Image.new('RGBA',canvasSize,(255,255,255,255))
+        aa.paste(a,(0,0));bb.paste(b,(0,0))
+        diff=ImageChops.difference(aa,bb)
+    else:diff=ImageChops.difference(a,b)
     changed=sum(1 for px in diff.getdata() if max(px[:3])>24)
-    ratio=changed/(a.width*a.height)
-    if changed:diff.convert('RGB').save(out/(path.stem+'-diff.png'))
-    record={'name':path.name,'changedPixels':changed,'ratio':ratio,'pass':ratio<=threshold}
+    ratio=changed/(diff.width*diff.height)
+    if changed or dimensionMismatch:diff.convert('RGB').save(out/(path.stem+'-diff.png'))
+    record={'name':path.name,'changedPixels':changed,'ratio':ratio,
+      'referenceSize':a.size,'currentSize':b.size,'dimensionMismatch':dimensionMismatch,
+      'pass':not dimensionMismatch and ratio<=threshold}
     rows.append(record)
     print('TYKORA_PIXEL_DIFF',json.dumps(record))
 summary={'baselineRunId':42025942260,'baselineSha':'0ded9a7dff818509589c55ac53b0d8179d060d96',
