@@ -166,3 +166,8 @@ Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95
 ## 2026-11-05 · Current HEAD hydration mismatch repair candidate
 
 - Latest CI at d168891f failed three Chromium/Firefox/WebKit tests due to production React #418 text hydration mismatch. Root cause: checked-in static Home captures RU strings after persisted defaults apply, whereas i18next initializes from navigator.language (often en-US) before hydration. Added RU initial language only when matching Home prerender is in document; settings still hydrate after first render. Added a browser-locale en-US regression; release prohibited until same-SHA CI validates this fix. React hydration mismatch logs remain enabled (not suppressed).
+
+## 2026-11-05 · Home text-node hydration diagnosis
+
+- Instrumented React `onRecoverableError` and found the first mismatch in the Layout `main > div.topbar > span`. Captured live `innerHTML` merges adjacent DOM text nodes, but React 19 hydration expects distinct sibling text nodes for JSX such as `TYKORA / {t('home')}`. Production #418 explicitly indicated a text mismatch.
+- Replaced adjacent static/dynamic JSX text siblings with a single template-string child in topbar, footer, Home CTA, percentage ring and daily-target display. This preserves visible text and avoids relying on missing React SSR `<!-- -->` comment separators in manually captured DOM. Hydration acceptance requires green exact-HEAD Chromium/Firefox/WebKit E2E. No mismatch was silently suppressed.

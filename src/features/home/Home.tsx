@@ -38,7 +38,7 @@ export function Home(){
      <h2>{last?t('Развивайте свой навык.','Build on your last session.'):t('Начните с вашей настоящей скорости.','Start with your real baseline.')}</h2>
      <p>{t('Только реальные измерения · Локальные данные · Без подписки','Only measured results · Local data · No subscription')}</p>
     </div>
-    <Link className="btn light-button" to="/practice">{last?t('Продолжить урок','Continue lesson'):copy.practiceNext} ↗</Link>
+    <Link className="btn light-button" to="/practice">{`${last?t('Продолжить урок','Continue lesson'):copy.practiceNext} ↗`}</Link>
    </div>
    <div className="surface card overview-progress">
     <div className="eyebrow">{t('Цель на сегодня','Today’s practice goal')}</div>
@@ -49,9 +49,9 @@ export function Home(){
       <circle cx="60" cy="60" r="47" fill="none" stroke="var(--accent)" strokeWidth="8"
        strokeLinecap="round" transform="rotate(-90 60 60)" strokeDasharray={(2*Math.PI*47).toFixed(2)}
        strokeDashoffset={(2*Math.PI*47*(1-progress)).toFixed(2)}/>
-      <text x="60" y="66" textAnchor="middle" fill="var(--text)" fontSize="24" fontWeight="700">{(progress*100).toFixed(0)}%</text>
+      <text x="60" y="66" textAnchor="middle" fill="var(--text)" fontSize="24" fontWeight="700">{`${(progress*100).toFixed(0)}%`}</text>
      </svg>
-     <div><div className="big">{minutesToday.toFixed(1)} <span>/ {dailyTarget} {t('мин','min')}</span></div>
+     <div><div className="big">{`${minutesToday.toFixed(1)} `}<span>{`/ ${dailyTarget} ${t('мин','min')}`}</span></div>
       <p className="small">{plan?t('Из вашего личного плана','From your personal plan'):t('Пример цели: её можно изменить в Академии','Sample goal: customize it in Academy')}</p></div>
     </div>
     <p className="small">{last?t('Последняя скорость: ','Last recorded speed: ')+displayWpm(last.summary.netWpm)+' WPM':t('Первое измерение ещё не выполнено.','Your first measurement is still ahead.')}</p>
