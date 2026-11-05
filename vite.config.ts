@@ -13,9 +13,6 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      // The default synchronous registerSW.js was render-blocking in Lighthouse;
-      // bootstrap the unchanged sw.js after load/idle instead.
-      injectRegister: null,
       includeAssets: ['icon.svg','apple-touch-icon.png'],
       manifest: {
         name: 'TYKORA — The art and science of typing',

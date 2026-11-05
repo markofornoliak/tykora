@@ -18,3 +18,7 @@ Eight immutable commit checkpoints from `3ef431f`/`75663d2` to `0ded9a7`, five L
 **Root-cause boundary:** the combination of both lazy persistence import paths (Home and uiStore) changes first-load LCP behavior; restoring either old import graph removes ~320ms of measured LCP delay. This finding is a causal code-isolation comparison, **not** proof of exact renderer wait time. Static HTML shell is *not* the primary culprit. Additional LCP element inspection is still required.
 
 **Chosen repair candidate:** reinstate eager facade import in `uiStore`; retain the after-first-paint `Layout` call to load settings and existing async Home data hydration. This avoids migration and removes the measured cold-start bundle structure associated with the regression. It may raise initial JS gzip from ~112.77kB back toward ~150.4kB and **does not meet the ≤105kB entry budget**; that trade-off is explicitly flagged. Candidate must be measured again on the latest SHA.
+
+## Idle Service Worker registration A/B (rejected)
+
+Raw Lighthouse report at current repair baseline showed Home `<h1>` as LCP element, TTFB 452.5ms, render delay 1502.5ms, and a modelled `registerSW.js` blocking opportunity ~301ms. Deferring registration until load/idle yielded LCP median **1952.95ms** over five Lighthouse 12.8.2 runs at SHA `9cc89e0d` (Actions #42079644192), versus approximately 1954ms pre-change. This does not meet target ≤1200ms and the difference is within run variability. Restored VitePWA's original bootstrap rather than keep a semantic change without measured LCP benefit.

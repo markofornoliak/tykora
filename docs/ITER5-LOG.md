@@ -144,3 +144,8 @@ Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95
 - Inspected raw Lighthouse 12.8.2 report (5-run LCP SHA c2bd9d42): LCP is `main#main-content > section > header.pagehead > h1`, render delay 1502.5ms of 1955ms; Lighthouse estimated registerSW.js render blocker 301ms and CSS 151ms.
 - Added VitePWA `injectRegister:null`, preserving offline worker registration via native `navigator.serviceWorker.register()` on load + requestIdleCallback, no skipWaiting; unlike blocking PWA script it does not run in first-paint critical path.
 - Hypothesis only until 5× Lighthouse and PWA E2E on the new exact SHA; do not claim 1.2s or 1.0s. Static Home SSR/hydration remains unimplemented; previously injected HTML shell without hydration regressed LCP.
+
+## 2026-11-05 · Deferred PWA registration experiment rejected
+
+- Matched Lighthouse 12.8.2 mobile 5× at `9cc89e0d0964fc64144452aec020f3515da3bc46`, Actions #42079644192: LCP median **1952.95ms**, trials 1849 /1954 /1957 /1953 /1953; CLS 0. The ~1ms difference vs ~1954ms earlier is not a reproducible 300ms gain.
+- Since deferring `registerSW.js` did not materially shorten LCP and changed offline bootstrap semantics, reverted the experiment to the previously passing PWA registration. No fake 1.2s success claim.
