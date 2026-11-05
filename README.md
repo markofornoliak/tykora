@@ -74,6 +74,7 @@ The 10 UI languages only cover the shell and primary labels, not every page or l
 
 - [Deployment and release checklist](docs/RELEASE.md)
 - [Privacy](docs/PRIVACY.md)
+- [Terms and product limitations](docs/TERMS.md)
 - [Matched iteration 6 performance baseline](docs/PERF-v0.10-BASELINE.md)
 - [Iteration 6 live engineering log](docs/ITER6-LOG.md)
 - [Naming collision review (decision pending)](docs/NAMING.md)

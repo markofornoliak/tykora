@@ -130,3 +130,8 @@
 
 - Added `.github/workflows/iter6-supply-chain.yml`, triggered only by its own workflow or lockfile changes (never by production deploy). Builds an inspectable CycloneDX SBOM using locked `npm ci` dependency tree, runs native `npm audit --json` **without exceptions, `--force`, or suppression**, prints severity and uploads raw JSON even when audit fails.
 - Missing/invalid report fails. Vulnerabilities if any remain BLOCKER until resolved by narrow package updates and full regression checks; no unsupported "audit clean" claim at writing. No artifact published as a software release.
+
+## 2026-11-05 · F: privacy and terms documentation + real network requests test
+
+- Replaced stale v0.8-style privacy text with current human-readable Beta v0.9 local IndexedDB/backup disclosure, hosting caveat, optional manual WebRTC STUN/IP caveat and data deletion options. Added `docs/TERMS.md` (MIT license, no certificates, no cloud backup, prototype behavior) and README link, without asserting legal advice or unattested external-host guarantees.
+- Added `e2e/iter6-network.spec.ts`: observe actual browser request events on real Home, Practice and Profile first loads across Chromium, Firefox, WebKit, including startup/idle; assert every HTTP(S) URL same-origin and zero external requests absent consent, without interception/mocks. No claimed PASS until CI returns.
