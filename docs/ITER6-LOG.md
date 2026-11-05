@@ -27,3 +27,10 @@
 - The size-limit test uploads a 25 MiB + 1-byte file and requires rejection before parsing. The migration tests assert native IDB version 40 and the exact previous score after each restart.
 - No production code, schema, fixture truth labels, thresholds, or golden snapshots were changed. Synthetic legacy data is **not** claimed to be actual customer exports. Crash-in-the-middle and physical device behavior remain **UNTESTED**.
 - Status at commit authoring: candidate / **CI pending**, no green claim until full Chromium/Firefox/WebKit results.
+
+## 2026-11-05 · Track F: P2P bounded message processing candidate
+
+- Hypothesis F2: manually signaled WebRTC's payload-size checks do not bound an incoming message flood; a per-peer 40/s rate gate and capped outgoing progress frequency prevent unbounded JSON parsing and channel sends without changing the wire schema.
+- Experiment F2: `src/infrastructure/peer/manualWebRtc.ts` adds `PeerRateGate`; progress sends limited to 40 Hz but completion messages remain unconditional, invalid fractions are dropped, channel handlers are cleared on close.
+- `src/infrastructure/peer/manualWebRtc.test.ts`: deterministic count-window, independent-peer, backwards-clock, oversized SDP and room/role checks.
+- The 40/s bound is a new *security behavior*, **not** a reduced test workload. Existing user-side typing and scoring remain unchanged; no STUN defaults changed. Exact CI status pending; no physical multi-peer reliability claim.

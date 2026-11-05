@@ -23,10 +23,29 @@ function waitIceComplete(pc:RTCPeerConnection):Promise<void>{
   pc.addEventListener('icegatheringstatechange',onState);
  });
 }
+/** Per-connection input gate: 40 inbound data-channel messages per rolling second.
+ * Deliberately use a fixed count (not string content) to avoid doing JSON.parse
+ * on unbounded bursts from an untrusted remote peer.
+ */
+export class PeerRateGate {
+ private windowStart=-1;
+ private count=0;
+ allow(nowMs:number):boolean {
+  if(!Number.isFinite(nowMs))return false;
+  if(this.windowStart<0||nowMs<this.windowStart||nowMs-this.windowStart>=1000){
+   this.windowStart=nowMs;this.count=0;
+  }
+  if(this.count>=40)return false;
+  this.count++;
+  return true;
+ }
+}
 export class ManualPeer {
  private readonly pc:RTCPeerConnection;
  private channel:RTCDataChannel|null=null;
  private readonly room:string;
+ private readonly incoming=new PeerRateGate();
+ private lastProgressSendAt=-Infinity;
  private readonly onStatus:(value:string)=>void;
  private readonly onProgress:(progress:PeerProgress)=>void;
  private readonly onStart:(start:PeerStart)=>void;
@@ -41,7 +60,7 @@ export class ManualPeer {
   channel.onopen=()=>this.onStatus('connected');
   channel.onclose=()=>this.onStatus('disconnected');
   channel.onmessage=(event:MessageEvent)=>{
-   if(typeof event.data!=='string'||event.data.length>1000)return;
+   if(typeof event.data!=='string'||event.data.length>1000||!this.incoming.allow(Date.now()))return;
    try{const m=JSON.parse(event.data) as Record<string,unknown>;
     if(m.kind==='progress'&&m.room===this.room&&typeof m.fraction==='number'&&Number.isFinite(m.fraction)&&m.fraction>=0&&m.fraction<=1&&typeof m.finished==='boolean')this.onProgress(m as unknown as PeerProgress);
     if(m.kind==='start'&&m.room===this.room&&typeof m.epochMs==='number'&&Number.isFinite(m.epochMs)&&Math.abs(m.epochMs-Date.now())<60_000)this.onStart(m as unknown as PeerStart);
@@ -69,8 +88,22 @@ export class ManualPeer {
   this.channel.send(JSON.stringify({kind:'start',room:this.room,epochMs} satisfies PeerStart));
  }
  send(fraction:number,finished:boolean):void{
-  if(this.channel?.readyState==='open')this.channel.send(JSON.stringify({kind:'progress',room:this.room,fraction:Math.max(0,Math.min(1,fraction)),finished} satisfies PeerProgress));
+  if(this.channel?.readyState!=='open'||!Number.isFinite(fraction))return;
+  const now=Date.now();
+  // Cap regular progress traffic at 40 Hz. A final completion event must
+  // never be dropped just because it follows another progress message.
+  if(!finished&&now-this.lastProgressSendAt<25)return;
+  this.lastProgressSendAt=now;
+  this.channel.send(JSON.stringify({kind:'progress',room:this.room,fraction:Math.max(0,Math.min(1,fraction)),finished} satisfies PeerProgress));
  }
- close():void{this.channel?.close();this.pc.close();}
+ close():void{
+  if(this.channel){
+   this.channel.onmessage=null;
+   this.channel.onopen=null;
+   this.channel.onclose=null;
+   this.channel.close();
+  }
+  this.pc.close();
+ }
  get connected():boolean{return this.channel?.readyState==='open';}
 }
