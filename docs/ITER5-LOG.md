@@ -60,3 +60,10 @@
 - Added keyboard, forced-colors and theme-selection Playwright smoke tests; full 9 routes ×24 themes ×3 viewports axe Chromium matrix as a dedicated CI job, leaving default 3-browser audit intact.
 - Added visual capture job for 36 Chromium snapshots across 3 palettes and 3 widths; no image-golden acceptance claimed.
 - Manual VoiceOver, NVDA, actual zoom, IME/dead-key/AltGr, physical mobile and touch are NOT conducted.
+
+## 2026-11-05 · A2 evaluated before progressing to B/C
+
+- CDP trace x6 at SHA 43045e5b, job #42022735338: CPU×1 observed p95 24ms (FAIL 16ms); CPU×4 observed p95 32ms (boundary); presentation delay dominates measured components.
+- 10-minute heap #42022735338: +1,107,904 bytes after forced GC, 514→516 DOM nodes; no zero-growth claim.
+- Static HTML startup shell was reverted at SHA a963528d after mobile LCP regression; dynamic Dexie import remained, but five-run LCP still ~2272.7ms, above earlier 1954ms.
+- CI token role audit 24×15 passed at 94dd8e8f; report docs/THEME-CONTRAST.md.

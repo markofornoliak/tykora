@@ -72,3 +72,7 @@ Build log for the same source: Vite entry `index-*.js` **150.37kB gzip**, CSS **
 4. **10-minute memory leak test — NOT RUN.** Requires controlled prolonged session and memory snapshots, not extrapolation from this 500-input benchmark.
 5. **True input-to-paint <16ms — NOT PROVEN.** Event Timing is thresholded; two-rAF is only a bound.
 6. **Manual mobile / IME / hardware — NOT RUN.** Automated cross-browser E2E is not a substitute.
+
+## A2 trace evidence and failed gate
+
+A2 measured report: [A2-TRACE.md](A2-TRACE.md) (Chrome trace runs ×1/×4, 3 each, experimental CSS candidates, 10-minute heap, simulated Home LCP, and all emitted Vite chunks). **CPU×1 p95 24ms FAIL**, **CPU×4 32ms observed only**, simulated LCP ~2.27s FAIL, heap +1.108MB (not necessarily leak). B/C work proceeds despite these open failures.
