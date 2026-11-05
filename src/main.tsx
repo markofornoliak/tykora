@@ -25,6 +25,6 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
         });
     };
     if ('requestIdleCallback' in window) window.requestIdleCallback(register, {timeout: 4000});
-    else window.setTimeout(register, 1500);
+    else setTimeout(register, 1500);
   }, {once: true});
 }
