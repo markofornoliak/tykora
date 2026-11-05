@@ -23,7 +23,7 @@ export function KeyboardHeatmap({nodes,locale}:{nodes:readonly SkillNode[];local
    return <span key={key} className="heatmap-key" style={{background:bin===null?'var(--panel)':ramp[bin],color:bin===null?'var(--text)':bin<2?'white':'#101815'}}
     title={node?key+': '+node.failures+' errors out of '+node.samples:'Нет наблюдений'}>{key}</span>;
   })}</div>)}</div>
-  <div className="heatmap-legend" aria-hidden="true">Меньше ошибок {ramp.map((color,i)=><i key={color} style={{background:color}}/>)} Больше ошибок</div>
+  <div className="heatmap-legend" aria-hidden="true">Меньше ошибок {ramp.map(color=><i key={color} style={{background:color}}/>)} Больше ошибок</div>
   <details><summary>Таблица ошибок клавиатуры ({keys.length} клавиш)</summary>
    <div className="social-table-scroll"><table className="social-table">
     <caption>Реальные наблюдения по клавишам выбранной раскладки. Прочерк означает отсутствие данных.</caption>
