@@ -171,3 +171,8 @@ Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95
 
 - Instrumented React `onRecoverableError` and found the first mismatch in the Layout `main > div.topbar > span`. Captured live `innerHTML` merges adjacent DOM text nodes, but React 19 hydration expects distinct sibling text nodes for JSX such as `TYKORA / {t('home')}`. Production #418 explicitly indicated a text mismatch.
 - Replaced adjacent static/dynamic JSX text siblings with a single template-string child in topbar, footer, Home CTA, percentage ring and daily-target display. This preserves visible text and avoids relying on missing React SSR `<!-- -->` comment separators in manually captured DOM. Hydration acceptance requires green exact-HEAD Chromium/Firefox/WebKit E2E. No mismatch was silently suppressed.
+
+## 2026-11-05 · Critical stylesheet CLS gate
+
+- Previous runtime removal of inline critical CSS repaired all 36 pinned screenshot diffs (#42089180681) but introduced a repeatable Lighthouse CLS 0.024632 on SHA 257a083a (mobile ×5, run #42089180649). This is a **real regression**, not accepted.
+- New candidate puts the inline fallback in `@layer tykora-critical`, removes late style-node deletion and avoids a standalone body line-height rule. Unlayered production CSS should win the cascade without a post-paint style transition. Requires exact-SHA 5-run mobile CLS and 36-image pixel diff before claiming acceptance.

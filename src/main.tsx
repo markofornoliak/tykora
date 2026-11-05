@@ -28,11 +28,5 @@ if(homeAtBootstrap&&root.dataset.tykoraHomePrerender==='1'){
   ReactDOM.createRoot(root).render(app);
 }
 
-// Inline critical paint rules must not override the complete, versioned
-// stylesheet in the settled interactive UI. The load event guarantees that
-// render-blocking CSS resources are available before removing the fallback.
-function releaseCriticalHomeCss(){
- document.querySelector('style[data-tykora-critical]')?.remove();
-}
-if(document.readyState==='complete')releaseCriticalHomeCss();
-else window.addEventListener('load',releaseCriticalHomeCss,{once:true});
+// The critical Home fallback is in a lower-priority cascade layer. The
+// unlayered production stylesheet takes precedence without late CSS removal.
