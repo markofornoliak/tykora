@@ -76,3 +76,7 @@ Build log for the same source: Vite entry `index-*.js` **150.37kB gzip**, CSS **
 ## A2 trace evidence and failed gate
 
 A2 measured report: [A2-TRACE.md](A2-TRACE.md) (Chrome trace runs ×1/×4, 3 each, experimental CSS candidates, 10-minute heap, simulated Home LCP, and all emitted Vite chunks). **CPU×1 p95 24ms FAIL**, **CPU×4 32ms observed only**, simulated LCP ~2.27s FAIL, heap +1.108MB (not necessarily leak). B/C work proceeds despite these open failures.
+
+## Five-run input gate
+
+CDP ×1 and ×4, five runs each: CPU×1 p95 24ms (FAIL ≤16ms); CPU×4 p95 32/32/32/40/32ms (FAIL robust ≤32ms). See docs/INPUT-PRESENTATION.md and Actions #42039411859.

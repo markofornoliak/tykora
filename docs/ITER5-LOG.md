@@ -128,3 +128,7 @@
 ## 2026-11-05 · E audited translated-page scope
 
 - Added RU/EN scope matrix with explicit Profile/Race/Classroom gaps and a six-route English UI Playwright smoke test. Existing i18n check covers only registered chrome/page copy, not all hardcoded JSX. No full RU/EN completion claim.
+
+## 2026-11-05 · Ten-trial latency result
+
+Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95 CPU×1 all 24ms; CPU×4=32,32,32,40,32ms; unpaired CDP EventLatency. No verified end-to-end presentation success; A remains open.

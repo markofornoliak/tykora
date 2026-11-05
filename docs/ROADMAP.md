@@ -40,3 +40,5 @@ For each claim, record command, exact commit SHA, test log, browser/device and t
 - Phase A2 is one time-bounded engineering pass. Start B and C after that pass even if latency goals remain open; document any FAIL explicitly.
 
 **A2 evidence update:** [A2 trace report](A2-TRACE.md) shows observed CPU×1 p95 24ms (FAIL ≤16), CPU×4 p95 32ms (boundary), simulated LCP ≥2.27s (FAIL ≤1.2s), 10-minute heap +1.108MB (no literal zero growth), initial graph ≤baseline not yet established. Proceeded to B/C after one A2 block as requested; **A not fully accepted**.
+
+**Five-run CDP acceptance update (2026-11-05):** p95 ×1=24ms (FAIL 16), ×4=32/32/32/40/32ms (FAIL robust 32). EventLatency stage slices unpaired; no adopted frame budget / no A acceptance. See docs/INPUT-PRESENTATION.md.
