@@ -4,6 +4,7 @@
 
 - Prototype off-React typing-session store with 250 ms React snapshots, unchanged engine/scoring/storage contract, and bounded imperative target painting. Benchmarks and all-browser acceptance are mandatory before phase-A sign-off.
 - Extend the input benchmark output with observed Event Timing p50/p99 (still thresholded at 16 ms).
+- Follow-up prototype replaces full 288-node class scan with changed-span painting and defers persistence to browser idle.
 
 
 ## 0.9.0 Beta · 2026-10-26 · GitHub Pages

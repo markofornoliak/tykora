@@ -33,12 +33,15 @@ export const TargetDisplay=memo(function TargetDisplay({target,store,blur}:{targ
   let start=-1;
   let nodes:HTMLSpanElement[]=[];
   let frame:number|null=null;
+  let previousTyped:readonly string[]=[];
+  let previousPosition=-1;
   function redraw(){
    const state=store.current;
    const pos=currentPosition(state);
    const typed=typedGraphemes(state);
    const wantedStart=Math.max(0,Math.floor(pos/96)*96-96);
-   if(start!==wantedStart){
+   const rebuild=start!==wantedStart;
+   if(rebuild){
     start=wantedStart;
     const end=Math.min(chars.length,start+288);
     const fragment=document.createDocumentFragment();
@@ -60,11 +63,23 @@ export const TargetDisplay=memo(function TargetDisplay({target,store,blur}:{targ
     }
     root!.replaceChildren(fragment);
    }
-   for(let j=0;j<nodes.length;j++){
-    const i=start+j;
+   const paint=(i:number)=>{
+    if(i<start||i>=start+nodes.length)return;
     const style=i<typed.length?(typed[i]===chars[i]?'typed':'err'):(i===pos&&state.endedAtMs===null?'caret':'');
-    if(nodes[j].className!==style)nodes[j].className=style;
+    const node=nodes[i-start];
+    if(node.className!==style)node.className=style;
+   };
+   if(rebuild){
+    for(let i=start;i<start+nodes.length;i++)paint(i);
+   }else{
+    // Most inputs append one grapheme. Only changed glyphs and caret
+    // need DOM inspection; no per-frame scan of 288 span nodes.
+    const end=Math.min(start+nodes.length,Math.max(previousTyped.length,typed.length));
+    for(let i=start;i<end;i++)if(previousTyped[i]!==typed[i])paint(i);
+    paint(previousPosition);paint(pos);
    }
+   previousTyped=typed;
+   previousPosition=pos;
   }
   function schedule(){
    if(frame!==null)return;

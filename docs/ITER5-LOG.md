@@ -15,3 +15,9 @@
 - Switched the target display to a bounded 288-grapheme native DOM window updated via requestAnimationFrame; input handlers no longer publish React state per keypress.
 - Added unit regressions for coalescing/finish; moved physical-key hint updates onto the existing 250 ms clock.
 - Extended benchmark metrics with p50/p99. Build and cross-browser tests must still complete; no performance target is claimed.
+
+## 2026-11-05 · Phase A second candidate (awaiting measurement)
+
+- First matched runs: baseline `0ce60bc` ordinary keydown p95 **32ms**, candidate `e02aea1` **32ms**, both 500/500 inputs and CLS 0; ordinary/profiler commit count **514→4** in separately instrumented builds. Target <=16ms not reached.
+- Optimized imperative paint to inspect changed grapheme spans and caret only, instead of all 288 span nodes on every animation frame. Added idle scheduling for completed-session persistence with 1s timeout/fallback. No changes to scoring formulas or database shape.
+- Fresh performance and all-browser CI required. See run logs, not just source claims.

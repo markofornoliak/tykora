@@ -188,6 +188,12 @@ export function Practice(){
    const record={id:crypto.randomUUID(),endedAt:new Date().toISOString(),mode:session.prompt.mode,
     locale:session.prompt.locale,layoutId:session.prompt.layoutId,promptId:session.prompt.id,summary,schemaVersion:1 as const};
    if(savedId.current===id)setFinalScore(summary);
+   // Persistence is never performed by an input handler or animation frame.
+   // Resolve within 1s even in a busy tab; fall back when idle callbacks are absent.
+   await new Promise<void>(resolve=>{
+    if(typeof window.requestIdleCallback==='function')window.requestIdleCallback(()=>resolve(),{timeout:1000});
+    else window.setTimeout(resolve,0);
+   });
    await repositories.progress.saveSession(record);
    if(savedId.current===id){setSaveNotice('Результат сохранён только на этом устройстве.');setPersistence('saved');}
    try{await repositories.skills.incorporate(session);}catch{
