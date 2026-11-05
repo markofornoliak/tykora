@@ -108,3 +108,10 @@
 - `docs/ROADMAP.md` appended iteration 6 verified and unverified status, no existing failed objectives relabeled as passed.
 - `docs/RELEASE.md` removes the obsolete statement that no lockfile or production release exists; current merge/deploy restrictions remain explicit.
 - `docs/GITHUB-ABOUT.md` supplies owner-review description and topics but **does not claim** GitHub About was edited; GitHub integration lacks that metadata-write action. Real light/dark screenshots and GIF are missing and not invented.
+
+## 2026-11-05 · P4: isolated Preact/compat runtime size experiment
+
+- Earlier [Actions #42119203944](https://github.com/markofornoliak/tykora/actions/runs/42119203944), single-runner N=10 at `1c97ec25`: main LCP 1954.86ms, iter5 1955.63ms, iter6 LCP **946.17ms**, TBT **85ms**, CLS 0, Performance **99**. Full interactive bootstrap **152509 gzip bytes** vs iter5 **151870**. This passes simulated LCP and TBT, **FAILS JS ≤90k/105k and Performance 100**; P1 is not fully accepted. Only static eager graph 1468 bytes; explicitly NOT reported as interactive JS total.
+- Hypothesis P4: ReactDOM and router/runtime account for much of the 152.5k gzip startup cost; `preact/compat` might reduce startup payload and main-thread long tasks. Preact is NOT automatically equivalent; React hydration, contexts, accessibility, events, router, Dexie and PWA all must behave identically.
+- Experiment: opt-in `TYKORA_PREACT_EXPERIMENT=1` Vite alias; isolated CI `npm install --no-save --no-package-lock preact@10.27.0`, same-runner production React vs Preact builds **Lighthouse x10 each**; full Chromium/Firefox/WebKit E2E and production offline check on Preact; artifacts contain per-chunk startup budget and raw reports.
+- There is **no** Preact dependency in `package.json` or published build; environment flag is off by default. Adopt only if performance gain is statistically meaningful and all gates pass, else discard/disable experiment. CI **pending**.
