@@ -31,7 +31,6 @@ export function Home(){
   .reduce((sum,s)=>sum+s.summary.durationMs/60000,0);
  const dailyTarget=plan?.dailyMinutes??15;
  const progress=Math.min(1,minutesToday/dailyTarget);
- const target=plan?.targetWpm??80;
  return <section><PageHeader kicker="TYKORA / Personal mastery" title={copy.homeTitle}>{copy.homeIntro}</PageHeader>
   <div className="welcome">
    <div className="feature">
