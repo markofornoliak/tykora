@@ -115,3 +115,15 @@ Ordinary-least-squares **+202104 bytes/session**, total **+1196188 bytes** (befo
 ### Iter6 Phase P1 (conditional, NOT accepted)
 
 [Candidate `ac695bcfe19b911f281d24010d9a7c94de9a430e`, matched Lighthouse x10](https://github.com/markofornoliak/tykora/actions/runs/42117102911) had main LCP median 1954.7715ms, iter5 1953.8973ms, iter6 candidate 917.3164ms (range 904.2743–955.3455ms). CLS=0, Perf=99. However TBT **118ms** on candidate versus 26ms on iter5, FAIL ≤100ms, and Firefox mobile navigation E2E FAILED on one run. Static eager JS graph 1322 bytes omits dynamic React bootstrap; **do not** compare that to 90k/105k full initial JS budget. The Phase0 harness now also computes interactive startup graph and browser JS network transfer. Re-run after navigation fix before deciding whether to keep P1.
+
+### Correction of quantile arithmetic (raw Lighthouse evidence, 2026-11-05)
+
+All earlier `ITER6_PHASE0_*` summaries used **nearest-rank p50**, the 5th ordered value when N=10, and incorrectly called this a mathematical median. The original raw reports are intact. Recomputing as the arithmetic mean of 5th and 6th observations, from the exact same [run #42119203944](https://github.com/markofornoliak/tykora/actions/runs/42119203944) **without discarding trials**, gives:
+
+| Matched variant | Genuine N=10 LCP median | Genuine TBT median | Perf score median (before integer UI rounding) | CLS median | Full Home interactive JS gzip |
+|---|---:|---:|---:|---:|---:|
+| main `0a7d167b` | **1955.0003 ms** | 16.25 ms | 98 | 0 | 150491 bytes |
+| iter5 `244c5060` | **1956.1089 ms** | 16.0 ms | 98 | 0 | 151870 bytes |
+| iter6 `1c97ec25` | **946.2403 ms** | 88.5 ms | **99.5** (trial scores 99–100) | 0 | **152509 bytes** |
+
+LCP ranges unchanged: main 1952.9447–1968.6435ms, iter5 1805.3122–1958.6371ms, iter6 904.5901–952.3355ms. The corrected interpolating percentile/median function is committed to the harness for all subsequent runs (R type 7). This is a **calculation correction**, not a change of workload or acceptance target. Performance 100 remains **NOT MET on all runs**, since some scored 99. LCP/TBT pass their numerical *simulated* targets; JS fails.

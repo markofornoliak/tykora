@@ -7,7 +7,12 @@ const required = (ok, message) => { if (!ok) throw new Error(message); };
 const percentile = (numbers, quantile) => {
   const sorted = numbers.filter(Number.isFinite).sort((a, b) => a - b);
   required(sorted.length > 0, 'No valid observations');
-  return sorted[Math.max(0, Math.ceil(quantile * sorted.length) - 1)];
+  required(quantile >= 0 && quantile <= 1, 'Quantile outside [0,1]');
+  // Linear quantile interpolation (R type 7): for even N the median is
+  // the arithmetic mean of the two middle order statistics.
+  const index = (sorted.length - 1) * quantile;
+  const lower = Math.floor(index), upper = Math.ceil(index);
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (index - lower);
 };
 const describe = values => ({
   n: values.length,
