@@ -18,7 +18,7 @@ for(const route of ['/', '/#/themes'] as const){
     await nav.getByRole('link',{name:'Класс'}).click();
     await expect(page).toHaveURL(/#\/classroom/);
     release();
-    await expect(page.getByRole('heading',{name:/Класс|Classroom/i}).first()).toBeVisible();
+    await expect(page.getByRole('heading',{name:/Обучение без аккаунтов|Learning without accounts/i}).first()).toBeVisible();
    }else{
     // The HTML contains Home markup, but a deep-linked app must clear it
     // synchronously to avoid a visible/selectable control that cannot work.

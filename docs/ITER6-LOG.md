@@ -115,3 +115,8 @@
 - Hypothesis P4: ReactDOM and router/runtime account for much of the 152.5k gzip startup cost; `preact/compat` might reduce startup payload and main-thread long tasks. Preact is NOT automatically equivalent; React hydration, contexts, accessibility, events, router, Dexie and PWA all must behave identically.
 - Experiment: opt-in `TYKORA_PREACT_EXPERIMENT=1` Vite alias; isolated CI `npm install --no-save --no-package-lock preact@10.27.0`, same-runner production React vs Preact builds **Lighthouse x10 each**; full Chromium/Firefox/WebKit E2E and production offline check on Preact; artifacts contain per-chunk startup budget and raw reports.
 - There is **no** Preact dependency in `package.json` or published build; environment flag is off by default. Adopt only if performance gain is statistically meaningful and all gates pass, else discard/disable experiment. CI **pending**.
+
+## 2026-11-05 · Correct delayed-bootstrap browser assertion (not lowered)
+
+- [Quality runs #42119991377 / #42119984730](https://github.com/markofornoliak/tykora/actions/runs/42119991377) failed in all 3 browsers only at the NEW test `iter6-bootstrap.spec.ts`: it expected a Classroom heading named “Класс” / “Classroom”, but actual full page title is “Обучение без аккаунтов.” / “Learning without accounts.” (verified in source). The prior assertion of exact hash route `/#/classroom` passed; no evidence of a navigation failure at this step.
+- Keep the forced real-module stall, navigation and hash assertions untouched; replace wrong heading expectation with the actual semantic h1 localized title and repeat cross-browser tests. No product runtime code changed in this experiment.
