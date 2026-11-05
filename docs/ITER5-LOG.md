@@ -132,3 +132,9 @@
 ## 2026-11-05 · Ten-trial latency result
 
 Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95 CPU×1 all 24ms; CPU×4=32,32,32,40,32ms; unpaired CDP EventLatency. No verified end-to-end presentation success; A remains open.
+
+## 2026-11-05 · Reviewed B visual golden baseline
+
+- Inspected archived 36 PNGs from run #42041281178, SHA 722b6661, 3 themes ×3 viewports ×4 routes. Owner explicitly asked to approve reference screenshots.
+- Pinned this current archive as CI golden at 1.5% pixel mismatch threshold with 24 RGB-channel delta; this is screenshot-only acceptance, not hardware/zoom/screen-reader acceptance.
+- Future intentional redesign requires explicit visual review and new immutable archive, not auto-rebaseline.

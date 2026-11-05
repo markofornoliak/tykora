@@ -1,3 +1,9 @@
-# Iteration 5 — pinned screenshot reference and pixel-diff gate
+# Iteration 5 — reviewed visual golden baseline (2026-11-05)
 
-Reference: GitHub Actions success run #42025942260, commit 0ded9a7dff818509589c55ac53b0d8179d060d96, immutable image archive ID 13413487613 (36 screenshots). Coverage: 4 routes × 3 themes (Daylight, Nightfall, Contrast Dark) × widths 320, 768, 1440px, full-page Chromium. New CI downloads the reference archive read-only, captures same screenshots with installed Playwright and compares pixels. More than 1.5% changed pixels (RGB component >24) or any dimension mismatch fails the gate; diff PNGs and a JSON summary are uploaded. The pinned reference is **machine-selected, not human-reviewed or owner-approved**. Rebaseline only after owner sees images and authorizes the new reference SHA; never automatically approve visual differences.
+The owner explicitly requested selecting golden screenshots for this iteration. Reference: GitHub Actions run #42041281178 (success), source SHA `722b66615a60507bc243ce622650aa9974da738f`, image artifact ID `13420688462`. Inspected all 36 full-page screenshots in Daylight / Nightfall / Contrast Dark at 320 / 768 / 1440 CSS pixels on Home, Practice, Results and Themes. This is a reviewed **automated screenshot baseline**, not independent screen-reader or on-device approval.
+
+CI downloads the exact archived images read-only; changed pixels (>24 RGB-channel difference) beyond **1.5%** or any dimension mismatch fail. Changed views generate diff PNGs and JSON. The historical 0ded baseline must no longer be used for redesigned Home/Results screenshots. Rebaseline requires a newly inspected artifact; no automatic reference updates.
+
+Known limitations: 320px screenshots have sticky bottom navigation that must be tested manually with touch and physical landscape virtual keyboard; screenshots show empty session states, not all loading/error/active/finished states; no browser zoom, NVDA, VoiceOver or real Moto G Power evidence. Passing pixel diff **alone** does not establish visual or WCAG conformance.
+
+Proof: [visual/a11y successful capture](https://github.com/markofornoliak/tykora/actions/runs/42041281178), [source commit](https://github.com/markofornoliak/tykora/commit/722b66615a60507bc243ce622650aa9974da738f); latest pinned-reference CI status must be checked separately.
