@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- B/E Home: RU/EN local-first editorial dashboard with factual last-session KPIs, daily goal ring and one practice CTA.
+
 - B: move 15 legacy hex colors into theme tokens, add a fixed Stylelint no-hex rule for non-token CSS.
 
 - B: evidence-only keyboard error heatmap, color-vision-friendly ramp and accessible table.

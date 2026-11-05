@@ -5,6 +5,7 @@ import './app/i18n';
 import './styles/app.css';
 import './shared/theme/tokens.css';
 import './shared/theme/heatmap.css';
+import './shared/theme/home.css';
 import { App } from './app/App';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

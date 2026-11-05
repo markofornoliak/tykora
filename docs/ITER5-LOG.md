@@ -107,3 +107,8 @@
 ## 2026-11-05 · B legacy CSS literal colour migration
 
 - Centralized 19 hex literal occurrences (15 unique) from src/styles/app.css into src/shared/theme/tokens.css without changing effective colors. Added pinned Stylelint `color-no-hex` CI command for non-token stylesheets and independent token check. Remaining non-color layout magic values and inline JSX styles are NOT fully migrated.
+
+## 2026-11-05 · E/B Home editorial rebuild
+
+- Rebuilt Home content RU/EN, retained original heading and navigation contract; added a daily-goal progress ring using only saved local session durations and a clearly labelled illustrative default when no user plan exists. No invented progress, achievements or forecast.
+- Other eight UI locales keep translated chrome/page intro and explicit RU fallback for newly added body copy; no full 10-locale claim. CI/visual golden will require review for intentional design changes.
