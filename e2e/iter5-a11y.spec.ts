@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 test('keyboard skip-link and typed-input focus are independently reachable',async({page})=>{
  await page.goto('/#/practice');
@@ -42,4 +43,24 @@ test('reduced motion and forced colors retain visible focus affordance',async({p
  await expect(input).toBeFocused();
  const style=await input.evaluate(el=>getComputedStyle(el).outlineStyle);
  expect(style).not.toBe('none');
+});
+
+test('Nightfall at 320px: real browser button contrast must pass',async({page})=>{
+ await page.setViewportSize({width:320,height:900});
+ await page.goto('/#/themes');
+ await page.getByRole('button',{name:'Nightfall',exact:true}).click();
+ const button=page.getByRole('button',{name:/Сохранить|Save|сохранить/i}).first();
+ const computed=await button.evaluate(el=>{
+  const s=getComputedStyle(el);
+  const root=getComputedStyle(document.documentElement);
+  return {className:el.className,disabled:(el as HTMLButtonElement).disabled,
+   color:s.color,background:s.backgroundColor,opacity:s.opacity,
+   accent:root.getPropertyValue('--accent'),onAccent:root.getPropertyValue('--on-accent')};
+ });
+ const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();
+ const issues=result.violations.filter(v=>v.id==='color-contrast').flatMap(v=>v.nodes.map(n=>({
+  target:n.target,html:n.html,summary:n.failureSummary,any:n.any.map(x=>x.message)
+ })));
+ console.log('TYKORA_CONTRAST_DEBUG '+JSON.stringify({computed,issues}));
+ expect(issues).toEqual([]);
 });
