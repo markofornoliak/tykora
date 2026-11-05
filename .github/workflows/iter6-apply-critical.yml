@@ -1,0 +1,81 @@
+name: Iteration 6 - apply verified critical dependency fixes (branch only)
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths: ['.github/workflows/iter6-apply-critical.yml']
+permissions:
+  contents: read
+jobs:
+  verify-remediation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Apply exactly the previously tested package change in this disposable runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --save-dev --save-exact vitest@5.1.0 --no-fund
+          npm audit fix --no-fund > /tmp/tykora-audit-fix.log 2>&1 || true
+          mkdir -p verified-lock
+          npm audit --json > verified-lock/audit.json || true
+          node - <<'NODE'
+          const fs=require('fs');
+          const a=JSON.parse(fs.readFileSync('verified-lock/audit.json','utf8'));
+          const counts=a.metadata?.vulnerabilities;
+          if(!counts||counts.critical!==0||counts.high!==0)throw Error('Critical/high vulnerabilities remain after proposed patch: '+JSON.stringify(counts));
+          console.log('ITER6_VERIFIED_FIX_COUNTS '+JSON.stringify(counts));
+          NODE
+      - run: npm run check:domain && npm run check && npm run lint && npm run test && npm run build && npm run check:dist
+      - run: npx playwright install --with-deps chromium firefox webkit && npm run test:e2e
+      - run: npx playwright install chromium && npm run test:e2e:production
+      - name: Freeze exact approved package files
+        shell: bash
+        run: |
+          cp package.json package-lock.json verified-lock/
+          sha256sum verified-lock/package.json verified-lock/package-lock.json > verified-lock/SHA256SUMS.txt
+          git diff --check
+          git diff --stat -- package.json package-lock.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iter6-verified-package-pair
+          path: verified-lock/
+          if-no-files-found: error
+  branch-only-apply:
+    needs: verify-remediation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: iter6-verified-package-pair
+          path: verified-lock
+      - name: Check exact source branch SHA before making one commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "feature/iter6-summit"
+          git -c http.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" fetch origin feature/iter6-summit
+          test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)" || { echo 'Ref moved: do not overwrite newer commits'; exit 1; }
+          cd verified-lock && sha256sum -c SHA256SUMS.txt && cd ..
+          cp verified-lock/package.json verified-lock/package-lock.json ./
+          git diff --check
+          git add package.json package-lock.json
+          test -n "$(git diff --cached --name-only)"
+          test "$(git diff --cached --name-only | wc -l)" -eq 2
+          git -c user.name='tykora-iter6-ci' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix(iter6-f): remove critical Vitest and tinypool advisories'
+          git -c http.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push origin HEAD:feature/iter6-summit
