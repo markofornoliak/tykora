@@ -41,3 +41,9 @@
 - New experiment: five identical 500-character custom sessions, completion, persistence and restart, all in a **single browser document**. Force GC after every restart and record JS heap, DOM nodes, document/window listeners and CDP detached DOM nodes where supported.
 - Capture baseline and final Chromium .heapsnapshot.gz files for retainer inspection. Emit linear heap slope per session and exact raw samples. Zero growth **not assumed**; no artificial success threshold.
 - Workflow: `.github/workflows/iter6-memory.yml`; script `scripts/iter6-memory.mjs`. CI status **pending**. This is headless Chrome only, not Safari, headed GPU, physical memory, or an assertion of absent leaks.
+
+## 2026-11-05 · VERIFIED evidence: Phase 0 and equal-session memory
+
+- **Phase 0 PASS as a measurement protocol**, not as a performance target. [Actions #42114840487](https://github.com/markofornoliak/tykora/actions/runs/42114840487), 30 valid Lighthouse 12.8.2 JSON runs, one matched runner, config and Chrome UA equality true. LCP medians main 1953.9814ms; iter5 1952.9922ms; iter6 initial 1955.7971ms; CLS=0 each, median Performance=98 each. Iter6 initial JS static graph 151870 gzip bytes. Targets LCP ≤1000ms and JS ≤90k FAIL. Full spread/tables and SHA in `docs/PERF-v0.10-BASELINE.md`.
+- **Equal-session memory workflow PASS as a test**: [Actions #42116205658](https://github.com/markofornoliak/tykora/actions/runs/42116205658) at `2cfcc70ea492df74652a47440a3ebce313b6be74`. 5 completed identical 500-char sessions, repeated forced GC; heap 3830460→5026648 bytes; 513 DOM nodes, 204 listeners, 0 detached nodes unchanged. Heap trend +202104 bytes/session across 0–5. Heap ≈0 slope goal **NOT MET/NOT PROVEN**; retainers require examination.
+- Quality gates for `a2b200a`, `e3b0e94`, `337ee2f` independently SUCCESS on push and PR variants in GitHub Actions. Latest SHA `2cfcc70` quality status must still be verified.

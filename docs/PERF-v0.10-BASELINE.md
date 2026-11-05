@@ -80,3 +80,34 @@ A2 measured report: [A2-TRACE.md](A2-TRACE.md) (Chrome trace runs ×1/×4, 3 eac
 ## Five-run input gate
 
 CDP ×1 and ×4, five runs each: CPU×1 p95 24ms (FAIL ≤16ms); CPU×4 p95 32/32/32/40/32ms (FAIL robust ≤32ms). See docs/INPUT-PRESENTATION.md and Actions #42039411859.
+
+## Iteration 6 · Phase 0 — verified matched triple baseline (2026-11-05)
+
+**Completed run:** [three-way Lighthouse x10 #42114840487](https://github.com/markofornoliak/tykora/actions/runs/42114840487); workflow SUCCESS; all thirty raw JSON reports saved as GitHub Actions artifact `tykora-iter6-phase0-3way-lh12x`. This section supersedes the *pending* Iteration 6 placeholders, not the earlier historical Iteration 5 observations.
+
+Single `ubuntu-24.04` runner, sequential `npm ci`, `check`, `lint`, `test`, `build`, `check:dist` for each immutable source; Lighthouse **12.8.2**, 412×823 simulated mobile, CPU ×4, RTT 150ms; 10 trials each (N=10). Automated cross-variant Lighthouse version, Chrome host user-agent and throttling/screen configuration equality: **PASS**.
+
+| Variant (immutable SHA) | LCP median (ms), N=10 | LCP min–max (ms) | CLS median | TBT median (ms) | Performance median | Entry gzip (bytes) | Initial static JS graph gzip (bytes) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| main `0a7d167bc320b503a03dfe1247c96687526ca28b` | 1953.9814 | 1952.7636–1957.1257 | 0 | 7.5 | 98 | 150366 | 150491 |
+| iter5 `244c5060b37ba9d802dbad796b3ce1ed562f5339` | 1952.9922 | 1805.2779–1958.2916 | 0 | 4.5 | 98 | 151745 | 151870 |
+| iter6 initial `a2b200a7053abf5770cf1fd99823899e21fa91d3` | 1955.7971 | 1804.9328–1983.0601 | 0 | 6.5 | 98 | 151745 | 151870 |
+
+**Verdict:** Iter5 median LCP differs from main by **−0.9892ms**; initial iter6 by **+1.8157ms**, dwarfed by observed variability. No supported significant LCP gain or regression. All three FAIL ≤1200ms minimum and ≤1000ms target. Initial graph gzip on iter6 **151870 bytes**, FAIL ≤105k/≤90k. CLS=0 accepted in this *Lighthouse scenario only*; Performance=98 FAIL ≥99. The *static import graph* budget is not a full browser HAR accounting for dynamic routes, workers or requests after load.
+
+**Known limitation:** the Lighthouse 12.8.2 LHR `largest-contentful-paint-element` diagnostic snippet is **null** in the emitted summary for all thirty reports; do not claim LCP element identification from this audit. This is a Linux Lighthouse emulation, not a physical low-end phone. Need trace/request chain and full Lighthouse artifact to establish the 4 LCP subparts and browser rendering causality.
+
+## Iteration 6 · five equal-session memory evidence (2026-11-05)
+
+Run: [#42116205658](https://github.com/markofornoliak/tykora/actions/runs/42116205658), commit `2cfcc70ea492df74652a47440a3ebce313b6be74`. Workflow SUCCESS, 5 finished **identical 500-character custom-text sessions** on one Chromium tab with UI reset each time and forced GC after restart. Baseline and final gzip Chrome heap snapshots are uploaded; browser-reported nodes and listeners were stable.
+
+| GC sample | Heap used bytes | DOM elements | JS event listeners | Detached DOM |
+|---|---:|---:|---:|---:|
+| Before | 3830460 | 513 | 204 | 0 |
+| After #1 | 4626364 | 513 | 204 | 0 |
+| After #2 | 4780232 | 513 | 204 | 0 |
+| After #3 | 4869752 | 513 | 204 | 0 |
+| After #4 | 4960752 | 513 | 204 | 0 |
+| After #5 | 5026648 | 513 | 204 | 0 |
+
+Ordinary-least-squares **+202104 bytes/session**, total **+1196188 bytes** (before vs after 5), but decelerating increments after the first session; likely initial runtime warm-up and/or accumulated references, not yet diagnosed. **Memory plateau ≈0 and leak absence are NOT proven.** No detached elements in these CDP samples and no increase in the 204 event listeners. To distinguish caches from retained sessions, compare snapshot retainers and repeat equal-session blocks without expanding session/IDB histories.
