@@ -1,0 +1,66 @@
+name: Iteration 5 - five-run LCP bisect
+on:
+  push:
+    branches: [feature/iter5-quality-design]
+    paths: [scripts/iter5-lcp-bisect.mjs, .github/workflows/iter5-lcp-bisect.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - {label: base3ef, ref: 3ef431fa6777501ab2da4eb61c52e50b289db839}
+          - {label: base756, ref: 75663d24ba2376b797dd9bb6490af2f35b9316d7}
+          - {label: a040, ref: a040ba9b306bb0b6a872bbb6a83dcf8c3edc31ca}
+          - {label: fece, ref: fece01874c40834edbb8774b05c612ab2d1e3344}
+          - {label: ab8e, ref: ab8e9d94695f3cbe2bced26fcf9c3649e7b3d901}
+          - {label: a963, ref: a963528df245643f9df74d204dcdfa5db90a2095}
+          - {label: 94dd, ref: 94dd8e8f49d54725f55147f4b1e7fd99d362ba42}
+          - {label: 0ded, ref: 0ded9a7dff818509589c55ac53b0d8179d060d96}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/iter5-quality-design
+          path: .iter5-harness
+          sparse-checkout: scripts/iter5-lcp-bisect.mjs
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: VITE_BASE_PATH=/ npm run build
+      - name: Start local production preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/iter5-bisect.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4174/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/iter5-bisect.log
+          exit 1
+      - name: Five matched Lighthouse mobile trials
+        run: |
+          mkdir -p performance-artifacts/lcp-bisect
+          for i in 1 2 3 4 5; do
+            npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/ --chrome-flags="--headless --no-sandbox" --output=json --output-path="performance-artifacts/lcp-bisect/run-$i.json" --quiet
+          done
+      - name: Summarize LCP and entry JS
+        env:
+          BISECT_REF: ${{ matrix.ref }}
+        run: node .iter5-harness/scripts/iter5-lcp-bisect.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter5-lcp-bisect-${{ matrix.label }}
+          path: performance-artifacts/lcp-bisect/*.json
+          if-no-files-found: warn
