@@ -111,3 +111,7 @@ Run: [#42116205658](https://github.com/markofornoliak/tykora/actions/runs/421162
 | After #5 | 5026648 | 513 | 204 | 0 |
 
 Ordinary-least-squares **+202104 bytes/session**, total **+1196188 bytes** (before vs after 5), but decelerating increments after the first session; likely initial runtime warm-up and/or accumulated references, not yet diagnosed. **Memory plateau ≈0 and leak absence are NOT proven.** No detached elements in these CDP samples and no increase in the 204 event listeners. To distinguish caches from retained sessions, compare snapshot retainers and repeat equal-session blocks without expanding session/IDB histories.
+
+### Iter6 Phase P1 (conditional, NOT accepted)
+
+[Candidate `ac695bcfe19b911f281d24010d9a7c94de9a430e`, matched Lighthouse x10](https://github.com/markofornoliak/tykora/actions/runs/42117102911) had main LCP median 1954.7715ms, iter5 1953.8973ms, iter6 candidate 917.3164ms (range 904.2743–955.3455ms). CLS=0, Perf=99. However TBT **118ms** on candidate versus 26ms on iter5, FAIL ≤100ms, and Firefox mobile navigation E2E FAILED on one run. Static eager JS graph 1322 bytes omits dynamic React bootstrap; **do not** compare that to 90k/105k full initial JS budget. The Phase0 harness now also computes interactive startup graph and browser JS network transfer. Re-run after navigation fix before deciding whether to keep P1.

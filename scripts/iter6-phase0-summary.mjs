@@ -42,7 +42,8 @@ if (variant === 'compare') {
     tbtMedianMs: reports[label].tbt.median,
     perfMedian: reports[label].performance.median,
     entryGzipBytes: reports[label].bundle.entryGzipBytes,
-    initialJsGzipBytes: reports[label].bundle.initialJsGzipBytes
+    initialJsGzipBytes: reports[label].bundle.initialJsGzipBytes,
+    initialInteractiveJsGzipBytes: reports[label].bundle.initialInteractiveJsGzipBytes
   }));
   const comparison = { comparable, rows, protocol: 'Single ubuntu-24.04 runner, sequential production builds, same Chrome and Lighthouse 12.8.2 mobile configuration; Lighthouse simulation, not physical device' };
   writeFileSync(join(directory, 'comparison.json'), JSON.stringify(comparison, null, 2));
@@ -84,18 +85,40 @@ const visit = file => {
 };
 for (const ref of entryRefs) visit(ref);
 const initialJsGzipBytes = [...initial].reduce((sum, file) => sum + (assetMap.get(file)?.gzipBytes ?? 0), 0);
+
+/** The new Home defers a genuine app-bootstrap chunk until after first paint.
+ * This JS IS STILL essential to make Home interactive, so count it.
+ * Ignore other lazy route imports: those do not run on Home. */
+const interactive = new Set(initial);
+const visitInteractive = file => {
+  if (interactive.has(file)) return;
+  interactive.add(file);
+  for (const dep of dependencies[file] ?? []) visitInteractive(dep);
+};
+for (const file of entryRefs) {
+  const source = readFileSync(join(distPath, file), 'utf8');
+  for (const match of source.matchAll(/\bimport\s*\(\s*["'](\.[^"']+\.js)["']\s*\)/g)) {
+    const dep = posix.normalize(posix.join(posix.dirname(file), match[1]));
+    if (/^assets\/bootstrap-[a-zA-Z0-9_-]+\.js$/.test(dep) && assetMap.has(dep)) visitInteractive(dep);
+  }
+}
+const initialInteractiveJsGzipBytes = [...interactive].reduce((sum, file) => sum + (assetMap.get(file)?.gzipBytes ?? 0), 0);
+
 const bundle = {
   entry,
   entryRefs,
   entryGzipBytes: assetMap.get(entry)?.gzipBytes ?? null,
   initialJsGzipBytes,
+  initialInteractiveJsGzipBytes,
+  interactiveFiles: [...interactive].sort(),
   initialFiles: [...initial].sort(),
   chunks: assets.map(asset => ({
     ...asset,
     initial: initial.has(asset.file),
+    requiredToHydrateHome: interactive.has(asset.file),
     staticImports: dependencies[asset.file]
   })).sort((a, b) => b.gzipBytes - a.gzipBytes),
-  definition: 'Sum of gzipSync byte lengths for entry scripts, HTML modulepreloads and transitively static-imported chunks; excludes lazy dynamic imports. Not a network HAR transfer-size measurement.'
+  definition: 'initialJsGzipBytes is eager static graph only. initialInteractiveJsGzipBytes ALSO counts dynamically loaded bootstrap plus static imports for real Home hydration (excludes unrelated lazy routes). Neither is on-wire bytes.'
 };
 const metrics = [];
 for (let trial = 1; trial <= 10; trial++) {
@@ -169,6 +192,7 @@ const result = {
   bestPractices: summarize('bestPractices'),
   seo: summarize('seo'),
   lcpElements: [...new Set(metrics.map(row => row.lcpElement))],
+  browserJsTransfer: describe(metrics.map(row => row.requests.filter(req => /\.js(?:\?|$)/.test(req.url??'')).reduce((sum,req) => sum + (req.transferSize ?? 0), 0))),
   bundle,
   runs: metrics,
   scope: 'GitHub Actions ubuntu-24.04; Lighthouse 12.x simulated mobile (not device RUM). CPU and network simulations are Lighthouse estimates.'
@@ -181,5 +205,6 @@ console.log('ITER6_PHASE0_VARIANT ' + JSON.stringify({
   perfMedian: result.performance.median,
   entryGzipBytes: bundle.entryGzipBytes,
   initialJsGzipBytes: bundle.initialJsGzipBytes,
+  initialInteractiveJsGzipBytes: bundle.initialInteractiveJsGzipBytes,
   lcpElements: result.lcpElements
 }));
