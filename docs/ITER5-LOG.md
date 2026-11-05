@@ -28,3 +28,10 @@
 - Baseline quality #42018802880 and first-candidate quality #42019118378 both completed SUCCESS; all-browser E2E runs on the first candidate are green. Earlier `main@0a7d167` quality run #42018469407 failed on one timeout in a 108-test axe E2E matrix; subsequent same-source baseline branch passed. Do not hide this runner variability.
 - Added five-run mobile Lighthouse evidence workflow; results were not yet available at this log entry.
 - Additional per-input JS handler and native paint timing diagnostics are opt-in through the benchmark object. They do not record typed strings; benchmark run is required.
+
+## 2026-11-05 · Browser diagnosis and mobile Lighthouse
+
+- Standard production CPU×4 diagnostic run #42019977034 at `75663d24`: input JS handler p95 ≈0.8ms; paint JS p95 ≈0.5ms; Event Timing p95 24ms from 285 thresholded samples. Profiling p95 32ms (not comparable with ordinary build), 5 commits. 500/500 input, CLS 0.
+- Mobile Lighthouse ×5 run #42019720034 at `38c25928`: LCP trials 1827.67/1956.52/1954.20/1957.90/1954.24ms; **median 1954.24ms** (objective ≤1000ms FAILED); median performance score 98, CLS 0.
+- Build entry chunk 150.37 kB gzip; this is not a fully modelled initial-network JS budget.
+- 10-minute memory profile, hardware IME, physical mobile Lighthouse and manually verified WCAG are **not performed**. Phases B–G remain unstarted because A is not accepted.
