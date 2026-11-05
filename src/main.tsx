@@ -8,6 +8,21 @@ import './shared/theme/heatmap.css';
 import './shared/theme/home.css';
 import { App } from './app/App';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode><HashRouter><App /></HashRouter></React.StrictMode>
-);
+const root=document.getElementById('root')!;
+const app=<React.StrictMode><HashRouter><App /></HashRouter></React.StrictMode>;
+const hash=window.location.hash;
+const homeAtBootstrap=!hash||hash==='#'||hash==='#/';
+if(homeAtBootstrap&&root.dataset.tykoraHomePrerender==='1'){
+  // The checked-in markup is an exact clean-profile Home DOM capture, not
+  // decorative placeholder text. Hydrate to retain the existing LCP heading.
+  ReactDOM.hydrateRoot(root,app,{
+    onRecoverableError:(error)=>{
+      // Never suppress or silently mask a hydration mismatch.
+      console.error('TYKORA_HOME_HYDRATION_RECOVERABLE',error);
+    }
+  });
+}else{
+  // A deep-linked route must never show the static Home while JS initializes.
+  root.replaceChildren();
+  ReactDOM.createRoot(root).render(app);
+}
