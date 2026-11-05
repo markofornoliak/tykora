@@ -23,7 +23,7 @@ export function lintLessonContent(limit=0.10):LessonContentIssue[]{
    for(const [label,txt] of [['practice',a.text],['review',b.text]] as const){
     const length=graphemes(txt).length;
     if(length<30||length>800)issues.push({id:lesson.id,locale,reason:label+' length',detail:length});
-    if(/[<>\u0000-\u0008]/u.test(txt))issues.push({id:lesson.id,locale,reason:label+' forbidden character'});
+    if(Array.from(txt).some(char=>char==='<'||char==='>'||char.charCodeAt(0)<9))issues.push({id:lesson.id,locale,reason:label+' forbidden character'});
    }
    const focus=locale==='ru'?lesson.focusRu:lesson.focusEn;
    const required=new Set(graphemes(focus).filter(x=>x.trim().length>0));
