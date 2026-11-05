@@ -2,8 +2,10 @@ import {create} from 'zustand';
 import i18next from '../i18n';
 import {palettes} from '../../shared/theme/palettes';
 import {defaultSettings,type AppSettings} from '../../application/ports/SettingsRepository';
-// Dexie is loaded only when the first local-settings read/write is requested.
-// Keeping it out of the eagerly loaded application graph reduces initial JS.
+// Import the storage facade synchronously, but initialize IndexedDB only
+// after first paint in Layout's animation-frame effect. A fully dynamic
+// import caused a measured +320ms Home LCP regression in matched trials.
+import {repositories} from '../../infrastructure/di/repositories';
 import {applyTheme} from '../../shared/theme/applyTheme';
 import {uiLocales,type InterfaceLocale} from '../../shared/i18n/catalog';
 interface UiStore {settings:AppSettings;ready:boolean;storageNotice:string|null;initialize:(force?:boolean)=>Promise<void>;updateSettings:(partial:Partial<AppSettings>)=>Promise<void>}
@@ -28,7 +30,6 @@ export const useUiStore=create<UiStore>((set,get)=>({
   if(hydrationPromise)return hydrationPromise;
   const operation=(async()=>{
    try{
-    const {repositories}=await import('../../infrastructure/di/repositories');
     const loaded=await repositories.settings.load();
     const valid=loaded.themeName==='Custom'&&loaded.customTheme||palettes.some(p=>p.name===loaded.themeName);
     const settings=valid?loaded:{...loaded,themeName:'Daylight'};
@@ -45,7 +46,6 @@ export const useUiStore=create<UiStore>((set,get)=>({
   if(!get().ready)await get().initialize();
   const settings={...get().settings,...partial};applySettings(settings);set({settings});
   saveQueue=saveQueue.catch(()=>{}).then(async()=>{
-   const {repositories}=await import('../../infrastructure/di/repositories');
    await repositories.settings.save(settings);
   });
   try{await saveQueue;}catch{set({storageNotice:'Unable to save settings to IndexedDB.'});}

@@ -88,3 +88,9 @@
 
 - Full 648-cell Chromium axe CI #42025942260 was SUCCESS at 0ded9a7. VoiceOver and NVDA explicitly require owner; step-by-step scripts added to A11Y-MANUAL.md.
 - Fixed strict TS6133 unused test import in D content lint; test result remains pending rerun.
+
+## 2026-11-05 · LCP full matched bisect
+
+- Eight SHA comparison #42035312314 five trials each identified first regression at ab8e9d9 (~1954→~2276ms).
+- 8 isolated 5× single-file revert comparisons #42036088912: restoring either Home eager repository import or uiStore eager repository import recovered ~1955ms; index-only and Layout-only reverts retained ~2270ms. Root boundary is lazy storage import graph, not static shell alone.
+- Selected minimal repair: restore eager repository facade import in uiStore while **actual IndexedDB initialize remains scheduled after first paint**. Initial gzip size budget ≤105kB remains unmet. Needs head SHA Lighthouse and all-browser CI before acceptance.
