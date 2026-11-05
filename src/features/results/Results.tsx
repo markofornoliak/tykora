@@ -16,11 +16,11 @@ function savePngCard(record:SessionRecord,english:boolean):void{
  ctx.fillStyle=bg;ctx.fillRect(0,0,1200,630);
  ctx.fillStyle=accent;ctx.fillRect(76,80,11,480);
  ctx.fillStyle=fg;ctx.font='700 39px system-ui, sans-serif';ctx.fillText('TYKORA',120,142);
- ctx.font='600 24px system-ui, sans-serif';ctx.fillText('PERSONAL TYPING RESULT',120,200);
+ ctx.font='600 24px system-ui, sans-serif';ctx.fillText(english?'PERSONAL TYPING RESULT':'ЛИЧНЫЙ РЕЗУЛЬТАТ',120,200);
  ctx.font='800 162px system-ui, sans-serif';ctx.fillText(displayWpm(record.summary.netWpm,0),110,390);
  ctx.font='600 29px system-ui, sans-serif';ctx.fillText('NET WPM',120,440);
  ctx.font='600 33px system-ui, sans-serif';ctx.fillText((english?'Accuracy: ':'Точность: ')+(record.summary.accuracy*100).toFixed(1)+'%',120,517);
- ctx.font='400 19px system-ui, sans-serif';ctx.fillText((english?'Local result · ':'Локальный результат · ')+new Date(record.endedAt).toLocaleDateString(),120,562);
+ ctx.font='400 19px system-ui, sans-serif';ctx.fillText((english?'Local result · ':'Локальный результат · ')+new Date(record.endedAt).toLocaleDateString(english?'en-US':'ru-RU'),120,562);
  const a=document.createElement('a');a.download='tykora-result.png';a.href=canvas.toDataURL('image/png');a.click();
 }
 export function Results() {
@@ -52,7 +52,7 @@ export function Results() {
     {!last ? <div className="surface card"><Placeholder>{loading?tr('Загрузка результата…','Loading result…'):tr('Нет сохранённого результата. Сначала завершите тест.','No saved result. Finish an exercise first.')}</Placeholder><Link to="/practice" className="btn primary" style={{marginTop:18}}>{tr('Перейти к практике','Go to practice')}</Link></div>:
       <div className="result-layout"><div className="share-card"><div className="row spread"><strong>▦ TYKORA</strong><span className="tiny">RESULT / {new Date(last.endedAt).getFullYear()}</span></div>
         <div className="share-large">{displayWpm(last.summary.netWpm,0)}</div><div>NET WORDS PER MINUTE</div>
-        <div className="share-metrics"><span>ТОЧНОСТЬ<br/><b>{(last.summary.accuracy*100).toFixed(1)}%</b></span><span>RAW WPM<br/><b>{displayWpm(last.summary.rawWpm)}</b></span></div><span className="tiny">TYPE. UNDERSTAND. MASTER.</span>
+        <div className="share-metrics"><span>{tr('ТОЧНОСТЬ','ACCURACY')}<br/><b>{(last.summary.accuracy*100).toFixed(1)}%</b></span><span>RAW WPM<br/><b>{displayWpm(last.summary.rawWpm)}</b></span></div><span className="tiny">TYPE. UNDERSTAND. MASTER.</span>
         <button className="btn secondary" type="button" onClick={()=>savePngCard(last,!!(tr('','EN')))}> {tr('Сохранить PNG-карточку (офлайн)','Save PNG card (offline)')}</button>
       </div><div className="surface card"><h3>{tr('Ваш разбор','Your breakdown')}</h3>
         <div className="lessonline"><span>Net WPM</span><b>{displayWpm(last.summary.netWpm)}</b></div>
@@ -62,7 +62,7 @@ export function Results() {
         <div className="lessonline"><span>{tr('Исправленные ошибки','Corrected mistakes')}</span><b>{last.summary.correctedErrors}</b></div>
         <div className="lessonline"><span>{tr('Неисправленные ошибки','Uncorrected mistakes')}</span><b>{last.summary.uncorrectedErrors}</b></div>
         <div className="lessonline"><span>{tr('Перестановки символов','Transpositions')}</span><b>{last.summary.errorTypes.transposition}</b></div>
-        <div className="lessonline"><span>{tr('Продолжительность','Duration')}</span><b>{(last.summary.durationMs/1000).toFixed(1)} с</b></div>
+        <div className="lessonline"><span>{tr('Продолжительность','Duration')}</span><b>{(last.summary.durationMs/1000).toFixed(1)} {tr('с','s')}</b></div>
         <div className="thinrule"/>
         <h3>{tr('Что тренировать дальше','What to practice next')}</h3><p className="small" style={{marginTop:9}}>{weak.length ? tr('Наблюдаемые сложные сочетания (до пяти): ','Observed difficult sequences (up to five): ')+weak.slice(0,5).map(x=>x.sequence).join(' · ')+tr('. Попробуйте адаптивную практику.','. Try adaptive practice.') : tr('После нескольких полноценных сессий появятся рекомендации на основании наблюдений.','After more complete sessions, recommendations will use your observations.')}</p>
         {timeline.length>=2?<section aria-label={tr('Скорость набора по секундам','Typing speed by second')}>

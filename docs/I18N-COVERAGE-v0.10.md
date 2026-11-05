@@ -23,3 +23,9 @@ CI: `e2e/iter5-english.spec.ts` checks six main routes in English against actual
 - Profile, Race and Classroom UI/consent/backup copy added through `useBilingual()`; no replacement of typed exercise language, scores or historic backup IDs. Test: `e2e/iter5-english.spec.ts` now covers nine primary routes and asserts the presence of English P2P IP disclosure and destructive backup wording. CI proof required on exact later SHA.
 - Remaining gap is **not** zero: domain-originated errors, some achievement/race dynamic notices, registered 10-locale chrome vs individual route copy, and all content curricula outside RU/EN remain scoped separately. Source token scans and browser focus/pixel captures are not equivalent to a native-speaker line-by-line review.
 - For D, the first three lessons have distinct versioned practice/review text and a 4-grapheme n-gram overlap test with `<10%` threshold. CI unit test is a focused 6-text regression, not a complete 124-lesson editorial audit. No historical saved score or ID rewrite.
+
+## Owner continuation: UI strings in embedded data visualizations
+
+- KeyboardHeatmap now uses the same RU/EN interface copy selector as its parent Analytics while retaining an independent typing-layout locale; table labels, legend and empty states are translated.
+- Results share-card accuracy and offline canvas PNG header and duration units localized RU/EN; Practice's user-facing status messages, Russian layout labels in English UI, lesson variant label and seconds units gain bilingual copy.
+- This is a scoped source audit, not comprehensive translation certification: browser E2E and native speaker review remain gates. First-loading static Home is always captured RU, with a later persisted UI-language change; associated locale flash remains an open UX risk.

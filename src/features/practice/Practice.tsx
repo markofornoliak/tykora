@@ -95,7 +95,7 @@ export function Practice(){
   if(nextMode==='diagnostic'){reset(diagnostic);return;}
   if(nextMode==='lesson') {
    const l=findLesson(chosenLesson)??curriculum[0];
-   setLessonTitle(`${nextLanguage==='ru'?l.titleRu:l.titleEn} · ${lessonVariant==='review'?'Контрольный текст':'Практика'}`);
+   setLessonTitle(`${nextLanguage==='ru'?l.titleRu:l.titleEn} · ${lessonVariant==='review'?tr('Контрольный текст','Review passage'):tr('Практика','Practice')}`);
    if(lessonVariant==='review'){
     try{
      const [history,profile]=await Promise.all([
@@ -105,7 +105,7 @@ export function Practice(){
      const availableAt=reviewAvailableAt(history,l,nextLanguage);
      if(availableAt===null||Date.now()<availableAt){
       reset(lessonPrompt(l,nextLanguage,nextLayout));
-      setSaveNotice('Контрольный текст доступен через 2 часа или в следующую календарную дату (UTC).');
+      setSaveNotice(tr('Контрольный текст доступен через 2 часа или в следующую календарную дату (UTC).','Review passage is available after two hours or on the next UTC calendar day.'));
       return;
      }
      const exclusions=historicalLessonVocabulary(history.map(x=>x.promptId),nextLanguage);
@@ -122,7 +122,7 @@ export function Practice(){
   }
   if(nextMode==='adaptive'){
    let skillNodes={};
-   try{skillNodes=await repositories.skills.byLayout(nextLayout,nextLanguage);}catch{setSaveNotice('История навыка недоступна.');}
+   try{skillNodes=await repositories.skills.byLayout(nextLayout,nextLanguage);}catch{setSaveNotice(tr('История навыка недоступна.','Skill history is unavailable.'));}
    if(requestId.current!==thisRequest)return;
    const seed=Date.now(); // model is sampled at the same instant as its deterministic seed
    const text=generateDrill(skillNodes,words[nextLanguage],{locale:nextLanguage,layoutId:nextLayout,seed,nowMs:seed,wordCount:effectiveCount,recentWords:recentWords.current});
@@ -168,7 +168,7 @@ export function Practice(){
  const onCompositionEnd=(event:CompositionEvent<HTMLTextAreaElement>)=>{
   composing.current=false;commit(event.currentTarget.value,'composition',event.nativeEvent.timeStamp);
  };
- const onPaste=(event:ClipboardEvent<HTMLTextAreaElement>)=>{event.preventDefault();setSaveNotice('Вставка в тест отключена. В режиме «Свой текст» вставлять можно в поле подготовки.');};
+ const onPaste=(event:ClipboardEvent<HTMLTextAreaElement>)=>{event.preventDefault();setSaveNotice(tr('Вставка в тест отключена. В режиме «Свой текст» вставлять можно в поле подготовки.','Pasting into the typing test is disabled. In My Text mode, paste into the preparation field instead.'));};
  const onDrop=(event:DragEvent<HTMLTextAreaElement>)=>event.preventDefault();
  const beforeInput=(event:FormEvent<HTMLTextAreaElement>)=>{
   const native=event.nativeEvent as InputEvent;
@@ -213,11 +213,11 @@ export function Practice(){
     else window.setTimeout(resolve,0);
    });
    await repositories.progress.saveSession(record);
-   if(savedId.current===id){setSaveNotice('Результат сохранён только на этом устройстве.');setPersistence('saved');}
+   if(savedId.current===id){setSaveNotice(tr('Результат сохранён только на этом устройстве.','Result saved on this device only.'));setPersistence('saved');}
    try{await repositories.skills.incorporate(session);}catch{
-    if(savedId.current===id)setSaveNotice('Результат сохранён, но модель навыка не обновилась.');
+    if(savedId.current===id)setSaveNotice(tr('Результат сохранён, но модель навыка не обновилась.','Result saved, but the skill model could not be updated.'));
    }
-  }).catch(()=>{if(savedId.current===id){setPersistence('failed');setSaveNotice('Не удалось рассчитать или сохранить результат.');}});
+  }).catch(()=>{if(savedId.current===id){setPersistence('failed');setSaveNotice(tr('Не удалось рассчитать или сохранить результат.','Could not calculate or save the result.'));}});
  },[session]);
  const interimScore=useMemo(()=>calculateScoreV2(session.endedAtMs===null?session:{...session,endedAtMs:null},now||session.endedAtMs||session.startedAtMs||0),[session,now]);
  const score=finalScore??interimScore;
@@ -225,15 +225,15 @@ export function Practice(){
  const pos=currentPosition(session),finished=session.endedAtMs!==null;
  const timer=elapsedMs(session,now||session.endedAtMs||0);
  const remaining=Math.max(0,duration-timer/1000);
- const showElapsed=mode==='time'?`${Math.ceil(remaining)} с`:`${(timer/1000).toFixed(1)} с`;
+ const showElapsed=mode==='time'?`${Math.ceil(remaining)} ${tr('с','s')}`:`${(timer/1000).toFixed(1)} ${tr('с','s')}`;
  const canEnd=session.startedAtMs!==null&&!finished;
  const blurText=mode==='blind'&&session.startedAtMs!==null;
  const shouldConfigure=mode==='custom';
  const passages=getPassages(language,track);
  const loadTextFile=async(file:File|undefined)=>{
   if(!file)return;
-  if(file.size>100_000){setSaveNotice('Файл слишком большой (максимум 100 КБ).');return;}
-  if(!(/\.(txt|md)$/i.test(file.name)||file.type.startsWith('text/'))){setSaveNotice('Поддерживаются только текстовые файлы TXT и MD.');return;}
+  if(file.size>100_000){setSaveNotice(tr('Файл слишком большой (максимум 100 КБ).','File is too large (maximum 100 KB).'));return;}
+  if(!(/\.(txt|md)$/i.test(file.name)||file.type.startsWith('text/'))){setSaveNotice(tr('Поддерживаются только текстовые файлы TXT и MD.','Only TXT and MD text files are supported.'));return;}
   const text=await file.text();setCustomText(text);
   await prepare('custom',language,layoutId,track,count,duration,text);
  };
@@ -246,7 +246,7 @@ export function Practice(){
    const lang=e.target.value as SupportedLocale;void prepare(mode,lang,layouts[lang][0].id,track,count,duration,customText);
   }}><option value="ru">{tr('Русский','Russian')}</option><option value="en">English</option></select>
   <label className="sr-only" htmlFor="practice-layout">{tr('Раскладка','Keyboard layout')}</label>
-  <select id="practice-layout" className="chip" value={layoutId} onChange={e=>void prepare(mode,language,e.target.value,track,count,duration,customText)}>{layouts[language].map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select>
+  <select id="practice-layout" className="chip" value={layoutId} onChange={e=>void prepare(mode,language,e.target.value,track,count,duration,customText)}>{layouts[language].map(l=><option key={l.id} value={l.id}>{tr(l.label,l.id==='ru-jcuken'?'Russian · JCUKEN':l.id==='ru-phonetic'?'Russian · phonetic':l.label)}</option>)}</select>
   <label className="sr-only" htmlFor="practice-mode">{tr('Режим','Mode')}</label>
   <select id="practice-mode" className="chip" value={mode} onChange={e=>void prepare(e.target.value as Selection)}>
    {mode==='lesson'&&<option value="lesson">{tr('Урок курса','Course lesson')}</option>}{(Object.keys(modeLabels) as ModeId[]).map(m=><option value={m} key={m}>{tr(modeLabels[m],modeLabelsEn[m])}</option>)}

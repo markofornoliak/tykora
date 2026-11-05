@@ -16,6 +16,9 @@ test('English navigation and primary pages preserve independent content controls
  await expect(page.getByLabel('Mode')).toBeVisible();
  await page.goto('/#/analytics');
  await expect(page.getByRole('heading',{name:'Progress you can explain.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Observed keyboard errors'})).toBeVisible();
+ await expect(page.getByText('Color represents error rate in completed sessions',{exact:false})).toBeVisible();
+ await expect(page.getByText('Keyboard errors table',{exact:false})).toBeVisible();
  await page.goto('/#/result');
  await expect(page.getByRole('heading',{name:'Clear rhythm. Measured result.'})).toBeVisible();
  await page.goto('/#/profile');
