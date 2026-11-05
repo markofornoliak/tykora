@@ -67,3 +67,8 @@
 - 10-minute heap #42022735338: +1,107,904 bytes after forced GC, 514→516 DOM nodes; no zero-growth claim.
 - Static HTML startup shell was reverted at SHA a963528d after mobile LCP regression; dynamic Dexie import remained, but five-run LCP still ~2272.7ms, above earlier 1954ms.
 - CI token role audit 24×15 passed at 94dd8e8f; report docs/THEME-CONTRAST.md.
+
+## 2026-11-05 · B results usability pass
+
+- Added offline PNG result card based exclusively on locally stored metrics, personal average only for historical sessions with matching scoringVersion+locale+layout, and top-five observed weak n-grams.
+- Does not fabricate second-by-second charts: existing session records do not persist a temporal series. Added Playwright browser download regression; pending CI proof.

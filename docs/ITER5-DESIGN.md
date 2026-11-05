@@ -6,3 +6,7 @@
 - 36 baseline-candidate screenshots captured by a dedicated GitHub Actions workflow: 4 routes × 3 themes × 3 widths, Chromium. **Capture is not visual regression PASS**.
 - Missing: approved reference image set, pixel-diff threshold, audited default/hover/active/disabled/loading/error/empty states for all components, Home/Results visual redesign, accessible Precision Lab chart tables, downloadable PNG result image, self-hosted font subsets and social preview asset.
 - No visual QA certification without screenshot review and browser-device checks.
+
+## Results screen incremental work
+
+Added a local-only PNG export rendered with Canvas from stored summary metrics, comparable-session average (only same locale/layout/scoringVersion), and up to five actual weak n-grams; no simulated charts/false time series. The rest of the page redesign and graphical time-series require privacy-consistent data contracts.

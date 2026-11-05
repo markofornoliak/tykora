@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- B Results: offline generated PNG share card, comparison with prior compatible scoring/layout sessions, top-five observed weak n-grams, explicit absence of unsupported time-series.
+
 - C: keyboard/reduced-motion/forced-colors Playwright tests, full theme × route Chromium axe workflow, 36 screenshot evidence workflow, and explicit manual audit ledger (not performed).
 
 - B: semantic CSS/TS tokens, runtime contrast resolver for 24 palette defaults, numerical 24×15 theme matrix, underline errors, focus/forced-colors/touch refinements. Manual visual/a11y acceptance remains open.
