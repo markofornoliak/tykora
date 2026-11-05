@@ -69,3 +69,8 @@
 - Candidate D1: leave original practices, ids and scores unchanged. Keep first-three `-review-v2` texts; version all later newly generated review prompts as `-review-v3`. Legacy `-review` identifiers remain accepted with their historical exact expected lengths. Extended `contentLint` now inspects 124×2 instead of only 3×2. New deterministic holdout: target-key drills for beginner levels and original authored narrative scenes plus drills for advanced levels.
 - The holdout generator uses deterministic local seeds, selects among variations with the lowest measured four-gram overlap; it never modifies user data, performs no external fetch, and caches generated text. Unit test checks that preexisting v1 review records for lesson 4 still satisfy mastery.
 - This is a *candidate*, not a content PASS. Full-audit, complete unit/build, all-browser E2E and human review still required before acceptance; failures mandate correction or revert.
+
+## 2026-11-05 · D1 red-gate repair: remove low-bit PRNG cycle
+
+- Full 124-lesson unit gate at `9f883276` FAILED for exactly 2 EN lessons: `L01-09`, `L02-07`, each 4-gram overlap 0.1667 (threshold <0.10). The gate **remains strict**. Baseline 242 issues were mostly resolved, but two are outstanding.
+- Hypothesis: the LCG low bits used by `random()%4` form a short periodic cycle when a target alphabet has four graphemes, reducing 4-gram diversity. Candidate fix: use upper 24 bits `state>>>8` for all deterministic choices, preserving seed/ID semantics. Run full 124×2 lint and all-browser CI anew; no claim of PASS until reported.

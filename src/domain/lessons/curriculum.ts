@@ -127,7 +127,7 @@ function versionThreeReview(lesson:CourseLesson,locale:SupportedLocale,practice:
  let best='',lowest=Infinity;
  for(let trial=0;trial<128;trial++){
   let state=seedReview(key+'v3:'+trial);
-  const random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state;};
+  const random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state>>>8;};
   const coverage=[...chars];
   for(let i=coverage.length-1;i>0;i--){const j=random()%(i+1);[coverage[i],coverage[j]]=[coverage[j],coverage[i]];}
   const words=[coverage.join('')];
