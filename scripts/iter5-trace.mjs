@@ -63,7 +63,7 @@ async function prepare(page){
      }
     }
    }).observe({type:'event',durationThreshold:16,buffered:false});
-  }catch{}
+  }catch{/* Event Timing is optional and its absence is reported as zero samples. */}
   document.addEventListener('keydown',event=>{
    if(event.target?.id!=='typing-input')return;
    const start=performance.now();
