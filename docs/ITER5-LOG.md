@@ -83,3 +83,8 @@
 
 - First three course lesson practice/review variants receive original, character-focused disjoint review text. **Existing practice IDs and legacy -review expected lengths remain compatible**; new built-in review prompts use -review-v2 IDs. Prior personal sessions are never rewritten.
 - Added strict four-gram intersection limit 10% plus focus glyph coverage/length/forbidden character checks and migration regression. CI needs to validate all six locales/lesson pairs before claiming PASS.
+
+## 2026-11-05 · C and D follow-up
+
+- Full 648-cell Chromium axe CI #42025942260 was SUCCESS at 0ded9a7. VoiceOver and NVDA explicitly require owner; step-by-step scripts added to A11Y-MANUAL.md.
+- Fixed strict TS6133 unused test import in D content lint; test result remains pending rerun.

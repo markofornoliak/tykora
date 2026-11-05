@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {curriculum,lessonPrompt,lessonProgressFromScores,LESSON_MASTERY_ACCURACY} from './curriculum';
+import {curriculum,lessonPrompt,lessonProgressFromScores} from './curriculum';
 import {graphemes} from '../typing/graphemes';
 import {lintLessonContent,overlapRatio} from './contentLint';
 describe('versioned first-three lesson holdout content',()=>{

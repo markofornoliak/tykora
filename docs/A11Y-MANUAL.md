@@ -22,3 +22,29 @@ Status: **NOT PERFORMED** (2026-11-05). Automated tests do not establish conform
 - Colour role matrix: separate Vitest 24×15 numeric pairs. It does **not** validate all real rendered combinations or disabled/hover/active states.
 
 Open requirements: actual VoiceOver/Safari and NVDA/Firefox, actual zoom at 200%/400%, tested modal focus return, screen-reader verbosity controls, landscape mobile virtual keyboard and full rendered screenshot diff baselines. Mark any unavailable device **not conducted**, never PASS.
+
+## Проверка владельцем — ручные сценарии / Owner-required manual tests
+
+**VoiceOver (macOS + Safari): ТРЕБУЕТ ВЛАДЕЛЬЦА — НЕ ПРОВЕДЕНО.**
+1. Checkout текущей feature-ветки; зафиксировать `git rev-parse HEAD`, macOS и версию Safari; локально запустить `npm ci` и `npm run dev`.
+2. Включить VoiceOver (Command+F5 либо Системные настройки → Универсальный доступ → VoiceOver). В Safari с адресной строки пройти клавишей Tab до Skip link; активировать Enter; проверить реальный фокус в main и сохранение URL.
+3. Клавиатурой и VoiceOver открыть Practice, прочитать текст и название поля, ввести 20 символов с ошибками и исправлениями. Отметить, если каждый символ из target озвучивается навязчиво.
+4. Проверить IME/Dead key/AltGr при наличии физической раскладки. Нажать Focus, выйти Escape, завершить сессию, проверить однократное итоговое aria-live и фокус после перехода.
+5. Переключить Daylight/Nightfall/Contrast Dark, включить Reduced Motion; проверить видимость focus-ring, активное состояние, озвучку переключателей.
+6. При zoom 200% и 400% повторить Practice, Result, Themes на эквивалентной ширине 320 CSS px, проверить горизонтальный скролл и наличие недоступных элементов.
+7. Записать SHA, браузер/ОС/версию VoiceOver, последовательность шагов, фактическую речь, PASS/FAIL/BLOCKED. Если Safari/macOS нет, оставить 'требует владельца'.
+
+**NVDA (Windows + Firefox): ТРЕБУЕТ ВЛАДЕЛЬЦА — НЕ ПРОВЕДЕНО.**
+1. На Windows запустить тот же исходный SHA локально, открыть Firefox с новым профилем. Записать версии Windows, Firefox и NVDA.
+2. Включить NVDA; проверить Tab/Shift+Tab, NVDA browse/focus mode, Skip link, 9 пунктов навигации и возврат фокуса после перехода.
+3. В Practice с NVDA прочитать target, ввести/исправить 20 символов, завершить, прослушать результат один раз. Проверить, не дублирует ли динамическая область каждый символ.
+4. Проверить реальную клавиатуру: IME, dead keys, AltGr, вставку и автокоррекцию (где доступно). Отсутствующее оборудование/IME = BLOCKED, не PASS.
+5. Включить Windows Contrast Theme и увеличить Firefox до 200% и 400%; проверить фокус, границы кнопок, отсутствие обрезания текста и ловушек.
+6. Для каждого дефекта указать воспроизведение, ожидаемое/фактическое, скрин/запись при необходимости, точный SHA. Завершить журналом PASS/FAIL/BLOCKED.
+
+| Сеанс | Статус | Нужный исполнитель |
+|---|---|---|
+| VoiceOver / Safari / macOS | ТРЕБУЕТ ВЛАДЕЛЬЦА; НЕ ПРОВЕДЕНО | владелец с Mac |
+| NVDA / Firefox / Windows | ТРЕБУЕТ ВЛАДЕЛЬЦА; НЕ ПРОВЕДЕНО | владелец с Windows |
+
+Автоматическая axe-матрица 9 маршрутов × 24 темы × 3 ширины (Chromium) действительно прошла на 0ded9a7: https://github.com/markofornoliak/tykora/actions/runs/42025942260. Это не подтверждает VoiceOver/NVDA.
