@@ -20,3 +20,7 @@ Source: [PERF-v0.9-BASELINE.md](PERF-v0.9-BASELINE.md). The older documented exp
 **Important limitation:** `PerformanceObserver({type:'event',durationThreshold:16})` does not observe all sub-16ms events; an observed p95 cannot certify true sub-16ms end-to-end input-to-paint. Two-rAF timings are an upper-bound proxy, not a presentation timestamp. A measurement on one GitHub runner is not a controlled device baseline.
 
 **Stage gate:** Phases A–G are not passed merely because a change or benchmark workflow exists. Repeat multiple measurements under identical conditions and report both numerator/sample counts and uncertainty. Do not merge or publish from this branch.
+
+## Iteration 5 implementation hypothesis
+
+A stores transient input state off React and uses bounded native DOM runs. It does **not** change the scoring formula or IndexedDB. This is a candidate until a **fresh matched main-vs-branch run** establishes actual p50/p95/p99, React commits and layout stability. The benchmark's 16ms Event Timing sampling threshold cannot prove <=16ms latency from an observed distribution.

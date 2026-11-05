@@ -1,9 +1,10 @@
-import {useEffect,useMemo,useRef,useState,type FormEvent,type CompositionEvent,type ClipboardEvent,type DragEvent} from 'react';
+import {useEffect,useMemo,useRef,useState,useSyncExternalStore,type FormEvent,type CompositionEvent,type ClipboardEvent,type DragEvent} from 'react';
 import {useNavigate,useSearchParams} from 'react-router-dom';
 import {PageHeader} from '../../shared/ui/Layout';
 import {useUiStore} from '../../app/store/uiStore';
 import {KeyboardPreview} from './components/KeyboardPreview';
 import {TargetDisplay} from '../../shared/ui/TargetDisplay';
+import {createSessionStore} from '../../application/typing/SessionStore';
 import {useTranslation} from 'react-i18next';
 import {pageCopy} from '../../shared/i18n/pageCopy';
 import type {InterfaceLocale} from '../../shared/i18n/catalog';
@@ -12,7 +13,7 @@ import {getPassages,type SupportedLocale,type TrackId} from '../../domain/conten
 import {curriculum,findLesson,lessonPrompt,reviewAvailableAt} from '../../domain/lessons/curriculum';
 import {generateLessonReview,historicalLessonVocabulary} from '../../domain/lessons/review';
 import {promptForMode,seedFromDate,modeLabels,type ModeId} from '../../domain/modes/modes';
-import {createEngine,acceptInput,currentPosition,finishEngine,type EngineState,type InputSource} from '../../domain/typing/engine';
+import {createEngine,acceptInput,currentPosition,finishEngine,type InputSource} from '../../domain/typing/engine';
 import {graphemes} from '../../domain/typing/graphemes';
 import {normalizedEventTimestamp} from '../../domain/typing/eventTime';
 import {elapsedMs} from '../../domain/metrics/metrics';
@@ -54,26 +55,24 @@ export function Practice(){
  const [customText,setCustomText]=useState('');
  const [lessonTitle,setLessonTitle]=useState('');
  const [prompt,setPrompt]=useState<TypingPrompt>(diagnostics[initialLocale]);
- const sessionRef=useRef<EngineState>(createEngine(diagnostics[initialLocale]));
- const [session,setSession]=useState<EngineState>(sessionRef.current);
+ const storeRef=useRef<ReturnType<typeof createSessionStore>|null>(null);
+ if(!storeRef.current)storeRef.current=createSessionStore(createEngine(diagnostics[initialLocale]));
+ const sessionStore=storeRef.current;
+ const session=useSyncExternalStore(sessionStore.subscribe,sessionStore.getSnapshot,sessionStore.getSnapshot);
  const [focus,setFocus]=useState(false);const [now,setNow]=useState(0);
  const [saveNotice,setSaveNotice]=useState('');
  const [persistence,setPersistence]=useState<'idle'|'saving'|'saved'|'failed'>('idle');
  const [finalScore,setFinalScore]=useState<ScoreV2|null>(null);
  const [lastCode,setLastCode]=useState('');
+ const lastCodeRef=useRef('');
  const composing=useRef(false);const savedId=useRef('');
  const recentWords=useRef<string[]>([]);const inputRef=useRef<HTMLTextAreaElement>(null);
- const requestId=useRef(0);const frameId=useRef<number|null>(null);const navigate=useNavigate();
- const publishFrame=()=>{
-  if(frameId.current!==null)return;
-  frameId.current=requestAnimationFrame(()=>{frameId.current=null;setSession(sessionRef.current);});
- };
- useEffect(()=>()=>{if(frameId.current!==null)cancelAnimationFrame(frameId.current);},[]);
+ const requestId=useRef(0);const navigate=useNavigate();
+ useEffect(()=>()=>sessionStore.dispose(),[sessionStore]);
  const settings=useUiStore(s=>s.settings),updateSettings=useUiStore(s=>s.updateSettings);
 
  const reset=(nextPrompt:TypingPrompt=prompt)=>{
-  if(frameId.current!==null){cancelAnimationFrame(frameId.current);frameId.current=null;}
-  const fresh=createEngine(nextPrompt);sessionRef.current=fresh;setSession(fresh);setPrompt(nextPrompt);
+  const fresh=createEngine(nextPrompt);sessionStore.update(fresh,true);setPrompt(nextPrompt);
   if(inputRef.current)inputRef.current.value='';
   savedId.current='';setNow(0);setSaveNotice('');setPersistence('idle');setFinalScore(null);
   composing.current=false;
@@ -142,16 +141,16 @@ export function Practice(){
   void prepare('lesson',nextLang,nextLayout,track,count,duration,customText,lessonId);
   // Trigger only when academy link changes: other controls reset through prepare directly.
  },[lessonId,query.get('lang'),lessonVariant]);
- const stop=(at:number)=>{const s=finishEngine(sessionRef.current,at);sessionRef.current=s;setSession(s);};
+ const stop=(at:number)=>{sessionStore.update(finishEngine(sessionStore.current,at),true);};
  const commit=(value:string,source:InputSource='keyboard',nativeTimestampMs?:number)=>{
   const receivedAt=performance.now();
   const fromEvent=nativeTimestampMs===undefined?receivedAt:normalizedEventTimestamp(nativeTimestampMs,receivedAt,performance.timeOrigin);
-  const previous=sessionRef.current.attempts.at(-1)?.atMs??0;
+  const previous=sessionStore.current.attempts.at(-1)?.atMs??0;
   const at=Math.max(fromEvent,previous); // preserve monotonic order under delayed dispatch
-  const previousState=sessionRef.current;
+  const previousState=sessionStore.current;
   let next=acceptInput(previousState,value,at,source);
-  if(mode==='hardcore'&&!settings.gentleMode&&next.attempts.length>sessionRef.current.attempts.length&&next.attempts.slice(sessionRef.current.attempts.length).some(a=>!a.correct))next=finishEngine(next,at);
-  sessionRef.current=next;if(next!==previousState)publishFrame();
+  if(mode==='hardcore'&&!settings.gentleMode&&next.attempts.length>previousState.attempts.length&&next.attempts.slice(previousState.attempts.length).some(a=>!a.correct))next=finishEngine(next,at);
+  sessionStore.update(next);
  };
  const onInput=(event:FormEvent<HTMLTextAreaElement>)=>{
   if(composing.current||(event.nativeEvent as InputEvent).isComposing)return;
@@ -169,8 +168,8 @@ export function Practice(){
  useEffect(()=>{
   if(session.startedAtMs===null||session.endedAtMs!==null)return;
   const id=window.setInterval(()=>{
-   const at=performance.now();setNow(at);
-   if(mode==='time'&&at-sessionRef.current.startedAtMs!>=duration*1000)stop(at);
+   const at=performance.now();setNow(at);setLastCode(lastCodeRef.current);
+   if(mode==='time'&&at-sessionStore.current.startedAtMs!>=duration*1000)stop(at);
   },250);
   return()=>window.clearInterval(id);
  },[session.startedAtMs,session.endedAtMs,mode,duration]);
@@ -254,14 +253,14 @@ export function Practice(){
    <div><div className="label">ТОЧНОСТЬ</div><strong>{score.totalAttempts&&(mode!=='zen'||finished)?`${(score.accuracy*100).toFixed(1)}%`:'—'}</strong></div>
   </div><span className="chip accent">{finished?t('sessionDone'):session.startedAtMs===null?t('sessionReady'):t('sessionRunning')}</span></div>
   <div className="typearea" onClick={()=>!finished&&inputRef.current?.focus()}>
-   <TargetDisplay target={prompt.text} typed={session.typed} position={pos} finished={finished} blur={blurText}/>
+   <TargetDisplay target={prompt.text} store={sessionStore} blur={blurText}/>
   </div>
   <p className="sr-only" id="target-readable">{t('target')}: {targetChars.slice(pos,pos+110).join('')}</p>
   <label className="sr-only" htmlFor="typing-input">{t('input')}</label>
   <textarea ref={inputRef} id="typing-input" className="typeinput" defaultValue=""
    onInput={onInput} onBeforeInput={beforeInput} onPaste={onPaste} onDrop={onDrop}
    onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={onCompositionEnd}
-   onKeyDown={event=>setLastCode(event.code)} disabled={finished} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+   onKeyDown={event=>{lastCodeRef.current=event.code;}} disabled={finished} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
    aria-describedby="typing-help target-readable" aria-keyshortcuts="Tab" rows={2} placeholder={t('exerciseHelp')}/>
   <div className="inline-help" id="typing-help"><span>Обработка локальная · Вставка отключена · {mode==='hardcore'?'Первая ошибка завершает попытку':'Ошибки можно исправлять'}</span><span>Esc — выход из фокуса</span></div>
   {canEnd&&mode!=='time'&&<button type="button" className="btn secondary small-btn end-session" onClick={()=>stop(performance.now())}>{t('finish')}</button>}

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — Iteration 5 (experimental branch; not a release)
+
+- Prototype off-React typing-session store with 250 ms React snapshots, unchanged engine/scoring/storage contract, and bounded imperative target painting. Benchmarks and all-browser acceptance are mandatory before phase-A sign-off.
+- Extend the input benchmark output with observed Event Timing p50/p99 (still thresholded at 16 ms).
+
+
 ## 0.9.0 Beta · 2026-10-26 · GitHub Pages
 
 **Beta publication approved by the project owner.** This is an experimental release, not confirmation of all v0.9 Definition-of-Done targets. Previous v0.8 code remains available in Git history.

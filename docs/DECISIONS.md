@@ -19,3 +19,5 @@
 **ADR-009: Preserve native composition.** Use native textarea value and composition-end commits for actual characters, `KeyboardEvent.code` only for non-text physical-key hints.
 
 **ADR-010: Calibrated language.** Skill confidence is a heuristic evidence weight; no validated probability claim.
+
+**ADR-017 (iteration 5, provisional): Bounded imperative typing window.** Native textarea and the unchanged immutable typing engine remain the semantic source of truth. A private session store publishes React snapshots every 250 ms and at start/end/reset; an aria-hidden window of up to 288 graphemes is painted via DOM refs in rAF. Chosen over canvas because screen-reader support is already provided by native textarea/target description, while native text selection, font metrics and IME compatibility remain easier to preserve. No measured performance improvement is claimed pending ordinary/profiling browser benchmarks. This decision is reversible if measurements regress.

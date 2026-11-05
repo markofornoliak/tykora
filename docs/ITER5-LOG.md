@@ -8,3 +8,10 @@
 - Updated existing measurement workflow to run on this branch, before changing application behavior.
 - Historical reference metrics do not establish fresh `main` p95. Actual measurements and check results must be added with run links and immutable full commit SHAs.
 - No browser tests or user-device audit claimed at this stage.
+
+## 2026-11-05 · Phase A implementation candidate (NOT accepted)
+
+- Added an external ephemeral session store with immediate visual listeners and a 250 ms React snapshot cadence; retained the original engine, score v2 and database contracts.
+- Switched the target display to a bounded 288-grapheme native DOM window updated via requestAnimationFrame; input handlers no longer publish React state per keypress.
+- Added unit regressions for coalescing/finish; moved physical-key hint updates onto the existing 250 ms clock.
+- Extended benchmark metrics with p50/p99. Build and cross-browser tests must still complete; no performance target is claimed.
