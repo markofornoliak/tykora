@@ -125,3 +125,8 @@
 
 - [Preact laboratory #42120761407](https://github.com/markofornoliak/tykora/actions/runs/42120761407) reached the experimental Preact build but Rollup rejected `src/app/App.tsx` import `Profiler` because `preact/compat` does not export it. This is genuine incompatibility (not a React product regression). Baseline React build/unit gate passed before that step.
 - For opt-in lab **only**, new `scripts/iter6-preact-compat.mjs` forwards the real Preact compat API and supplies a transparent Profiler pass-through component; the recorded practice profiling counters are **not comparable** under this shim. This is acceptable only for *non-profiler* comparison of visual and functional behavior, never to claim Profiler correctness. Production still imports React. Run all 3 browser tests, if functional mismatch found reject rather than silence.
+
+## 2026-11-05 · Track F: independent npm audit and SBOM workflow
+
+- Added `.github/workflows/iter6-supply-chain.yml`, triggered only by its own workflow or lockfile changes (never by production deploy). Builds an inspectable CycloneDX SBOM using locked `npm ci` dependency tree, runs native `npm audit --json` **without exceptions, `--force`, or suppression**, prints severity and uploads raw JSON even when audit fails.
+- Missing/invalid report fails. Vulnerabilities if any remain BLOCKER until resolved by narrow package updates and full regression checks; no unsupported "audit clean" claim at writing. No artifact published as a software release.

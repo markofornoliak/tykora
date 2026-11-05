@@ -1,0 +1,52 @@
+name: Iteration 6 - supply-chain audit and CycloneDX SBOM
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-supply-chain.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Generate lockfile-resolved CycloneDX component inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p performance-artifacts/iter6-supply-chain
+          npm sbom --sbom-format cyclonedx > performance-artifacts/iter6-supply-chain/sbom.cdx.json
+          node -e "const fs=require('fs');const s=JSON.parse(fs.readFileSync('performance-artifacts/iter6-supply-chain/sbom.cdx.json'));if(s.bomFormat!=='CycloneDX'||!Array.isArray(s.components))process.exit(1);console.log('ITER6_SBOM '+JSON.stringify({sha:process.env.GITHUB_SHA,format:s.bomFormat,specVersion:s.specVersion,components:s.components.length}));"
+      - name: Run real npm audit and retain all findings
+        id: audit
+        shell: bash
+        run: |
+          mkdir -p performance-artifacts/iter6-supply-chain
+          npm audit --json > performance-artifacts/iter6-supply-chain/npm-audit.json
+      - name: Read true audit severity counts
+        if: always()
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='performance-artifacts/iter6-supply-chain/npm-audit.json';
+          if(!fs.existsSync(p)){console.error('npm audit produced no report');process.exit(1);}
+          const a=JSON.parse(fs.readFileSync(p));
+          console.log('ITER6_NPM_AUDIT '+JSON.stringify({sha:process.env.GITHUB_SHA,severityCounts:a.metadata?.vulnerabilities??null,findings:Object.keys(a.vulnerabilities??{}).sort(),npmError:a.error??null}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tykora-iter6-sbom-and-npm-audit
+          path: performance-artifacts/iter6-supply-chain/*
+          if-no-files-found: warn
