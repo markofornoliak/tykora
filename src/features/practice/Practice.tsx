@@ -7,6 +7,7 @@ import {TargetDisplay} from '../../shared/ui/TargetDisplay';
 import {createSessionStore} from '../../application/typing/SessionStore';
 import {useTranslation} from 'react-i18next';
 import {pageCopy} from '../../shared/i18n/pageCopy';
+import {useBilingual} from '../../shared/i18n/useBilingual';
 import type {InterfaceLocale} from '../../shared/i18n/catalog';
 import {diagnostics,words} from '../../domain/content/prompts';
 import {getPassages,type SupportedLocale,type TrackId} from '../../domain/content/library';
@@ -37,6 +38,8 @@ const tracks:readonly {id:TrackId;label:string}[]=[
  {id:'code-js',label:'JavaScript'},{id:'business',label:'Деловые тексты'},
  {id:'finance',label:'Финансы'},{id:'medical',label:'Медицина'},{id:'legal',label:'Право'}
 ];
+const modeLabelsEn:Record<ModeId,string>={diagnostic:'Diagnosis',adaptive:'Adaptive',time:'Timed',words:'Word count',quote:'Quotes and texts',custom:'My text',zen:'Zen',hardcore:'Hardcore',blind:'Blind mode',burst:'Burst',daily:'Daily exercise',marathon:'Marathon'};
+const trackNamesEn:Record<TrackId,string>={general:'General texts','code-python':'Python','code-cpp':'C++','code-js':'JavaScript',business:'Business',finance:'Finance',medical:'Medicine',legal:'Legal'};
 export function Practice(){
  // Opt-in benchmark probe only; no persistent event data or typing text.
  if(typeof window!=='undefined'){
@@ -44,6 +47,7 @@ export function Practice(){
   if(p)p.practiceRenders++;
  }
  const {t}=useTranslation();
+ const tr=useBilingual();
  const interfaceLocale=useUiStore(s=>s.settings.uiLocale) as InterfaceLocale;
  const copy=pageCopy[interfaceLocale]??pageCopy.ru;
  const [query]=useSearchParams();const lessonId=query.get('lesson')??'';
@@ -236,41 +240,41 @@ export function Practice(){
  return <section className="practice-page">
  {!focus&&<PageHeader kicker="TYKORA / Practice" title={copy.practiceTitle}>{copy.practiceIntro}</PageHeader>}
  {focus&&<button type="button" className="btn secondary focus-exit" onClick={()=>{setFocus(false);requestAnimationFrame(()=>inputRef.current?.focus());}}>{t('exitFocus')} (Esc)</button>}
- {!focus&&<div className="practice-toolbar" role="group" aria-label="Настройки тренировки">
-  <label className="sr-only" htmlFor="practice-language">Язык текста</label>
+ {!focus&&<div className="practice-toolbar" role="group" aria-label={tr('Настройки тренировки','Practice settings')}>
+  <label className="sr-only" htmlFor="practice-language">{tr('Язык текста','Content language')}</label>
   <select id="practice-language" className="chip" value={language} onChange={e=>{
    const lang=e.target.value as SupportedLocale;void prepare(mode,lang,layouts[lang][0].id,track,count,duration,customText);
-  }}><option value="ru">Русский</option><option value="en">English</option></select>
-  <label className="sr-only" htmlFor="practice-layout">Раскладка</label>
+  }}><option value="ru">{tr('Русский','Russian')}</option><option value="en">English</option></select>
+  <label className="sr-only" htmlFor="practice-layout">{tr('Раскладка','Keyboard layout')}</label>
   <select id="practice-layout" className="chip" value={layoutId} onChange={e=>void prepare(mode,language,e.target.value,track,count,duration,customText)}>{layouts[language].map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select>
-  <label className="sr-only" htmlFor="practice-mode">Режим</label>
+  <label className="sr-only" htmlFor="practice-mode">{tr('Режим','Mode')}</label>
   <select id="practice-mode" className="chip" value={mode} onChange={e=>void prepare(e.target.value as Selection)}>
-   {mode==='lesson'&&<option value="lesson">Урок курса</option>}{(Object.keys(modeLabels) as ModeId[]).map(m=><option value={m} key={m}>{modeLabels[m]}</option>)}
+   {mode==='lesson'&&<option value="lesson">{tr('Урок курса','Course lesson')}</option>}{(Object.keys(modeLabels) as ModeId[]).map(m=><option value={m} key={m}>{tr(modeLabels[m],modeLabelsEn[m])}</option>)}
   </select>
   <div className="spacer"/><button type="button" className="btn small-btn" onClick={()=>reset()}>↺ {t('restart')}</button>
   <button type="button" className="btn secondary small-btn" aria-pressed={focus} onClick={()=>{setFocus(x=>!x);requestAnimationFrame(()=>inputRef.current?.focus());}}>{focus?t('exitFocus'):`⛶ ${t('focus')}`}</button>
  </div>}
  {!focus&&<div className="mode-options">
-  {(mode==='words'||mode==='adaptive')&&<label className="small">Слов <select className="chip" value={count} onChange={e=>void prepare(mode,language,layoutId,track,Number(e.target.value))}><option>10</option><option>25</option><option>50</option>{mode==='words'&&<option>100</option>}</select></label>}
-  {mode==='time'&&<label className="small">Время <select className="chip" value={duration} onChange={e=>void prepare(mode,language,layoutId,track,count,Number(e.target.value))}>{[15,30,60,120].map(n=><option value={n} key={n}>{n} секунд</option>)}</select></label>}
-  {mode==='quote'&&<label className="small">Тематика <select className="chip" value={track} onChange={e=>void prepare(mode,language,layoutId,e.target.value as TrackId)}>{tracks.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}</select></label>}
-  {mode==='daily'&&<span className="chip">Единый текст дня для выбранного языка · без глобального рейтинга</span>}
-  {mode==='hardcore'&&<span className="chip">Первая ошибка завершает попытку</span>}
-  {mode==='blind'&&<span className="chip">Текст скрывается после первого символа</span>}
-  {mode==='burst'&&<span className="chip">12 слов · скоростной подход</span>}
-  {(mode==='zen'||mode==='marathon')&&<span className="chip">Ручное завершение доступно после начала набора</span>}
+  {(mode==='words'||mode==='adaptive')&&<label className="small">{tr('Слов','Words')} <select className="chip" value={count} onChange={e=>void prepare(mode,language,layoutId,track,Number(e.target.value))}><option>10</option><option>25</option><option>50</option>{mode==='words'&&<option>100</option>}</select></label>}
+  {mode==='time'&&<label className="small">{tr('Время','Time')} <select className="chip" value={duration} onChange={e=>void prepare(mode,language,layoutId,track,count,Number(e.target.value))}>{[15,30,60,120].map(n=><option value={n} key={n}>{n} {tr('секунд','seconds')}</option>)}</select></label>}
+  {mode==='quote'&&<label className="small">{tr('Тематика','Subject')} <select className="chip" value={track} onChange={e=>void prepare(mode,language,layoutId,e.target.value as TrackId)}>{tracks.map(t=><option key={t.id} value={t.id}>{tr(t.label,trackNamesEn[t.id])}</option>)}</select></label>}
+  {mode==='daily'&&<span className="chip">{tr('Единый текст дня для выбранного языка · без глобального рейтинга','Daily text for selected language · no global leaderboard')}</span>}
+  {mode==='hardcore'&&<span className="chip">{tr('Первая ошибка завершает попытку','First error ends the attempt')}</span>}
+  {mode==='blind'&&<span className="chip">{tr('Текст скрывается после первого символа','Target hidden after the first character')}</span>}
+  {mode==='burst'&&<span className="chip">{tr('12 слов · скоростной подход','12 words · short speed session')}</span>}
+  {(mode==='zen'||mode==='marathon')&&<span className="chip">{tr('Ручное завершение доступно после начала набора','You can finish after typing begins')}</span>}
   {mode==='lesson'&&<span className="chip accent">{lessonTitle||lessonId}</span>}
-  {shouldConfigure&&<div className="custom-editor surface"><label htmlFor="custom-text"><b>Ваш текст для тренировки</b></label><p className="small muted">До 6 000 символов. Текст обрабатывается локально и не сохраняется в истории.</p>
-    <textarea id="custom-text" rows={4} value={customText} onChange={e=>setCustomText(e.target.value)} placeholder="Вставьте собственный текст здесь"/>
-    <div className="row" style={{gap:12,flexWrap:'wrap'}}><button className="btn primary small-btn" type="button" onClick={()=>void prepare('custom',language,layoutId,track,count,duration,customText)}>Загрузить текст в упражнение</button><label className="btn secondary small-btn file-label">Открыть TXT/MD <input type="file" accept=".txt,.md,text/plain,text/markdown" onChange={e=>void loadTextFile(e.target.files?.[0])}/></label></div>
+  {shouldConfigure&&<div className="custom-editor surface"><label htmlFor="custom-text"><b>{tr('Ваш текст для тренировки','Your practice text')}</b></label><p className="small muted">{tr('До 6 000 символов. Текст обрабатывается локально и не сохраняется в истории.','Up to 6,000 characters. Your text is processed locally and is not stored in history.')}</p>
+    <textarea id="custom-text" rows={4} value={customText} onChange={e=>setCustomText(e.target.value)} placeholder={tr('Вставьте собственный текст здесь','Paste your own text here')}/>
+    <div className="row" style={{gap:12,flexWrap:'wrap'}}><button className="btn primary small-btn" type="button" onClick={()=>void prepare('custom',language,layoutId,track,count,duration,customText)}>{tr('Загрузить текст в упражнение','Load text into exercise')}</button><label className="btn secondary small-btn file-label">{tr('Открыть TXT/MD','Open TXT/MD')} <input type="file" accept=".txt,.md,text/plain,text/markdown" onChange={e=>void loadTextFile(e.target.files?.[0])}/></label></div>
    </div>}
-  {mode==='quote'&&<span className="small muted">{passages.length} оригинальных текстов в выбранном треке · автор TYKORA</span>}
+  {mode==='quote'&&<span className="small muted">{passages.length} {tr('оригинальных текстов в выбранном треке · автор TYKORA','original passages in selected track · written for TYKORA')}</span>}
  </div>}
  <div className="surface practice-stage">
   <div className="practice-stats"><div className="practice-numbers">
-   <div><div className="label">{mode==='time'?'ОСТАЛОСЬ':'ВРЕМЯ'}</div><strong>{mode==='zen'&&!finished?'—':showElapsed}</strong></div>
+   <div><div className="label">{mode==='time'?tr('ОСТАЛОСЬ','REMAINING'):tr('ВРЕМЯ','TIME')}</div><strong>{mode==='zen'&&!finished?'—':showElapsed}</strong></div>
    <div><div className="label">NET WPM</div><strong>{session.startedAtMs===null||(mode==='zen'&&!finished)?'—':displayWpm(score.netWpm)}</strong></div>
-   <div><div className="label">ТОЧНОСТЬ</div><strong>{score.totalAttempts&&(mode!=='zen'||finished)?`${(score.accuracy*100).toFixed(1)}%`:'—'}</strong></div>
+   <div><div className="label">{tr('ТОЧНОСТЬ','ACCURACY')}</div><strong>{score.totalAttempts&&(mode!=='zen'||finished)?`${(score.accuracy*100).toFixed(1)}%`:'—'}</strong></div>
   </div><span className="chip accent">{finished?t('sessionDone'):session.startedAtMs===null?t('sessionReady'):t('sessionRunning')}</span></div>
   <div className="typearea" onClick={()=>!finished&&inputRef.current?.focus()}>
    <TargetDisplay target={prompt.text} store={sessionStore} blur={blurText}/>
@@ -282,14 +286,14 @@ export function Practice(){
    onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={onCompositionEnd}
    onKeyDown={event=>{lastCodeRef.current=event.code;}} disabled={finished} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
    aria-describedby="typing-help target-readable" aria-keyshortcuts="Tab" rows={2} placeholder={t('exerciseHelp')}/>
-  <div className="inline-help" id="typing-help"><span>Обработка локальная · Вставка отключена · {mode==='hardcore'?'Первая ошибка завершает попытку':'Ошибки можно исправлять'}</span><span>Esc — выход из фокуса</span></div>
+  <div className="inline-help" id="typing-help"><span>{tr('Локальный ввод · Вставка отключена · ','Local input · Paste disabled · ')}{mode==='hardcore'?tr('Первая ошибка завершает попытку','First error ends attempt'):tr('Ошибки можно исправлять','Errors can be corrected')}</span><span>{tr('Esc — выход из фокуса','Esc — exit focus mode')}</span></div>
   {canEnd&&mode!=='time'&&<button type="button" className="btn secondary small-btn end-session" onClick={()=>stop(performance.now())}>{t('finish')}</button>}
-  {finished&&<div className="finished-box" role="status"><div><strong>Завершено · {displayWpm(score.netWpm)} WPM</strong><p className="small">Точность {(score.accuracy*100).toFixed(1)}% · Неисправленных ошибок {score.uncorrectedErrors}</p></div><button className="btn primary" type="button" disabled={persistence!=='saved'} onClick={()=>navigate('/result')}>{persistence==='saving'?'Сохранение…':'Полный результат ↗'}</button></div>}
+  {finished&&<div className="finished-box" role="status"><div><strong>{tr('Завершено','Finished')} · {displayWpm(score.netWpm)} WPM</strong><p className="small">{tr('Точность','Accuracy')} {(score.accuracy*100).toFixed(1)}% · {tr('Неисправленных ошибок','Uncorrected errors')} {score.uncorrectedErrors}</p></div><button className="btn primary" type="button" disabled={persistence!=='saved'} onClick={()=>navigate('/result')}>{persistence==='saving'?tr('Сохранение…','Saving…'):tr('Полный результат ↗','Full result ↗')}</button></div>}
   {saveNotice&&<p className="small muted" role="status" style={{marginTop:16}}>{saveNotice}</p>}
  </div>
- {!focus&&<div className="surface keyboard-card"><div className="row spread"><h2 style={{fontSize:17,letterSpacing:'-.025em',fontWeight:700}}>Визуальная клавиатура</h2><label className="small row"><input checked={settings.showKeyboard} onChange={e=>void updateSettings({showKeyboard:e.target.checked})} type="checkbox"/> Показать</label></div>
+ {!focus&&<div className="surface keyboard-card"><div className="row spread"><h2 style={{fontSize:17,letterSpacing:'-.025em',fontWeight:700}}>{tr('Визуальная клавиатура','Visual keyboard')}</h2><label className="small row"><input checked={settings.showKeyboard} onChange={e=>void updateSettings({showKeyboard:e.target.checked})} type="checkbox"/> {tr('Показать','Show')}</label></div>
   {settings.showKeyboard&&<KeyboardPreview next={targetChars[pos]??' '} locale={language} layoutId={layoutId} code={lastCode}/>}
  </div>}
- {!focus&&<div className="note" style={{marginTop:14}}>В курс входят {curriculum.length} упражнения RU/EN. Другие раскладки доступны как физические подсказки, но переведённые курсы для них пока не созданы. Результат не подтверждает, каким пальцем была нажата клавиша. Источники учебных и профессиональных текстов — собственный контент TYKORA.</div>}
+ {!focus&&<div className="note" style={{marginTop:14}}>{tr('В курс входят','The curriculum includes')} {curriculum.length} {tr('упражнения RU/EN. Другие раскладки доступны как физические подсказки, но переведённые курсы для них пока не созданы. Результат не подтверждает, каким пальцем была нажата клавиша. Источники учебных и профессиональных текстов — собственный контент TYKORA.','RU/EN exercises. Other layouts provide physical-key hints only; they do not have translated courses. The app cannot determine which finger pressed a key. Learning texts are original TYKORA content.')}</div>}
  </section>;
 }

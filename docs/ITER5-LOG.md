@@ -120,3 +120,7 @@
 ## 2026-11-05 · E RU/EN Academy and Themes
 
 - Added authored bilingual RU/EN text on Academy and Themes, including course navigation, mastery stage labels, plan controls, settings explanations and contrasts. Existing lesson language selection remains an independent RU/EN switch. Default RU E2E labels preserved. 8 other locale body translations remain partial.
+
+## 2026-11-05 · E bilingual Practice / physical keyboard hints
+
+- Added authored English/русский user-facing Practice labels, mode names, track labels, status, help, result and settings. Kept independent content locale+keyboard layout controls and existing RU tests. Physical keyboard hints now have RU/EN strings. Some domain error/notice messages remain Russian and must be audited before claiming full bilingual coverage.

@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- E: RU/EN Practice toolbar, mode guidance, end-result messages and visual keyboard hints.
+
 - E: RU/EN Themes and Academy page copy, course status and plan-setting labels.
 
 - E: RU/EN authored Results and Analytics body copy and table semantics (other 8 languages retain partial coverage).
