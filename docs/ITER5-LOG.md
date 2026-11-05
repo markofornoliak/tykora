@@ -124,3 +124,7 @@
 ## 2026-11-05 · E bilingual Practice / physical keyboard hints
 
 - Added authored English/русский user-facing Practice labels, mode names, track labels, status, help, result and settings. Kept independent content locale+keyboard layout controls and existing RU tests. Physical keyboard hints now have RU/EN strings. Some domain error/notice messages remain Russian and must be audited before claiming full bilingual coverage.
+
+## 2026-11-05 · E audited translated-page scope
+
+- Added RU/EN scope matrix with explicit Profile/Race/Classroom gaps and a six-route English UI Playwright smoke test. Existing i18n check covers only registered chrome/page copy, not all hardcoded JSX. No full RU/EN completion claim.

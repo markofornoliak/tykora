@@ -1,0 +1,21 @@
+import {test,expect} from '@playwright/test';
+test('English navigation and primary pages preserve independent content controls',async({page})=>{
+ await page.goto('/#/themes');
+ await page.locator('#ui-locale').selectOption('en');
+ await expect(page.locator('html')).toHaveAttribute('lang','en');
+ await expect(page.getByText('Only primary color pairs are checked; this is not a complete WCAG audit.')).toBeVisible();
+ await page.goto('/#/');
+ await expect(page.getByRole('heading',{name:'Your metrics'})).toBeVisible();
+ await expect(page.getByRole('link',{name:/Continue lesson|Start/}).first()).toBeVisible();
+ await page.goto('/#/academy');
+ await expect(page.getByRole('heading',{name:'Small steps. Lasting skills.'})).toBeVisible();
+ await expect(page.getByLabel('Exercise language')).toBeVisible();
+ await page.goto('/#/practice');
+ await expect(page.getByLabel('Content language')).toBeVisible();
+ await expect(page.getByLabel('Keyboard layout')).toBeVisible();
+ await expect(page.getByLabel('Mode')).toBeVisible();
+ await page.goto('/#/analytics');
+ await expect(page.getByRole('heading',{name:'Progress you can explain.'})).toBeVisible();
+ await page.goto('/#/result');
+ await expect(page.getByRole('heading',{name:'Clear rhythm. Measured result.'})).toBeVisible();
+});
