@@ -48,3 +48,9 @@
 - Added static HTML first-paint skeleton and local critical CSS. Did not add network font preload: repository has **no** packaged .woff/.woff2 subset assets; no external font requests permitted.
 - Converted Home progress and UiStore settings persistence to post-render dynamic import; no score worker was on the Home critical route.
 - Updated p95 budgets to CPU×1 ≤16ms, CPU×4 ≤32ms, LCP first ≤1.2s then ≤1.0s, with explicit simulation caveats. Acceptance pending new CI and five-run Lighthouse source SHA.
+
+## 2026-11-05 · B: semantic tokens and contrast
+
+- Calculated pre-change palette border role <3:1 against surface on 24/24 defaults.
+- Introduced semantic token CSS/TypeScript, deterministic role contrast resolver, 24×15 Vitest pair matrix and numeric audit document; added target typography / error underline / coarse touch / forced-colors / focus rules.
+- This is not a complete component-state review, visual baseline, or manual WCAG 2.2 AA pass. Await CI.

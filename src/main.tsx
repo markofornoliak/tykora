@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import './app/i18n';
 import './styles/app.css';
+import './shared/theme/tokens.css';
 import { App } from './app/App';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

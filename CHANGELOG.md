@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- B: semantic CSS/TS tokens, runtime contrast resolver for 24 palette defaults, numerical 24×15 theme matrix, underline errors, focus/forced-colors/touch refinements. Manual visual/a11y acceptance remains open.
+
 - A2 diagnostics: new Chrome trace and 10-minute heap workflows; Home Dexie import made lazy and added static first-paint shell with local critical CSS. Results gated by CI and measured Lighthouse.
 
 - Prototype off-React typing-session store with 250 ms React snapshots, unchanged engine/scoring/storage contract, and bounded imperative target painting. Benchmarks and all-browser acceptance are mandatory before phase-A sign-off.
