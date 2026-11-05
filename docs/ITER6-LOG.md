@@ -167,3 +167,11 @@
 
 - [Guarded fix run #42123116752](https://github.com/markofornoliak/tykora/actions/runs/42123116752): **verify-remediation SUCCESS**, including cross-browser and offline PWA, but the separate write-only job FAILED before any commit because SHA256SUMS contains paths starting `verified-lock/` and the script also `cd` into that folder, causing doubled path. Exact HEAD check passed. **No package update applied**; no security regression masked.
 - Minimal repair: run `sha256sum -c verified-lock/SHA256SUMS.txt` from checkout root with unchanged expected checksums. Re-run the complete job; only after all checks and SHA equality can it push one package-pair commit. No relaxation.
+
+## 2026-11-05 · Iter6 deep-link skip-link focus race — targeted repair
+
+- A reported Chromium E2E run: 146 passed / 1 failed / 30 skipped at `e2e/a11y-i18n.spec.ts:19`, initial `/#/academy`: after one Tab, the skip-link was not focused. Green results in other runs do not erase this failure.
+- Source-based hypothesis: `index.html` serves static Home HTML on every hash route; if user focus moves into its skip-link while entry JS is pending, `src/main.tsx` destroys that node for non-Home deep-links. The link is visible but transient, allowing an intermittent focus loss.
+- Runtime repair: small **unconditional** parser-time inline hash guard flags non-Home routes, and critical CSS hides `#root[data-tykora-home-prerender="1"]` only for those routes; `src/main.tsx` removes its marker after clearing the wrong-route DOM. Home first paint and all scoring/content paths unchanged. No user-agent, Lighthouse or CI bypass. An eventual strict CSP must hash/nonce this inline guard as well as existing critical CSS.
+- New `e2e/iter6-deeplink-focus.spec.ts`: deliberately stall the real production entry JS on Academy and Themes across all three Playwright projects. Verify stale Home is absent from accessibility tree; after release, actual skip-link receives first Tab, Enter focuses main, and hash remains correct. Original skip-link E2E remains unchanged.
+- Evidence: **pending CI** for `check`, `lint`, `test`, `build`, `check:dist`, full Playwright and Lighthouse ×10. No assertion of PASS before completed runs.

@@ -55,5 +55,8 @@ if(homeAtBootstrap){
  // Deep links must never expose stale, unhydrated Home controls. Clear the
  // wrong-route static DOM BEFORE dynamic module loading, not after it.
  root.replaceChildren();
+ // Release the parser-time deep-link guard only after clearing stale Home.
+ // This leaves an empty root until React renders the real route.
+ delete root.dataset.tykoraHomePrerender;
  bootstrap();
 }

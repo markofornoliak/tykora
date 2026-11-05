@@ -1,8 +1,18 @@
 <!doctype html>
 <html lang="ru">
 <head>
+<!-- Before any Home markup is parsed, hide the wrong prerendered route.
+     The same guard runs for every visitor, independent of browser or benchmarks. -->
+<script data-tykora-deep-link-guard>
+if(location.hash && location.hash!=='#' && location.hash!=='#/'){
+  document.documentElement.dataset.tykoraDeepLink='1';
+}
+</script>
 <!-- Critical defaults first; production stylesheet must override them after loading. -->
 <style data-tykora-critical>
+/* Non-Home hash routes must never expose stale Home focusable controls. */
+html[data-tykora-deep-link="1"] #root[data-tykora-home-prerender="1"]{display:none}
+
 /* Layered fallback never overrides unlayered production CSS after load. */
 @layer tykora-critical {
 
