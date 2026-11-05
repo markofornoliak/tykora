@@ -1,0 +1,8 @@
+{
+  "ignoreFiles": [
+    "src/shared/theme/tokens.css"
+  ],
+  "rules": {
+    "color-no-hex": true
+  }
+}

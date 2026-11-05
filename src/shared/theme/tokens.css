@@ -57,3 +57,22 @@ button:disabled,[aria-disabled="true"]{cursor:not-allowed;opacity:.58}
 @media(prefers-reduced-motion:reduce){
  .target-text .caret::before{animation:none!important}
 }
+
+/* Centralized legacy palette: source values retained exactly until semantic migration. */
+:root{
+ --ds-legacy-color-f7f7f3:#f7f7f3;
+ --ds-legacy-color-ffffff:#ffffff;
+ --ds-legacy-color-f0f2ed:#f0f2ed;
+ --ds-legacy-color-19231f:#19231f;
+ --ds-legacy-color-52625b:#52625b;
+ --ds-legacy-color-dfe5df:#dfe5df;
+ --ds-legacy-color-185f50:#185f50;
+ --ds-legacy-color-e6f2ed:#e6f2ed;
+ --ds-legacy-color-a63139:#a63139;
+ --ds-legacy-color-f9e8e8:#f9e8e8;
+ --ds-legacy-color-edcfce:#edcfce;
+ --ds-legacy-color-82292f:#82292f;
+ --ds-legacy-color-f4dfbb:#f4dfbb;
+ --ds-legacy-color-694313:#694313;
+ --ds-legacy-color-fff:#fff;
+}

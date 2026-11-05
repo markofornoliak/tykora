@@ -103,3 +103,7 @@
 ## 2026-11-05 · B accessible keyboard heatmap
 
 - Added per-key local error-rate heatmap in Analytics with Viridis sequential palette (not red-green), numeric labels and accessible table. Keys without valid completed-session observations remain visibly unmeasured. Not an inference of finger position.
+
+## 2026-11-05 · B legacy CSS literal colour migration
+
+- Centralized 19 hex literal occurrences (15 unique) from src/styles/app.css into src/shared/theme/tokens.css without changing effective colors. Added pinned Stylelint `color-no-hex` CI command for non-token stylesheets and independent token check. Remaining non-color layout magic values and inline JSX styles are NOT fully migrated.

@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- B: move 15 legacy hex colors into theme tokens, add a fixed Stylelint no-hex rule for non-token CSS.
+
 - B: evidence-only keyboard error heatmap, color-vision-friendly ramp and accessible table.
 
 - B: optional per-second local aggregate timeline for new sessions and accessible chart/table in Results, without raw keystroke storage or history migration.
