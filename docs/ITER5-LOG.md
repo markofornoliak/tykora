@@ -112,3 +112,7 @@
 
 - Rebuilt Home content RU/EN, retained original heading and navigation contract; added a daily-goal progress ring using only saved local session durations and a clearly labelled illustrative default when no user plan exists. No invented progress, achievements or forecast.
 - Other eight UI locales keep translated chrome/page intro and explicit RU fallback for newly added body copy; no full 10-locale claim. CI/visual golden will require review for intentional design changes.
+
+## 2026-11-05 · E bilingual Results + Analytics
+
+- Authored RU/EN strings for Results and Analytics headings, metrics, evidence tables, error/empty states and offline PNG action; preserves existing RU defaults and E2E names. Other locales keep RU fallback for page body.

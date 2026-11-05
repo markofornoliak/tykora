@@ -5,7 +5,8 @@ import type { SessionRecord } from '../../application/ports/ProgressRepository';
 import {displayWpm} from '../../shared/utils/formatMetrics';
 import { repositories } from '../../infrastructure/di/repositories';
 import { weakestSkills,type SkillNode } from '../../domain/skills/model';
-function savePngCard(record:SessionRecord):void{
+import {useBilingual} from '../../shared/i18n/useBilingual';
+function savePngCard(record:SessionRecord,english:boolean):void{
  const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=630;
  const ctx=canvas.getContext('2d');if(!ctx)return;
  const css=getComputedStyle(document.documentElement);
@@ -18,11 +19,12 @@ function savePngCard(record:SessionRecord):void{
  ctx.font='600 24px system-ui, sans-serif';ctx.fillText('PERSONAL TYPING RESULT',120,200);
  ctx.font='800 162px system-ui, sans-serif';ctx.fillText(displayWpm(record.summary.netWpm,0),110,390);
  ctx.font='600 29px system-ui, sans-serif';ctx.fillText('NET WPM',120,440);
- ctx.font='600 33px system-ui, sans-serif';ctx.fillText('Точность: '+(record.summary.accuracy*100).toFixed(1)+'%',120,517);
- ctx.font='400 19px system-ui, sans-serif';ctx.fillText('Локальный результат · '+new Date(record.endedAt).toLocaleDateString(),120,562);
+ ctx.font='600 33px system-ui, sans-serif';ctx.fillText((english?'Accuracy: ':'Точность: ')+(record.summary.accuracy*100).toFixed(1)+'%',120,517);
+ ctx.font='400 19px system-ui, sans-serif';ctx.fillText((english?'Local result · ':'Локальный результат · ')+new Date(record.endedAt).toLocaleDateString(),120,562);
  const a=document.createElement('a');a.download='tykora-result.png';a.href=canvas.toDataURL('image/png');a.click();
 }
 export function Results() {
+  const tr=useBilingual();
   const [last,setLast]=useState<SessionRecord|null>(null);
   const [weak,setWeak]=useState<SkillNode[]>([]);
   const [loading,setLoading]=useState(true);
@@ -46,35 +48,35 @@ export function Results() {
   const maxWpm=Math.max(10,...timeline.map(p=>p.netWpm??0));
   const maxSecond=Math.max(1,...timeline.map(p=>p.second));
   const points=timeline.map(p=>`${20+p.second/maxSecond*560},${155-(p.netWpm??0)/maxWpm*130}`).join(' ');
-  return <section><PageHeader kicker="Результат / Achievement" title="Хороший ритм. Чёткий результат.">Каждый показатель получен из реального набора и сохранён только на этом устройстве.</PageHeader>
-    {!last ? <div className="surface card"><Placeholder>{loading?'Загрузка результата…':'Нет сохранённого результата. Сначала завершите тест.'}</Placeholder><Link to="/practice" className="btn primary" style={{marginTop:18}}>Перейти к практике</Link></div>:
+  return <section><PageHeader kicker={tr('Результат / Achievement','Result / Achievement')} title={tr('Хороший ритм. Чёткий результат.','Clear rhythm. Measured result.')}>{tr('Каждый показатель получен из реального набора и сохранён только на этом устройстве.','Every metric comes from your own typing and is stored on this device only.')}</PageHeader>
+    {!last ? <div className="surface card"><Placeholder>{loading?tr('Загрузка результата…','Loading result…'):tr('Нет сохранённого результата. Сначала завершите тест.','No saved result. Finish an exercise first.')}</Placeholder><Link to="/practice" className="btn primary" style={{marginTop:18}}>{tr('Перейти к практике','Go to practice')}</Link></div>:
       <div className="result-layout"><div className="share-card"><div className="row spread"><strong>▦ TYKORA</strong><span className="tiny">RESULT / {new Date(last.endedAt).getFullYear()}</span></div>
         <div className="share-large">{displayWpm(last.summary.netWpm,0)}</div><div>NET WORDS PER MINUTE</div>
         <div className="share-metrics"><span>ТОЧНОСТЬ<br/><b>{(last.summary.accuracy*100).toFixed(1)}%</b></span><span>RAW WPM<br/><b>{displayWpm(last.summary.rawWpm)}</b></span></div><span className="tiny">TYPE. UNDERSTAND. MASTER.</span>
-        <button className="btn secondary" type="button" onClick={()=>savePngCard(last)}>Сохранить PNG-карточку (офлайн)</button>
-      </div><div className="surface card"><h3>Ваш разбор</h3>
+        <button className="btn secondary" type="button" onClick={()=>savePngCard(last,!!(tr('','EN')))}> {tr('Сохранить PNG-карточку (офлайн)','Save PNG card (offline)')}</button>
+      </div><div className="surface card"><h3>{tr('Ваш разбор','Your breakdown')}</h3>
         <div className="lessonline"><span>Net WPM</span><b>{displayWpm(last.summary.netWpm)}</b></div>
         <div className="lessonline"><span>Raw WPM</span><b>{displayWpm(last.summary.rawWpm)}</b></div>
-        {comparable&&last.summary.netWpm!==null&&<div className="lessonline"><span>Среднее прошлых {comparable.count} сопоставимых сессий</span><b>{comparable.average.toFixed(1)} WPM</b></div>}
-        <div className="lessonline"><span>Точность всех попыток</span><b>{(last.summary.accuracy*100).toFixed(1)}%</b></div>
-        <div className="lessonline"><span>Исправленные ошибки</span><b>{last.summary.correctedErrors}</b></div>
-        <div className="lessonline"><span>Неисправленные ошибки</span><b>{last.summary.uncorrectedErrors}</b></div>
-        <div className="lessonline"><span>Перестановки символов</span><b>{last.summary.errorTypes.transposition}</b></div>
-        <div className="lessonline"><span>Продолжительность</span><b>{(last.summary.durationMs/1000).toFixed(1)} с</b></div>
+        {comparable&&last.summary.netWpm!==null&&<div className="lessonline"><span>{tr('Среднее прошлых','Average of prior')} {comparable.count} {tr('сопоставимых сессий','comparable sessions')}</span><b>{comparable.average.toFixed(1)} WPM</b></div>}
+        <div className="lessonline"><span>{tr('Точность всех попыток','Accuracy across attempts')}</span><b>{(last.summary.accuracy*100).toFixed(1)}%</b></div>
+        <div className="lessonline"><span>{tr('Исправленные ошибки','Corrected mistakes')}</span><b>{last.summary.correctedErrors}</b></div>
+        <div className="lessonline"><span>{tr('Неисправленные ошибки','Uncorrected mistakes')}</span><b>{last.summary.uncorrectedErrors}</b></div>
+        <div className="lessonline"><span>{tr('Перестановки символов','Transpositions')}</span><b>{last.summary.errorTypes.transposition}</b></div>
+        <div className="lessonline"><span>{tr('Продолжительность','Duration')}</span><b>{(last.summary.durationMs/1000).toFixed(1)} с</b></div>
         <div className="thinrule"/>
-        <h3>Что тренировать дальше</h3><p className="small" style={{marginTop:9}}>{weak.length ? `Наблюдаемые сложные сочетания (до пяти): ${weak.slice(0,5).map(x=>x.sequence).join(' · ')}. Попробуйте адаптивную практику.` : 'После нескольких полноценных сессий появятся рекомендации на основании наблюдений.'}</p>
-        {timeline.length>=2?<section aria-label="Скорость набора по секундам">
-          <h3>Наблюдаемая скорость по секундам</h3>
-          <svg className="chart" viewBox="0 0 600 180" role="img" aria-label="Наблюдаемые значения Net WPM по прошедшим секундам">
+        <h3>{tr('Что тренировать дальше','What to practice next')}</h3><p className="small" style={{marginTop:9}}>{weak.length ? tr('Наблюдаемые сложные сочетания (до пяти): ','Observed difficult sequences (up to five): ')+weak.slice(0,5).map(x=>x.sequence).join(' · ')+tr('. Попробуйте адаптивную практику.','. Try adaptive practice.') : tr('После нескольких полноценных сессий появятся рекомендации на основании наблюдений.','After more complete sessions, recommendations will use your observations.')}</p>
+        {timeline.length>=2?<section aria-label={tr('Скорость набора по секундам','Typing speed by second')}>
+          <h3>{tr('Наблюдаемая скорость по секундам','Observed speed by second')}</h3>
+          <svg className="chart" viewBox="0 0 600 180" role="img" aria-label={tr('Наблюдаемые значения Net WPM по прошедшим секундам','Observed Net WPM across elapsed seconds')}>
             <line x1="20" y1="155" x2="580" y2="155" stroke="var(--border)"/>
             <polyline points={points} fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinejoin="round"/>
           </svg>
-          <details><summary>Таблица наблюдений по секундам ({timeline.length})</summary>
-          <div style={{overflowX:'auto'}}><table className="social-table"><caption>Фактические сохранённые интервальные значения, а не восстановление итогового WPM.</caption>
-          <thead><tr><th scope="col">Секунда</th><th scope="col">Net WPM</th><th scope="col">Точность</th><th scope="col">Попыток</th></tr></thead>
+          <details><summary>{tr('Таблица наблюдений по секундам','Per-second observations table')} ({timeline.length})</summary>
+          <div style={{overflowX:'auto'}}><table className="social-table"><caption>{tr('Фактические сохранённые интервальные значения, а не восстановление итогового WPM.','Recorded interval values, not reconstructed from the final WPM.')}</caption>
+          <thead><tr><th scope="col">{tr('Секунда','Second')}</th><th scope="col">Net WPM</th><th scope="col">{tr('Точность','Accuracy')}</th><th scope="col">{tr('Попыток','Attempts')}</th></tr></thead>
           <tbody>{timeline.map(point=><tr key={point.second}><th scope="row">{point.second}</th><td>{point.netWpm?.toFixed(1)??'—'}</td><td>{(point.accuracy*100).toFixed(1)}%</td><td>{point.attempts}</td></tr>)}</tbody></table></div></details>
-         </section>:<p className="small muted" style={{marginTop:10}}>Нет достоверного временного ряда: он доступен только для новых сессий с достаточной длительностью, без реконструкции старых данных.</p>}
-        <Link className="btn primary" style={{marginTop:22,width:'100%'}} to="/practice">Продолжить практику ↗</Link>
+         </section>:<p className="small muted" style={{marginTop:10}}>{tr('Нет достоверного временного ряда: он доступен только для новых сессий с достаточной длительностью, без реконструкции старых данных.','No real time series available. Only sufficiently long new sessions record interval samples; older history is never reconstructed.')}</p>}
+        <Link className="btn primary" style={{marginTop:22,width:'100%'}} to="/practice">{tr('Продолжить практику','Continue practice')} ↗</Link>
       </div></div>}
   </section>;
 }
