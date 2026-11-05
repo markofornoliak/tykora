@@ -24,3 +24,15 @@ test('Deep link does not keep the Home prerender after React boots',async({page}
  await expect(page.locator('#practice-mode')).toBeVisible();
  await expect(page.getByRole('heading',{name:'Каждое нажатие — шаг вперёд.'})).toHaveCount(0);
 });
+
+test('Home prerender matches initial locale when browser language is English',async({browser})=>{
+ const context=await browser.newContext({locale:'en-US',viewport:{width:1280,height:900}});
+ try{
+  const page=await context.newPage();
+  const issues:string[]=[];
+  page.on('console',message=>{if(message.type()==='error'&&/hydration|mismatch|recoverable/i.test(message.text()))issues.push(message.text());});
+  await page.goto('/#/',{waitUntil:'networkidle'});
+  await expect(page.getByRole('heading',{name:'Каждое нажатие — шаг вперёд.'})).toBeVisible();
+  expect(issues).toEqual([]);
+ }finally{await context.close();}
+});

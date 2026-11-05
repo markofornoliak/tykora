@@ -162,3 +162,7 @@ Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95
 - Extended actual pinned Stylelint 16.23.1 `color-no-hex` gate from app.css/heatmap.css to all `src/**/*.css`, with the existing `.stylelintrc.json` explicitly excluding only central `tokens.css`.
 - Expanded dependency-free guard to scan all other theme CSS including home.css; pinning package through npm exec is not the same as a package-lock devDependency, recorded for reproducibility.
 - CI success on exact new SHA is required before claiming broad no-hex gate PASS.
+
+## 2026-11-05 · Current HEAD hydration mismatch repair candidate
+
+- Latest CI at d168891f failed three Chromium/Firefox/WebKit tests due to production React #418 text hydration mismatch. Root cause: checked-in static Home captures RU strings after persisted defaults apply, whereas i18next initializes from navigator.language (often en-US) before hydration. Added RU initial language only when matching Home prerender is in document; settings still hydrate after first render. Added a browser-locale en-US regression; release prohibited until same-SHA CI validates this fix. React hydration mismatch logs remain enabled (not suppressed).
