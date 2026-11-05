@@ -156,3 +156,9 @@ Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95
 - E: Added Profile/Race/Classroom RU/EN main interface strings with safety-critical backup/permission/IP disclosures; Profile achievements/tier and Race simulated bot display names are translated by stable IDs, without changing domain objects. Expanded English E2E to all nine routes.
 - Coverage is still **partial pending exhaustive string audit/native-speaker QA**, especially deep dynamic error/state paths and user-provided exercise copy that must remain independent of interface locale.
 - F and G intentionally deferred to next iteration. No merge/release/deploy or repo rename.
+
+## 2026-11-05 · B CSS lint coverage completed
+
+- Extended actual pinned Stylelint 16.23.1 `color-no-hex` gate from app.css/heatmap.css to all `src/**/*.css`, with the existing `.stylelintrc.json` explicitly excluding only central `tokens.css`.
+- Expanded dependency-free guard to scan all other theme CSS including home.css; pinning package through npm exec is not the same as a package-lock devDependency, recorded for reproducibility.
+- CI success on exact new SHA is required before claiming broad no-hex gate PASS.
