@@ -48,3 +48,23 @@ test('short practice stores a v2 result with unavailable speed, not fake zero',a
  expect(record.summary.netWpm).toBeNull();
  expect(record.summary.rawWpm).toBeNull();
 });
+
+
+test('imperative target updates immediately and keeps only a bounded text window',async({page})=>{
+ await page.goto('/#/practice');
+ await page.locator('#practice-mode').selectOption('custom');
+ await page.locator('#custom-text').fill('a'.repeat(550));
+ await page.getByRole('button',{name:'Загрузить текст в упражнение'}).click();
+ const input=page.locator('#typing-input');
+ const windowText=page.locator('[data-typing-window="bounded"]');
+ await expect(windowText).toBeVisible();
+ await input.fill('a'.repeat(250));
+ // Virtualized rendering excludes glyphs before the current window.
+ await expect(windowText.locator('.typed')).toHaveCount(154);
+ expect(await windowText.locator('span').count()).toBeLessThanOrEqual(290);
+ await input.fill('a'.repeat(249)+'x');
+ await expect(windowText.locator('.err')).toHaveText('a');
+ await input.fill('a'.repeat(250));
+ await expect(windowText.locator('.err')).toHaveCount(0);
+ expect(await input.inputValue()).toHaveLength(250);
+});

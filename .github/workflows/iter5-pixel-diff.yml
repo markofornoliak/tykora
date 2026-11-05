@@ -1,0 +1,55 @@
+name: Iteration 5 - pinned visual pixel diff
+on:
+  push:
+    branches: [feature/iter5-quality-design]
+    paths:
+      - scripts/iter5-pixel-diff.py
+      - .github/workflows/iter5-pixel-diff.yml
+      - index.html
+      - src/main.tsx
+      - src/app/**
+      - src/features/**
+      - src/shared/ui/**
+      - src/shared/i18n/**
+      - src/styles/**
+      - src/shared/theme/**
+      - e2e/iter5-visual.spec.ts
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: VITE_BASE_PATH=/ npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Capture same 36 screen variants
+        env:
+          TYKORA_VISUAL_CAPTURE: '1'
+        run: npx playwright test e2e/iter5-visual.spec.ts --project=chromium
+      - name: Download pinned verified screenshot archive
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 42041281178
+          name: iter5-visual-review-36-screens
+          path: performance-artifacts/iter5-golden
+          repository: markofornoliak/tykora
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install comparator
+        run: python3 -m pip install --user --break-system-packages Pillow==11.3.0
+      - name: Compare pixels (1.5 percent threshold)
+        run: python3 scripts/iter5-pixel-diff.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter5-pixel-diff
+          path: performance-artifacts/iter5-pixel-diff/*
+          if-no-files-found: warn

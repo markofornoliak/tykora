@@ -1,0 +1,61 @@
+name: Iteration 5 - Lighthouse mobile x5 (measurement only)
+on:
+  push:
+    branches: [feature/iter5-quality-design]
+    paths:
+      - 'src/**'
+      - 'index.html'
+      - 'vite.config.ts'
+      - '.github/workflows/iter5-lighthouse.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: VITE_BASE_PATH=/ npm run build
+      - name: Start local production preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/iter5-lighthouse-preview.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4174/ > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/iter5-lighthouse-preview.log
+          exit 1
+      - name: Lighthouse 12.8.2 mobile, 5 independent runs
+        run: |
+          mkdir -p performance-artifacts/lighthouse-mobile
+          for i in 1 2 3 4 5; do
+            npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/ --chrome-flags="--headless --no-sandbox" --output=json --output-path="performance-artifacts/lighthouse-mobile/run-$i.json" --quiet
+          done
+      - name: Report exact mobile median and measurement conditions
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const rows=[];
+          for(let i=1;i<=5;i++){
+            const j=JSON.parse(readFileSync('performance-artifacts/lighthouse-mobile/run-'+i+'.json','utf8'));
+            rows.push({run:i,lcpMs:j.audits['largest-contentful-paint']?.numericValue??null,cls:j.audits['cumulative-layout-shift']?.numericValue??null,performanceScore:j.categories.performance?.score??null,version:j.lighthouseVersion,throttling:j.configSettings?.throttling,screen:j.configSettings?.screenEmulation,benchmarkIndex:j.environment?.benchmarkIndex});
+          }
+          function median(key){
+            const values=rows.map(r=>r[key]).filter(Number.isFinite).sort((a,b)=>a-b);
+            return values.length===5?values[2]:null;
+          }
+          const report={sha:process.env.GITHUB_SHA,runs:rows,medianLcpMs:median('lcpMs'),medianCls:median('cls'),medianPerformanceScore:median('performanceScore'),targetLcpMs:1000,meetsLcpTarget:median('lcpMs')!==null&&median('lcpMs')<=1000,scope:'GitHub-hosted Linux simulated Lighthouse mobile only; NOT a measured Moto G Power device'};
+          console.log('TYKORA_ITER5_LIGHTHOUSE '+JSON.stringify(report));
+          writeFileSync('performance-artifacts/lighthouse-mobile/summary.json',JSON.stringify(report,null,2));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tykora-iter5-mobile-lighthouse
+          path: performance-artifacts/lighthouse-mobile/*.json
+          if-no-files-found: warn

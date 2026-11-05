@@ -1,0 +1,78 @@
+/* Iteration 5 semantic tokens. Theme colors come from applyTheme. */
+:root{
+ --ds-surface:var(--surface);--ds-surface-2:var(--panel);
+ --ds-text:var(--text);--ds-text-muted:var(--muted);
+ --ds-accent:var(--accent);--ds-success:var(--success);
+ --ds-error:var(--danger);--ds-warning:var(--warning);
+ --ds-focus:var(--ring);--ds-border:var(--border);
+ --ds-space-1:4px;--ds-space-2:8px;--ds-space-3:12px;--ds-space-4:16px;
+ --ds-space-6:24px;--ds-space-8:32px;--ds-space-12:48px;
+ --ds-type-xs:clamp(.75rem,.72rem + .12vw,.8125rem);
+ --ds-type-sm:clamp(.875rem,.83rem + .2vw,1rem);
+ --ds-type-base:clamp(1rem,.94rem + .23vw,1.125rem);
+ --ds-type-lg:clamp(1.2rem,1.12rem + .3vw,1.35rem);
+ --ds-type-xl:clamp(1.44rem,1.34rem + .38vw,1.62rem);
+ --ds-type-2xl:clamp(1.728rem,1.61rem + .44vw,1.944rem);
+ --ds-radius-sm:6px;--ds-radius-md:12px;--ds-radius-lg:20px;
+ --ds-shadow-1:0 2px 8px rgb(0 0 0 / .04);
+ --ds-shadow-2:0 8px 24px rgb(0 0 0 / .06);
+ --ds-shadow-3:0 16px 44px rgb(0 0 0 / .09);
+ --ds-duration-fast:120ms;--ds-duration-base:200ms;--ds-duration-slow:320ms;
+ --ds-ease-standard:cubic-bezier(.2,.8,.2,1);
+ --ds-ease-productive:cubic-bezier(.3,0,.15,1);
+ --ds-z-base:0;--ds-z-menu:10;--ds-z-modal:50;--ds-z-toast:80;
+}
+.target-text{
+ max-width:70ch;
+ font-size:calc(clamp(24px,2.4vw,32px) * var(--text-scale,1))!important;
+ line-height:1.65!important;
+ font-variant-ligatures:none;
+ font-feature-settings:"liga" 0,"calt" 0;
+}
+.target-text .err{
+ text-decoration:underline dotted currentColor;
+ text-decoration-thickness:2px;
+ text-underline-offset:.16em;
+}
+button:focus-visible,select:focus-visible,textarea:focus-visible,
+input:focus-visible,a:focus-visible,[role="button"]:focus-visible{
+ outline:3px solid var(--ds-focus);
+ outline-offset:3px;
+}
+/* Prevent transient theme-switch contrast failures: animate transform, never background color. */
+.btn{transition-property:transform;transition-duration:var(--ds-duration-fast);transition-timing-function:var(--ds-ease-standard)}
+button:disabled,[aria-disabled="true"]{cursor:not-allowed;opacity:.58}
+@media(pointer:coarse){
+ button,.btn,select,.icon-button{min-height:44px;min-width:44px}
+}
+@media(prefers-color-scheme:dark){
+ :root:not([style*="--bg"]){color-scheme:dark}
+}
+@media(forced-colors:active){
+ .target-text .caret::before{background:Highlight!important}
+ button:focus-visible,select:focus-visible,textarea:focus-visible,
+ input:focus-visible,a:focus-visible{outline:3px solid Highlight!important}
+ .target-text .err{text-decoration-style:double}
+}
+@media(prefers-reduced-motion:reduce){
+ .target-text .caret::before{animation:none!important}
+}
+
+/* Centralized legacy palette: source values retained exactly until semantic migration. */
+:root{
+ --ds-legacy-color-f7f7f3:#f7f7f3;
+ --ds-legacy-color-ffffff:#ffffff;
+ --ds-legacy-color-f0f2ed:#f0f2ed;
+ --ds-legacy-color-19231f:#19231f;
+ --ds-legacy-color-52625b:#52625b;
+ --ds-legacy-color-dfe5df:#dfe5df;
+ --ds-legacy-color-185f50:#185f50;
+ --ds-legacy-color-e6f2ed:#e6f2ed;
+ --ds-legacy-color-a63139:#a63139;
+ --ds-legacy-color-f9e8e8:#f9e8e8;
+ --ds-legacy-color-edcfce:#edcfce;
+ --ds-legacy-color-82292f:#82292f;
+ --ds-legacy-color-f4dfbb:#f4dfbb;
+ --ds-legacy-color-694313:#694313;
+ --ds-legacy-color-fff:#fff;
+}

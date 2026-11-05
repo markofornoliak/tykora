@@ -1,21 +1,25 @@
-import {useEffect,useMemo,useRef,useState,type FormEvent,type CompositionEvent,type ClipboardEvent,type DragEvent} from 'react';
+import {useEffect,useMemo,useRef,useState,useSyncExternalStore,type FormEvent,type CompositionEvent,type ClipboardEvent,type DragEvent} from 'react';
 import {useNavigate,useSearchParams} from 'react-router-dom';
 import {PageHeader} from '../../shared/ui/Layout';
 import {useUiStore} from '../../app/store/uiStore';
 import {KeyboardPreview} from './components/KeyboardPreview';
 import {TargetDisplay} from '../../shared/ui/TargetDisplay';
+import {createSessionStore} from '../../application/typing/SessionStore';
 import {useTranslation} from 'react-i18next';
 import {pageCopy} from '../../shared/i18n/pageCopy';
+import {useBilingual} from '../../shared/i18n/useBilingual';
 import type {InterfaceLocale} from '../../shared/i18n/catalog';
 import {diagnostics,words} from '../../domain/content/prompts';
 import {getPassages,type SupportedLocale,type TrackId} from '../../domain/content/library';
 import {curriculum,findLesson,lessonPrompt,reviewAvailableAt} from '../../domain/lessons/curriculum';
 import {generateLessonReview,historicalLessonVocabulary} from '../../domain/lessons/review';
 import {promptForMode,seedFromDate,modeLabels,type ModeId} from '../../domain/modes/modes';
-import {createEngine,acceptInput,currentPosition,finishEngine,type EngineState,type InputSource} from '../../domain/typing/engine';
+import {createEngine,acceptInput,currentPosition,finishEngine,type InputSource} from '../../domain/typing/engine';
 import {graphemes} from '../../domain/typing/graphemes';
 import {normalizedEventTimestamp} from '../../domain/typing/eventTime';
 import {elapsedMs} from '../../domain/metrics/metrics';
+import {timelineSample,appendTimelineSample} from '../../domain/metrics/timeline';
+import type {SessionTimelineSample} from '../../application/ports/ProgressRepository';
 import {calculateScoreV2,type ScoreV2} from '../../domain/metrics/metricsV2';
 import {displayWpm} from '../../shared/utils/formatMetrics';
 import {scoreAsync} from '../../infrastructure/workers/scoreAsync';
@@ -34,6 +38,8 @@ const tracks:readonly {id:TrackId;label:string}[]=[
  {id:'code-js',label:'JavaScript'},{id:'business',label:'Деловые тексты'},
  {id:'finance',label:'Финансы'},{id:'medical',label:'Медицина'},{id:'legal',label:'Право'}
 ];
+const modeLabelsEn:Record<ModeId,string>={diagnostic:'Diagnosis',adaptive:'Adaptive',time:'Timed',words:'Word count',quote:'Quotes and texts',custom:'My text',zen:'Zen',hardcore:'Hardcore',blind:'Blind mode',burst:'Burst',daily:'Daily exercise',marathon:'Marathon'};
+const trackNamesEn:Record<TrackId,string>={general:'General texts','code-python':'Python','code-cpp':'C++','code-js':'JavaScript',business:'Business',finance:'Finance',medical:'Medicine',legal:'Legal'};
 export function Practice(){
  // Opt-in benchmark probe only; no persistent event data or typing text.
  if(typeof window!=='undefined'){
@@ -41,6 +47,7 @@ export function Practice(){
   if(p)p.practiceRenders++;
  }
  const {t}=useTranslation();
+ const tr=useBilingual();
  const interfaceLocale=useUiStore(s=>s.settings.uiLocale) as InterfaceLocale;
  const copy=pageCopy[interfaceLocale]??pageCopy.ru;
  const [query]=useSearchParams();const lessonId=query.get('lesson')??'';
@@ -54,28 +61,27 @@ export function Practice(){
  const [customText,setCustomText]=useState('');
  const [lessonTitle,setLessonTitle]=useState('');
  const [prompt,setPrompt]=useState<TypingPrompt>(diagnostics[initialLocale]);
- const sessionRef=useRef<EngineState>(createEngine(diagnostics[initialLocale]));
- const [session,setSession]=useState<EngineState>(sessionRef.current);
+ const storeRef=useRef<ReturnType<typeof createSessionStore>|null>(null);
+ if(!storeRef.current)storeRef.current=createSessionStore(createEngine(diagnostics[initialLocale]));
+ const sessionStore=storeRef.current;
+ const session=useSyncExternalStore(sessionStore.subscribe,sessionStore.getSnapshot,sessionStore.getSnapshot);
  const [focus,setFocus]=useState(false);const [now,setNow]=useState(0);
  const [saveNotice,setSaveNotice]=useState('');
  const [persistence,setPersistence]=useState<'idle'|'saving'|'saved'|'failed'>('idle');
  const [finalScore,setFinalScore]=useState<ScoreV2|null>(null);
  const [lastCode,setLastCode]=useState('');
+ const lastCodeRef=useRef('');
  const composing=useRef(false);const savedId=useRef('');
+ const timelineRef=useRef<SessionTimelineSample[]>([]);
  const recentWords=useRef<string[]>([]);const inputRef=useRef<HTMLTextAreaElement>(null);
- const requestId=useRef(0);const frameId=useRef<number|null>(null);const navigate=useNavigate();
- const publishFrame=()=>{
-  if(frameId.current!==null)return;
-  frameId.current=requestAnimationFrame(()=>{frameId.current=null;setSession(sessionRef.current);});
- };
- useEffect(()=>()=>{if(frameId.current!==null)cancelAnimationFrame(frameId.current);},[]);
+ const requestId=useRef(0);const navigate=useNavigate();
+ useEffect(()=>()=>sessionStore.dispose(),[sessionStore]);
  const settings=useUiStore(s=>s.settings),updateSettings=useUiStore(s=>s.updateSettings);
 
  const reset=(nextPrompt:TypingPrompt=prompt)=>{
-  if(frameId.current!==null){cancelAnimationFrame(frameId.current);frameId.current=null;}
-  const fresh=createEngine(nextPrompt);sessionRef.current=fresh;setSession(fresh);setPrompt(nextPrompt);
+  const fresh=createEngine(nextPrompt);sessionStore.update(fresh,true);setPrompt(nextPrompt);
   if(inputRef.current)inputRef.current.value='';
-  savedId.current='';setNow(0);setSaveNotice('');setPersistence('idle');setFinalScore(null);
+  timelineRef.current=[];savedId.current='';setNow(0);setSaveNotice('');setPersistence('idle');setFinalScore(null);
   composing.current=false;
   requestAnimationFrame(()=>inputRef.current?.focus());
  };
@@ -89,7 +95,7 @@ export function Practice(){
   if(nextMode==='diagnostic'){reset(diagnostic);return;}
   if(nextMode==='lesson') {
    const l=findLesson(chosenLesson)??curriculum[0];
-   setLessonTitle(`${nextLanguage==='ru'?l.titleRu:l.titleEn} · ${lessonVariant==='review'?'Контрольный текст':'Практика'}`);
+   setLessonTitle(`${nextLanguage==='ru'?l.titleRu:l.titleEn} · ${lessonVariant==='review'?tr('Контрольный текст','Review passage'):tr('Практика','Practice')}`);
    if(lessonVariant==='review'){
     try{
      const [history,profile]=await Promise.all([
@@ -99,7 +105,7 @@ export function Practice(){
      const availableAt=reviewAvailableAt(history,l,nextLanguage);
      if(availableAt===null||Date.now()<availableAt){
       reset(lessonPrompt(l,nextLanguage,nextLayout));
-      setSaveNotice('Контрольный текст доступен через 2 часа или в следующую календарную дату (UTC).');
+      setSaveNotice(tr('Контрольный текст доступен через 2 часа или в следующую календарную дату (UTC).','Review passage is available after two hours or on the next UTC calendar day.'));
       return;
      }
      const exclusions=historicalLessonVocabulary(history.map(x=>x.promptId),nextLanguage);
@@ -116,7 +122,7 @@ export function Practice(){
   }
   if(nextMode==='adaptive'){
    let skillNodes={};
-   try{skillNodes=await repositories.skills.byLayout(nextLayout,nextLanguage);}catch{setSaveNotice('История навыка недоступна.');}
+   try{skillNodes=await repositories.skills.byLayout(nextLayout,nextLanguage);}catch{setSaveNotice(tr('История навыка недоступна.','Skill history is unavailable.'));}
    if(requestId.current!==thisRequest)return;
    const seed=Date.now(); // model is sampled at the same instant as its deterministic seed
    const text=generateDrill(skillNodes,words[nextLanguage],{locale:nextLanguage,layoutId:nextLayout,seed,nowMs:seed,wordCount:effectiveCount,recentWords:recentWords.current});
@@ -142,16 +148,18 @@ export function Practice(){
   void prepare('lesson',nextLang,nextLayout,track,count,duration,customText,lessonId);
   // Trigger only when academy link changes: other controls reset through prepare directly.
  },[lessonId,query.get('lang'),lessonVariant]);
- const stop=(at:number)=>{const s=finishEngine(sessionRef.current,at);sessionRef.current=s;setSession(s);};
+ const stop=(at:number)=>{sessionStore.update(finishEngine(sessionStore.current,at),true);};
  const commit=(value:string,source:InputSource='keyboard',nativeTimestampMs?:number)=>{
   const receivedAt=performance.now();
   const fromEvent=nativeTimestampMs===undefined?receivedAt:normalizedEventTimestamp(nativeTimestampMs,receivedAt,performance.timeOrigin);
-  const previous=sessionRef.current.attempts.at(-1)?.atMs??0;
+  const previous=sessionStore.current.attempts.at(-1)?.atMs??0;
   const at=Math.max(fromEvent,previous); // preserve monotonic order under delayed dispatch
-  const previousState=sessionRef.current;
+  const previousState=sessionStore.current;
   let next=acceptInput(previousState,value,at,source);
-  if(mode==='hardcore'&&!settings.gentleMode&&next.attempts.length>sessionRef.current.attempts.length&&next.attempts.slice(sessionRef.current.attempts.length).some(a=>!a.correct))next=finishEngine(next,at);
-  sessionRef.current=next;if(next!==previousState)publishFrame();
+  if(mode==='hardcore'&&!settings.gentleMode&&next.attempts.length>previousState.attempts.length&&next.attempts.slice(previousState.attempts.length).some(a=>!a.correct))next=finishEngine(next,at);
+  sessionStore.update(next);
+  const probe=(window as unknown as {__TYKORA_BENCHMARK__?:{handlerMs?:number[]}}).__TYKORA_BENCHMARK__;
+  probe?.handlerMs?.push(performance.now()-receivedAt);
  };
  const onInput=(event:FormEvent<HTMLTextAreaElement>)=>{
   if(composing.current||(event.nativeEvent as InputEvent).isComposing)return;
@@ -160,7 +168,7 @@ export function Practice(){
  const onCompositionEnd=(event:CompositionEvent<HTMLTextAreaElement>)=>{
   composing.current=false;commit(event.currentTarget.value,'composition',event.nativeEvent.timeStamp);
  };
- const onPaste=(event:ClipboardEvent<HTMLTextAreaElement>)=>{event.preventDefault();setSaveNotice('Вставка в тест отключена. В режиме «Свой текст» вставлять можно в поле подготовки.');};
+ const onPaste=(event:ClipboardEvent<HTMLTextAreaElement>)=>{event.preventDefault();setSaveNotice(tr('Вставка в тест отключена. В режиме «Свой текст» вставлять можно в поле подготовки.','Pasting into the typing test is disabled. In My Text mode, paste into the preparation field instead.'));};
  const onDrop=(event:DragEvent<HTMLTextAreaElement>)=>event.preventDefault();
  const beforeInput=(event:FormEvent<HTMLTextAreaElement>)=>{
   const native=event.nativeEvent as InputEvent;
@@ -169,8 +177,14 @@ export function Practice(){
  useEffect(()=>{
   if(session.startedAtMs===null||session.endedAtMs!==null)return;
   const id=window.setInterval(()=>{
-   const at=performance.now();setNow(at);
-   if(mode==='time'&&at-sessionRef.current.startedAtMs!>=duration*1000)stop(at);
+   const at=performance.now();setNow(at);setLastCode(lastCodeRef.current);
+   const latest=sessionStore.current;
+   const sec=latest.startedAtMs===null?null:Math.floor((at-latest.startedAtMs)/1000);
+   if(sec!==null&&sec>=(timelineRef.current.at(-1)?.second??-1)){
+    const sample=timelineSample(latest,at);
+    if(sample)timelineRef.current=appendTimelineSample(timelineRef.current,sample);
+   }
+   if(mode==='time'&&at-sessionStore.current.startedAtMs!>=duration*1000)stop(at);
   },250);
   return()=>window.clearInterval(id);
  },[session.startedAtMs,session.endedAtMs,mode,duration]);
@@ -184,17 +198,26 @@ export function Practice(){
   const id=`${session.prompt.id}-${session.startedAtMs}`;
   if(savedId.current===id)return;savedId.current=id;
   setPersistence('saving');
+  const lastPoint=timelineSample(session,session.endedAtMs);
+  if(lastPoint)timelineRef.current=appendTimelineSample(timelineRef.current,lastPoint);
+  const storedTimeline=[...timelineRef.current];
   // Completed alignments can be quadratic. Never run them synchronously in render.
   void scoreAsync(session,session.endedAtMs).then(async summary=>{
    const record={id:crypto.randomUUID(),endedAt:new Date().toISOString(),mode:session.prompt.mode,
-    locale:session.prompt.locale,layoutId:session.prompt.layoutId,promptId:session.prompt.id,summary,schemaVersion:1 as const};
+    locale:session.prompt.locale,layoutId:session.prompt.layoutId,promptId:session.prompt.id,summary,schemaVersion:1 as const,timeline:storedTimeline};
    if(savedId.current===id)setFinalScore(summary);
+   // Persistence is never performed by an input handler or animation frame.
+   // Resolve within 1s even in a busy tab; fall back when idle callbacks are absent.
+   await new Promise<void>(resolve=>{
+    if(typeof window.requestIdleCallback==='function')window.requestIdleCallback(()=>resolve(),{timeout:1000});
+    else window.setTimeout(resolve,0);
+   });
    await repositories.progress.saveSession(record);
-   if(savedId.current===id){setSaveNotice('Результат сохранён только на этом устройстве.');setPersistence('saved');}
+   if(savedId.current===id){setSaveNotice(tr('Результат сохранён только на этом устройстве.','Result saved on this device only.'));setPersistence('saved');}
    try{await repositories.skills.incorporate(session);}catch{
-    if(savedId.current===id)setSaveNotice('Результат сохранён, но модель навыка не обновилась.');
+    if(savedId.current===id)setSaveNotice(tr('Результат сохранён, но модель навыка не обновилась.','Result saved, but the skill model could not be updated.'));
    }
-  }).catch(()=>{if(savedId.current===id){setPersistence('failed');setSaveNotice('Не удалось рассчитать или сохранить результат.');}});
+  }).catch(()=>{if(savedId.current===id){setPersistence('failed');setSaveNotice(tr('Не удалось рассчитать или сохранить результат.','Could not calculate or save the result.'));}});
  },[session]);
  const interimScore=useMemo(()=>calculateScoreV2(session.endedAtMs===null?session:{...session,endedAtMs:null},now||session.endedAtMs||session.startedAtMs||0),[session,now]);
  const score=finalScore??interimScore;
@@ -202,75 +225,75 @@ export function Practice(){
  const pos=currentPosition(session),finished=session.endedAtMs!==null;
  const timer=elapsedMs(session,now||session.endedAtMs||0);
  const remaining=Math.max(0,duration-timer/1000);
- const showElapsed=mode==='time'?`${Math.ceil(remaining)} с`:`${(timer/1000).toFixed(1)} с`;
+ const showElapsed=mode==='time'?`${Math.ceil(remaining)} ${tr('с','s')}`:`${(timer/1000).toFixed(1)} ${tr('с','s')}`;
  const canEnd=session.startedAtMs!==null&&!finished;
  const blurText=mode==='blind'&&session.startedAtMs!==null;
  const shouldConfigure=mode==='custom';
  const passages=getPassages(language,track);
  const loadTextFile=async(file:File|undefined)=>{
   if(!file)return;
-  if(file.size>100_000){setSaveNotice('Файл слишком большой (максимум 100 КБ).');return;}
-  if(!(/\.(txt|md)$/i.test(file.name)||file.type.startsWith('text/'))){setSaveNotice('Поддерживаются только текстовые файлы TXT и MD.');return;}
+  if(file.size>100_000){setSaveNotice(tr('Файл слишком большой (максимум 100 КБ).','File is too large (maximum 100 KB).'));return;}
+  if(!(/\.(txt|md)$/i.test(file.name)||file.type.startsWith('text/'))){setSaveNotice(tr('Поддерживаются только текстовые файлы TXT и MD.','Only TXT and MD text files are supported.'));return;}
   const text=await file.text();setCustomText(text);
   await prepare('custom',language,layoutId,track,count,duration,text);
  };
  return <section className="practice-page">
  {!focus&&<PageHeader kicker="TYKORA / Practice" title={copy.practiceTitle}>{copy.practiceIntro}</PageHeader>}
  {focus&&<button type="button" className="btn secondary focus-exit" onClick={()=>{setFocus(false);requestAnimationFrame(()=>inputRef.current?.focus());}}>{t('exitFocus')} (Esc)</button>}
- {!focus&&<div className="practice-toolbar" role="group" aria-label="Настройки тренировки">
-  <label className="sr-only" htmlFor="practice-language">Язык текста</label>
+ {!focus&&<div className="practice-toolbar" role="group" aria-label={tr('Настройки тренировки','Practice settings')}>
+  <label className="sr-only" htmlFor="practice-language">{tr('Язык текста','Content language')}</label>
   <select id="practice-language" className="chip" value={language} onChange={e=>{
    const lang=e.target.value as SupportedLocale;void prepare(mode,lang,layouts[lang][0].id,track,count,duration,customText);
-  }}><option value="ru">Русский</option><option value="en">English</option></select>
-  <label className="sr-only" htmlFor="practice-layout">Раскладка</label>
-  <select id="practice-layout" className="chip" value={layoutId} onChange={e=>void prepare(mode,language,e.target.value,track,count,duration,customText)}>{layouts[language].map(l=><option key={l.id} value={l.id}>{l.label}</option>)}</select>
-  <label className="sr-only" htmlFor="practice-mode">Режим</label>
+  }}><option value="ru">{tr('Русский','Russian')}</option><option value="en">English</option></select>
+  <label className="sr-only" htmlFor="practice-layout">{tr('Раскладка','Keyboard layout')}</label>
+  <select id="practice-layout" className="chip" value={layoutId} onChange={e=>void prepare(mode,language,e.target.value,track,count,duration,customText)}>{layouts[language].map(l=><option key={l.id} value={l.id}>{tr(l.label,l.id==='ru-jcuken'?'Russian · JCUKEN':l.id==='ru-phonetic'?'Russian · phonetic':l.label)}</option>)}</select>
+  <label className="sr-only" htmlFor="practice-mode">{tr('Режим','Mode')}</label>
   <select id="practice-mode" className="chip" value={mode} onChange={e=>void prepare(e.target.value as Selection)}>
-   {mode==='lesson'&&<option value="lesson">Урок курса</option>}{(Object.keys(modeLabels) as ModeId[]).map(m=><option value={m} key={m}>{modeLabels[m]}</option>)}
+   {mode==='lesson'&&<option value="lesson">{tr('Урок курса','Course lesson')}</option>}{(Object.keys(modeLabels) as ModeId[]).map(m=><option value={m} key={m}>{tr(modeLabels[m],modeLabelsEn[m])}</option>)}
   </select>
   <div className="spacer"/><button type="button" className="btn small-btn" onClick={()=>reset()}>↺ {t('restart')}</button>
   <button type="button" className="btn secondary small-btn" aria-pressed={focus} onClick={()=>{setFocus(x=>!x);requestAnimationFrame(()=>inputRef.current?.focus());}}>{focus?t('exitFocus'):`⛶ ${t('focus')}`}</button>
  </div>}
  {!focus&&<div className="mode-options">
-  {(mode==='words'||mode==='adaptive')&&<label className="small">Слов <select className="chip" value={count} onChange={e=>void prepare(mode,language,layoutId,track,Number(e.target.value))}><option>10</option><option>25</option><option>50</option>{mode==='words'&&<option>100</option>}</select></label>}
-  {mode==='time'&&<label className="small">Время <select className="chip" value={duration} onChange={e=>void prepare(mode,language,layoutId,track,count,Number(e.target.value))}>{[15,30,60,120].map(n=><option value={n} key={n}>{n} секунд</option>)}</select></label>}
-  {mode==='quote'&&<label className="small">Тематика <select className="chip" value={track} onChange={e=>void prepare(mode,language,layoutId,e.target.value as TrackId)}>{tracks.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}</select></label>}
-  {mode==='daily'&&<span className="chip">Единый текст дня для выбранного языка · без глобального рейтинга</span>}
-  {mode==='hardcore'&&<span className="chip">Первая ошибка завершает попытку</span>}
-  {mode==='blind'&&<span className="chip">Текст скрывается после первого символа</span>}
-  {mode==='burst'&&<span className="chip">12 слов · скоростной подход</span>}
-  {(mode==='zen'||mode==='marathon')&&<span className="chip">Ручное завершение доступно после начала набора</span>}
+  {(mode==='words'||mode==='adaptive')&&<label className="small">{tr('Слов','Words')} <select className="chip" value={count} onChange={e=>void prepare(mode,language,layoutId,track,Number(e.target.value))}><option>10</option><option>25</option><option>50</option>{mode==='words'&&<option>100</option>}</select></label>}
+  {mode==='time'&&<label className="small">{tr('Время','Time')} <select className="chip" value={duration} onChange={e=>void prepare(mode,language,layoutId,track,count,Number(e.target.value))}>{[15,30,60,120].map(n=><option value={n} key={n}>{n} {tr('секунд','seconds')}</option>)}</select></label>}
+  {mode==='quote'&&<label className="small">{tr('Тематика','Subject')} <select className="chip" value={track} onChange={e=>void prepare(mode,language,layoutId,e.target.value as TrackId)}>{tracks.map(t=><option key={t.id} value={t.id}>{tr(t.label,trackNamesEn[t.id])}</option>)}</select></label>}
+  {mode==='daily'&&<span className="chip">{tr('Единый текст дня для выбранного языка · без глобального рейтинга','Daily text for selected language · no global leaderboard')}</span>}
+  {mode==='hardcore'&&<span className="chip">{tr('Первая ошибка завершает попытку','First error ends the attempt')}</span>}
+  {mode==='blind'&&<span className="chip">{tr('Текст скрывается после первого символа','Target hidden after the first character')}</span>}
+  {mode==='burst'&&<span className="chip">{tr('12 слов · скоростной подход','12 words · short speed session')}</span>}
+  {(mode==='zen'||mode==='marathon')&&<span className="chip">{tr('Ручное завершение доступно после начала набора','You can finish after typing begins')}</span>}
   {mode==='lesson'&&<span className="chip accent">{lessonTitle||lessonId}</span>}
-  {shouldConfigure&&<div className="custom-editor surface"><label htmlFor="custom-text"><b>Ваш текст для тренировки</b></label><p className="small muted">До 6 000 символов. Текст обрабатывается локально и не сохраняется в истории.</p>
-    <textarea id="custom-text" rows={4} value={customText} onChange={e=>setCustomText(e.target.value)} placeholder="Вставьте собственный текст здесь"/>
-    <div className="row" style={{gap:12,flexWrap:'wrap'}}><button className="btn primary small-btn" type="button" onClick={()=>void prepare('custom',language,layoutId,track,count,duration,customText)}>Загрузить текст в упражнение</button><label className="btn secondary small-btn file-label">Открыть TXT/MD <input type="file" accept=".txt,.md,text/plain,text/markdown" onChange={e=>void loadTextFile(e.target.files?.[0])}/></label></div>
+  {shouldConfigure&&<div className="custom-editor surface"><label htmlFor="custom-text"><b>{tr('Ваш текст для тренировки','Your practice text')}</b></label><p className="small muted">{tr('До 6 000 символов. Текст обрабатывается локально и не сохраняется в истории.','Up to 6,000 characters. Your text is processed locally and is not stored in history.')}</p>
+    <textarea id="custom-text" rows={4} value={customText} onChange={e=>setCustomText(e.target.value)} placeholder={tr('Вставьте собственный текст здесь','Paste your own text here')}/>
+    <div className="row" style={{gap:12,flexWrap:'wrap'}}><button className="btn primary small-btn" type="button" onClick={()=>void prepare('custom',language,layoutId,track,count,duration,customText)}>{tr('Загрузить текст в упражнение','Load text into exercise')}</button><label className="btn secondary small-btn file-label">{tr('Открыть TXT/MD','Open TXT/MD')} <input type="file" accept=".txt,.md,text/plain,text/markdown" onChange={e=>void loadTextFile(e.target.files?.[0])}/></label></div>
    </div>}
-  {mode==='quote'&&<span className="small muted">{passages.length} оригинальных текстов в выбранном треке · автор TYKORA</span>}
+  {mode==='quote'&&<span className="small muted">{passages.length} {tr('оригинальных текстов в выбранном треке · автор TYKORA','original passages in selected track · written for TYKORA')}</span>}
  </div>}
  <div className="surface practice-stage">
   <div className="practice-stats"><div className="practice-numbers">
-   <div><div className="label">{mode==='time'?'ОСТАЛОСЬ':'ВРЕМЯ'}</div><strong>{mode==='zen'&&!finished?'—':showElapsed}</strong></div>
+   <div><div className="label">{mode==='time'?tr('ОСТАЛОСЬ','REMAINING'):tr('ВРЕМЯ','TIME')}</div><strong>{mode==='zen'&&!finished?'—':showElapsed}</strong></div>
    <div><div className="label">NET WPM</div><strong>{session.startedAtMs===null||(mode==='zen'&&!finished)?'—':displayWpm(score.netWpm)}</strong></div>
-   <div><div className="label">ТОЧНОСТЬ</div><strong>{score.totalAttempts&&(mode!=='zen'||finished)?`${(score.accuracy*100).toFixed(1)}%`:'—'}</strong></div>
+   <div><div className="label">{tr('ТОЧНОСТЬ','ACCURACY')}</div><strong>{score.totalAttempts&&(mode!=='zen'||finished)?`${(score.accuracy*100).toFixed(1)}%`:'—'}</strong></div>
   </div><span className="chip accent">{finished?t('sessionDone'):session.startedAtMs===null?t('sessionReady'):t('sessionRunning')}</span></div>
   <div className="typearea" onClick={()=>!finished&&inputRef.current?.focus()}>
-   <TargetDisplay target={prompt.text} typed={session.typed} position={pos} finished={finished} blur={blurText}/>
+   <TargetDisplay target={prompt.text} store={sessionStore} blur={blurText}/>
   </div>
   <p className="sr-only" id="target-readable">{t('target')}: {targetChars.slice(pos,pos+110).join('')}</p>
   <label className="sr-only" htmlFor="typing-input">{t('input')}</label>
   <textarea ref={inputRef} id="typing-input" className="typeinput" defaultValue=""
    onInput={onInput} onBeforeInput={beforeInput} onPaste={onPaste} onDrop={onDrop}
    onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={onCompositionEnd}
-   onKeyDown={event=>setLastCode(event.code)} disabled={finished} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+   onKeyDown={event=>{lastCodeRef.current=event.code;}} disabled={finished} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
    aria-describedby="typing-help target-readable" aria-keyshortcuts="Tab" rows={2} placeholder={t('exerciseHelp')}/>
-  <div className="inline-help" id="typing-help"><span>Обработка локальная · Вставка отключена · {mode==='hardcore'?'Первая ошибка завершает попытку':'Ошибки можно исправлять'}</span><span>Esc — выход из фокуса</span></div>
+  <div className="inline-help" id="typing-help"><span>{tr('Локальный ввод · Вставка отключена · ','Local input · Paste disabled · ')}{mode==='hardcore'?tr('Первая ошибка завершает попытку','First error ends attempt'):tr('Ошибки можно исправлять','Errors can be corrected')}</span><span>{tr('Esc — выход из фокуса','Esc — exit focus mode')}</span></div>
   {canEnd&&mode!=='time'&&<button type="button" className="btn secondary small-btn end-session" onClick={()=>stop(performance.now())}>{t('finish')}</button>}
-  {finished&&<div className="finished-box" role="status"><div><strong>Завершено · {displayWpm(score.netWpm)} WPM</strong><p className="small">Точность {(score.accuracy*100).toFixed(1)}% · Неисправленных ошибок {score.uncorrectedErrors}</p></div><button className="btn primary" type="button" disabled={persistence!=='saved'} onClick={()=>navigate('/result')}>{persistence==='saving'?'Сохранение…':'Полный результат ↗'}</button></div>}
+  {finished&&<div className="finished-box" role="status"><div><strong>{tr('Завершено','Finished')} · {displayWpm(score.netWpm)} WPM</strong><p className="small">{tr('Точность','Accuracy')} {(score.accuracy*100).toFixed(1)}% · {tr('Неисправленных ошибок','Uncorrected errors')} {score.uncorrectedErrors}</p></div><button className="btn primary" type="button" disabled={persistence!=='saved'} onClick={()=>navigate('/result')}>{persistence==='saving'?tr('Сохранение…','Saving…'):tr('Полный результат ↗','Full result ↗')}</button></div>}
   {saveNotice&&<p className="small muted" role="status" style={{marginTop:16}}>{saveNotice}</p>}
  </div>
- {!focus&&<div className="surface keyboard-card"><div className="row spread"><h2 style={{fontSize:17,letterSpacing:'-.025em',fontWeight:700}}>Визуальная клавиатура</h2><label className="small row"><input checked={settings.showKeyboard} onChange={e=>void updateSettings({showKeyboard:e.target.checked})} type="checkbox"/> Показать</label></div>
+ {!focus&&<div className="surface keyboard-card"><div className="row spread"><h2 style={{fontSize:17,letterSpacing:'-.025em',fontWeight:700}}>{tr('Визуальная клавиатура','Visual keyboard')}</h2><label className="small row"><input checked={settings.showKeyboard} onChange={e=>void updateSettings({showKeyboard:e.target.checked})} type="checkbox"/> {tr('Показать','Show')}</label></div>
   {settings.showKeyboard&&<KeyboardPreview next={targetChars[pos]??' '} locale={language} layoutId={layoutId} code={lastCode}/>}
  </div>}
- {!focus&&<div className="note" style={{marginTop:14}}>В курс входят {curriculum.length} упражнения RU/EN. Другие раскладки доступны как физические подсказки, но переведённые курсы для них пока не созданы. Результат не подтверждает, каким пальцем была нажата клавиша. Источники учебных и профессиональных текстов — собственный контент TYKORA.</div>}
+ {!focus&&<div className="note" style={{marginTop:14}}>{tr('В курс входят','The curriculum includes')} {curriculum.length} {tr('упражнения RU/EN. Другие раскладки доступны как физические подсказки, но переведённые курсы для них пока не созданы. Результат не подтверждает, каким пальцем была нажата клавиша. Источники учебных и профессиональных текстов — собственный контент TYKORA.','RU/EN exercises. Other layouts provide physical-key hints only; they do not have translated courses. The app cannot determine which finger pressed a key. Learning texts are original TYKORA content.')}</div>}
  </section>;
 }

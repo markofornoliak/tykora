@@ -2,6 +2,9 @@ import {create} from 'zustand';
 import i18next from '../i18n';
 import {palettes} from '../../shared/theme/palettes';
 import {defaultSettings,type AppSettings} from '../../application/ports/SettingsRepository';
+// Import the storage facade synchronously, but initialize IndexedDB only
+// after first paint in Layout's animation-frame effect. A fully dynamic
+// import caused a measured +320ms Home LCP regression in matched trials.
 import {repositories} from '../../infrastructure/di/repositories';
 import {applyTheme} from '../../shared/theme/applyTheme';
 import {uiLocales,type InterfaceLocale} from '../../shared/i18n/catalog';
@@ -42,7 +45,9 @@ export const useUiStore=create<UiStore>((set,get)=>({
  updateSettings:async(partial)=>{
   if(!get().ready)await get().initialize();
   const settings={...get().settings,...partial};applySettings(settings);set({settings});
-  saveQueue=saveQueue.catch(()=>{}).then(()=>repositories.settings.save(settings));
+  saveQueue=saveQueue.catch(()=>{}).then(async()=>{
+   await repositories.settings.save(settings);
+  });
   try{await saveQueue;}catch{set({storageNotice:'Unable to save settings to IndexedDB.'});}
  }
 }));

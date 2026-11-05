@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased — Iteration 5 (experimental branch; not a release)
+
+- E: RU/EN Practice toolbar, mode guidance, end-result messages and visual keyboard hints.
+
+- E: RU/EN Themes and Academy page copy, course status and plan-setting labels.
+
+- E: RU/EN authored Results and Analytics body copy and table semantics (other 8 languages retain partial coverage).
+
+- B/E Home: RU/EN local-first editorial dashboard with factual last-session KPIs, daily goal ring and one practice CTA.
+
+- B: move 15 legacy hex colors into theme tokens, add a fixed Stylelint no-hex rule for non-token CSS.
+
+- B: evidence-only keyboard error heatmap, color-vision-friendly ramp and accessible table.
+
+- B: optional per-second local aggregate timeline for new sessions and accessible chart/table in Results, without raw keystroke storage or history migration.
+
+- D: versioned original review content for first three RU/EN lessons, four-gram practice/review lint with focus coverage, historical review ID/length compatibility tests.
+
+- C/B fix candidate: prevent transient theme-switch contrast failure by removing button background animation; WebKit link activation regression exercises explicit focus without claiming full Tab-order verification.
+
+- B Results: offline generated PNG share card, comparison with prior compatible scoring/layout sessions, top-five observed weak n-grams, explicit absence of unsupported time-series.
+
+- C: keyboard/reduced-motion/forced-colors Playwright tests, full theme × route Chromium axe workflow, 36 screenshot evidence workflow, and explicit manual audit ledger (not performed).
+
+- B: semantic CSS/TS tokens, runtime contrast resolver for 24 palette defaults, numerical 24×15 theme matrix, underline errors, focus/forced-colors/touch refinements. Manual visual/a11y acceptance remains open.
+
+- A2 diagnostics: new Chrome trace and 10-minute heap workflows; Home Dexie import made lazy and added static first-paint shell with local critical CSS. Results gated by CI and measured Lighthouse.
+
+- Prototype off-React typing-session store with 250 ms React snapshots, unchanged engine/scoring/storage contract, and bounded imperative target painting. Benchmarks and all-browser acceptance are mandatory before phase-A sign-off.
+- Extend the input benchmark output with observed Event Timing p50/p99 (still thresholded at 16 ms).
+- Follow-up prototype replaces full 288-node class scan with changed-span painting and defers persistence to browser idle.
+
+
 ## 0.9.0 Beta · 2026-10-26 · GitHub Pages
 
 **Beta publication approved by the project owner.** This is an experimental release, not confirmation of all v0.9 Definition-of-Done targets. Previous v0.8 code remains available in Git history.

@@ -17,6 +17,9 @@ jobs:
       - run: npm run check:workers
       - run: npm run check
       - run: npm run lint
+      - run: node scripts/iter5-check-tokens.mjs
+      - run: node scripts/iter5-css-check.mjs
+      - run: npm exec --yes --package=stylelint@16.23.1 -- stylelint "src/**/*.css"
       - run: npm run check:i18n
       - run: npm run test:property
       - run: npm run test

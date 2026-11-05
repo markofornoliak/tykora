@@ -13,7 +13,12 @@ const links=[
 export function Layout(){
  const {t}=useTranslation();const {pathname}=useLocation();const previousRoute=useRef<string|null>(null);
  const initialize=useUiStore(s=>s.initialize),settings=useUiStore(s=>s.settings),updateSettings=useUiStore(s=>s.updateSettings),notice=useUiStore(s=>s.storageNotice);
- useEffect(()=>{void initialize();},[initialize]);
+ useEffect(()=>{
+  // Apply persisted settings after the first render opportunity. The app is
+  // usable immediately, and the optional IndexedDB chunk loads separately.
+  const frame=requestAnimationFrame(()=>{void initialize();});
+  return ()=>cancelAnimationFrame(frame);
+ },[initialize]);
  useEffect(()=>{if(previousRoute.current!==null&&previousRoute.current!==pathname){document.getElementById('main-content')?.focus({preventScroll:true});}previousRoute.current=pathname;},[pathname]);
  const toggleDark=()=>{void updateSettings({themeName:settings.themeName==='Nightfall'?'Daylight':'Nightfall'});};
  const page=links.find(l=>l.href===pathname);
@@ -29,7 +34,7 @@ export function Layout(){
    <div className="spacer"/><div className="sidefoot"><span className="green-dot"/><b>{t('local')}</b><p>{t('noAccount')}</p><p>Typing core · Beta v0.9.0</p></div>
   </aside>
   <main className="main" id="main-content" tabIndex={-1}>
-   <div className="topbar"><span className="top-left">TYKORA / {t(page?.key??'home')}</span>
+   <div className="topbar"><span className="top-left">{`TYKORA / ${t(page?.key??'home')}`}</span>
     <div className="top-right">
      <span className="top-pill">{t('stored')}</span>
      <label className="sr-only" htmlFor="ui-locale">{t('language')}</label>
@@ -42,7 +47,7 @@ export function Layout(){
    </div>
    {notice&&<div className="note warning" role="status">{notice}</div>}
    <Outlet/>
-   <footer className="footer">TYKORA · {t('footer')} · Beta v0.9.0</footer>
+   <footer className="footer">{`TYKORA · ${t('footer')} · Beta v0.9.0`}</footer>
   </main>
   <nav className="bottom-nav" aria-label={t('navMain')}>{links.map(l=><LinkItem link={l} key={l.key}/>)}</nav>
  </div>;

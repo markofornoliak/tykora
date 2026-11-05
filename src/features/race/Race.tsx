@@ -7,8 +7,10 @@ import {calculateScore} from '../../domain/metrics/metrics';
 import {makeBots,botProgress,raceProgress,raceText,sanitizeRoomId,type BotDifficulty} from '../../domain/social/race';
 import {ManualPeer} from '../../infrastructure/peer/manualWebRtc';
 import {repositories} from '../../infrastructure/di/repositories';
+import {useBilingual} from '../../shared/i18n/useBilingual';
 
 export function Race(){
+ const tr=useBilingual();
  const [query]=useSearchParams();
  const initialRoom=sanitizeRoomId(query.get('room')??'practice');
  const [room,setRoom]=useState(initialRoom||'practice');
@@ -40,7 +42,7 @@ export function Race(){
   if(session.startedAtMs===null)return;
   // Store local scores only. These are *unverified* races, not rankings.
   const record={id:crypto.randomUUID(),endedAt:new Date().toISOString(),mode:prompt.mode,locale,layoutId:prompt.layoutId,promptId:prompt.id,summary:calculateScore(session,session.endedAtMs),schemaVersion:1 as const};
-  void repositories.progress.saveSession(record).then(()=>setMessage('Гонка завершена. Результат сохранён локально.')).catch(()=>setMessage('Результат не удалось сохранить.'));
+  void repositories.progress.saveSession(record).then(()=>setMessage(tr('Гонка завершена. Результат сохранён локально.','Race finished. Result saved locally.'))).catch(()=>setMessage(tr('Результат не удалось сохранить.','Could not save the result.')));
  },[session,prompt,locale]);
  const commit=(text:string)=>{
   if(peerMode&&(connection!=='connected'||sharedStart===null||Date.now()<sharedStart))return;
@@ -54,67 +56,68 @@ export function Race(){
  const targetChars=useMemo(()=>graphemes(promptText),[promptText]);
  const typedChars=useMemo(()=>graphemes(session.typed),[session.typed]);
  const score=calculateScore(session,session.endedAtMs??now);
- const speedEntries=peerMode&&connection==='connected'?[{id:'peer',name:'Другой участник',progress:peerProgress,bot:false}]:bots.map(b=>({id:b.id,name:b.name,progress:botProgress(b,elapsed,promptText),bot:true}));
+ const botNamesEn:Record<string,string>={'bot-0':'Quiet Wind','bot-1':'Steady Rhythm','bot-2':'Fast Typist'};
+ const speedEntries=peerMode&&connection==='connected'?[{id:'peer',name:tr('Другой участник','Other participant'),progress:peerProgress,bot:false}]:bots.map(b=>({id:b.id,name:tr(b.name,botNamesEn[b.id]??b.name),progress:botProgress(b,elapsed,promptText),bot:true}));
  const link=`${location.origin}${location.pathname}#/race?room=${encodeURIComponent(room)}&lang=${locale}`;
  const connect=async(action:'offer'|'answer'|'apply')=>{
   setBusy(true);setMessage('');
   try{
    if(action==='apply'){
-    if(!peerRef.current)throw new Error('Сначала создайте приглашение.');
-    await peerRef.current.applyAnswer(manualInput.trim());setMessage('Ответ принят. Ожидайте соединения WebRTC.');
+    if(!peerRef.current)throw new Error(tr('Сначала создайте приглашение.','Create an invitation first.'));
+    await peerRef.current.applyAnswer(manualInput.trim());setMessage(tr('Ответ принят. Ожидайте соединения WebRTC.','Answer accepted. Waiting for WebRTC connection.'));
    }else{
-    peerRef.current?.close();const peer=new ManualPeer(`${room}:${locale}`,stun,setConnection,p=>{setPeerProgress(p.fraction);setPeerFinished(p.finished);},s=>{setSharedStart(s.epochMs);setMessage('Общий старт получен. Готовьтесь к набору.');});peerRef.current=peer;
+    peerRef.current?.close();const peer=new ManualPeer(`${room}:${locale}`,stun,setConnection,p=>{setPeerProgress(p.fraction);setPeerFinished(p.finished);},s=>{setSharedStart(s.epochMs);setMessage(tr('Общий старт получен. Готовьтесь к набору.','Shared starting time received. Get ready to type.'));});peerRef.current=peer;
     setPeerMode(true);setConnection('connecting');
     const out=action==='offer'?await peer.offer():await peer.answer(manualInput.trim());
-    setManualOutput(out);setMessage(action==='offer'?'Отправьте созданный код гостю.':'Отправьте ответный код создателю комнаты.');
+    setManualOutput(out);setMessage(action==='offer'?tr('Отправьте созданный код гостю.','Send this code to your guest.'):tr('Отправьте ответный код создателю комнаты.','Send the answer code to the host.'));
    }
-  }catch(err){setMessage(err instanceof Error?err.message:'Ошибка соединения.');}
+  }catch(err){setMessage(err instanceof Error?err.message:tr('Ошибка соединения.','Connection error.'));}
   finally{setBusy(false);}
  };
  const beginShared=()=>{
-  try{if(!peerRef.current?.connected)throw new Error('Сначала дождитесь подключения.');
-   reset();const start=Date.now()+5000;setSharedStart(start);peerRef.current.start(start);setMessage('Общий старт через 5 секунд. Время синхронизируется приблизительно по часам устройств.');
-  }catch(e){setMessage(e instanceof Error?e.message:'Не удалось начать гонку.');}
+  try{if(!peerRef.current?.connected)throw new Error(tr('Сначала дождитесь подключения.','Wait for the peer connection first.'));
+   reset();const start=Date.now()+5000;setSharedStart(start);peerRef.current.start(start);setMessage(tr('Общий старт через 5 секунд. Время синхронизируется приблизительно по часам устройств.','Shared race starts in 5 seconds. Device clocks are approximately synchronized.'));
+  }catch(e){setMessage(e instanceof Error?e.message:tr('Не удалось начать гонку.','Could not start the race.'));}
  };
  const disconnect=()=>{peerRef.current?.close();peerRef.current=null;setPeerMode(false);setConnection('не подключено');setManualInput('');setManualOutput('');reset();};
  return <section className="social-page">
-  <PageHeader kicker="Social / Race Lab" title="Соревнуйтесь в своём ритме.">Три локальных бота доступны офлайн. Для гонки с другом используйте экспериментальную P2P-комнату с ручным обменом кодами подключения.</PageHeader>
+  <PageHeader kicker="Social / Race Lab" title={tr('Соревнуйтесь в своём ритме.','Race at your own pace.')}>{tr('Три локальных бота доступны офлайн. Для гонки с другом используйте экспериментальную P2P-комнату с ручным обменом кодами подключения.','Three simulated bots work offline. To race a friend, use an experimental peer-to-peer room with manual connection code exchange.')}</PageHeader>
   <div className="surface card race-setup">
-   <div className="row spread"><h2>Гоночная дорожка</h2><span className="chip accent">{peerMode?'P2P · Beta':'OFFLINE BOTS'}</span></div>
+   <div className="row spread"><h2>{tr('Гоночная дорожка','Race track')}</h2><span className="chip accent">{peerMode?'P2P · Beta':'OFFLINE BOTS'}</span></div>
    <div className="mode-options">
-    <label>Комната <input aria-label="Код комнаты" className="social-input short" maxLength={28} value={room} disabled={session.startedAtMs!==null||peerMode} onChange={e=>setRoom(sanitizeRoomId(e.target.value)||'practice')}/></label>
-    <label>Текст <select className="chip" value={locale} disabled={session.startedAtMs!==null||peerMode} onChange={e=>setLocale(e.target.value as 'ru'|'en')}><option value="ru">Русский</option><option value="en">English</option></select></label>
-    <label>Боты <select className="chip" value={difficulty} disabled={session.startedAtMs!==null} onChange={e=>setDifficulty(e.target.value as BotDifficulty)}><option value="beginner">Начинающие</option><option value="intermediate">Средние</option><option value="advanced">Быстрые</option></select></label>
-    <button className="btn secondary small-btn" onClick={reset} type="button">Заново</button>
+    <label>{tr('Комната','Room')} <input aria-label={tr('Код комнаты','Room code')} className="social-input short" maxLength={28} value={room} disabled={session.startedAtMs!==null||peerMode} onChange={e=>setRoom(sanitizeRoomId(e.target.value)||'practice')}/></label>
+    <label>{tr('Текст','Text')} <select className="chip" value={locale} disabled={session.startedAtMs!==null||peerMode} onChange={e=>setLocale(e.target.value as 'ru'|'en')}><option value="ru">{tr('Русский','Russian')}</option><option value="en">English</option></select></label>
+    <label>{tr('Боты','Bots')} <select className="chip" value={difficulty} disabled={session.startedAtMs!==null} onChange={e=>setDifficulty(e.target.value as BotDifficulty)}><option value="beginner">{tr('Начинающие','Beginner')}</option><option value="intermediate">{tr('Средние','Intermediate')}</option><option value="advanced">{tr('Быстрые','Advanced')}</option></select></label>
+    <button className="btn secondary small-btn" onClick={reset} type="button">{tr('Заново','Restart')}</button>
    </div>
-   {peerMode&&<div className="note" role="status">{sharedStart===null?'Ожидание общего старта от создателя комнаты.':wallNow<sharedStart?`Старт через ${Math.max(1,Math.ceil((sharedStart-wallNow)/1000))} с`:'Общий старт!'} · Соединение: {connection}</div>}
-   <div className="race-tracks" aria-label="Прогресс участников"><div className="race-lane"><div className="row spread"><strong>Вы</strong><span>{Math.round(myProgress*100)}%</span></div><div className="race-bar"><i style={{width:`${myProgress*100}%`}}/></div></div>
-    {speedEntries.map(entry=><div className="race-lane" key={entry.id}><div className="row spread"><span>{entry.name}{entry.bot?' · бот':''}{entry.id==='peer'&&peerFinished?' · финиш':''}</span><span>{Math.round(entry.progress*100)}%</span></div><div className="race-bar"><i style={{width:`${entry.progress*100}%`}}/></div></div>)}
+   {peerMode&&<div className="note" role="status">{sharedStart===null?tr('Ожидание общего старта от создателя комнаты.','Waiting for the host to start.'):wallNow<sharedStart?tr(`Старт через ${Math.max(1,Math.ceil((sharedStart-wallNow)/1000))} с`,`Starts in ${Math.max(1,Math.ceil((sharedStart-wallNow)/1000))} s`):tr('Общий старт!','Shared start!')} · {tr('Соединение: ','Connection: ')}{connection}</div>}
+   <div className="race-tracks" aria-label={tr('Прогресс участников','Participant progress')}><div className="race-lane"><div className="row spread"><strong>{tr('Вы','You')}</strong><span>{Math.round(myProgress*100)}%</span></div><div className="race-bar"><i style={{width:`${myProgress*100}%`}}/></div></div>
+    {speedEntries.map(entry=><div className="race-lane" key={entry.id}><div className="row spread"><span>{entry.name}{entry.bot?tr(' · бот',' · bot'):''}{entry.id==='peer'&&peerFinished?tr(' · финиш',' · finished'):''}</span><span>{Math.round(entry.progress*100)}%</span></div><div className="race-bar"><i style={{width:`${entry.progress*100}%`}}/></div></div>)}
    </div>
    <div className="social-race-text" aria-hidden="true">{targetChars.map((char,index)=><span key={index} className={index<typedChars.length?(typedChars[index]===char?'typed':'err'):index===typedChars.length?'caret':''}>{char}</span>)}</div>
-   <label className="sr-only" htmlFor="race-input">Наберите предложенный текст</label>
-   <p className="sr-only" id="race-target">Текст для набора: {promptText}</p>
-   <textarea ref={inputRef} id="race-input" aria-describedby="race-target" className="social-textarea" value={composingRef.current?composition:session.typed} disabled={finished||(peerMode&&(connection!=='connected'||sharedStart===null||wallNow<sharedStart))} placeholder="Нажмите сюда и начните печатать…" onInput={onInput}
+   <label className="sr-only" htmlFor="race-input">{tr('Наберите предложенный текст','Type the displayed text')}</label>
+   <p className="sr-only" id="race-target">{tr('Текст для набора: ','Typing target: ')}{promptText}</p>
+   <textarea ref={inputRef} id="race-input" aria-describedby="race-target" className="social-textarea" value={composingRef.current?composition:session.typed} disabled={finished||(peerMode&&(connection!=='connected'||sharedStart===null||wallNow<sharedStart))} placeholder={tr('Нажмите сюда и начните печатать…','Click here and start typing…')} onInput={onInput}
      onBeforeInput={e=>{const t=(e.nativeEvent as InputEvent).inputType;if(t==='insertFromPaste'||t==='insertFromDrop')e.preventDefault();}}
      onPaste={(e:ClipboardEvent<HTMLTextAreaElement>)=>e.preventDefault()} onDrop={e=>e.preventDefault()}
      onCompositionStart={()=>{composingRef.current=true;setComposition(stateRef.current.typed);}} onCompositionEnd={onCompositionEnd} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} rows={2}/>
-   <div className="row spread" style={{marginTop:14,gap:12,flexWrap:'wrap'}}><span className="small muted">{finished?'Финиш!':session.startedAtMs===null?'Старт по первому символу':'Гонка идёт…'} · {Math.round(elapsed/1000)} c</span><strong>{score.netWpm.toFixed(1)} WPM · {(score.accuracy*100).toFixed(1)}%</strong></div>
+   <div className="row spread" style={{marginTop:14,gap:12,flexWrap:'wrap'}}><span className="small muted">{finished?tr('Финиш!','Finished!'):session.startedAtMs===null?tr('Старт по первому символу','Start on the first character'):tr('Гонка идёт…','Race in progress…')} · {Math.round(elapsed/1000)} c</span><strong>{score.netWpm.toFixed(1)} WPM · {(score.accuracy*100).toFixed(1)}%</strong></div>
   </div>
-  <div className="surface card" style={{marginTop:18}}><div className="row spread"><h2>Гонка с другом</h2><span className="chip">WebRTC · экспериментально</span></div>
-   <p className="small muted">Ссылка задаёт одинаковый текст, но <strong>не подключает участников автоматически</strong>. Нужен обмен SDP-кодами; без STUN доступна в основном локальная сеть. Нет TURN, поэтому некоторые подключения не работают. Другой участник может узнать ваш IP через WebRTC.</p>
-   <div className="social-form"><label htmlFor="race-link">Ссылка-приглашение</label><div className="row" style={{gap:8}}><input id="race-link" value={link} readOnly/><button className="btn secondary" type="button" onClick={()=>void navigator.clipboard.writeText(link).then(()=>setMessage('Ссылка скопирована.')).catch(()=>setMessage('Не удалось скопировать ссылку.'))}>Копировать</button></div>
-    <label htmlFor="race-role">Моя роль</label><select id="race-role" value={role} disabled={busy||peerMode} onChange={e=>setRole(e.target.value as 'host'|'guest')}><option value="host">Создатель комнаты</option><option value="guest">Гость</option></select>
-    <label className="small"><input type="checkbox" checked={stun} disabled={busy||peerMode} onChange={e=>setStun(e.target.checked)}/> Разрешить внешний STUN (Google; сервис увидит ваш IP-адрес)</label>
-    {role==='guest'&&<label>Код приглашения от создателя<textarea rows={3} value={manualInput} onChange={e=>setManualInput(e.target.value)} placeholder="Вставьте предложение SDP в формате JSON"/></label>}
-    {role==='host'&&!manualOutput&&<button className="btn primary" type="button" disabled={busy} onClick={()=>void connect('offer')}>{busy?'Создание…':'1. Создать приглашение'}</button>}
-    {role==='guest'&&<button className="btn primary" type="button" disabled={busy||!manualInput.trim()} onClick={()=>void connect('answer')}>{busy?'Подключение…':'2. Создать ответ'}</button>}
-    {manualOutput&&<><label>Ваш код для второго участника<textarea rows={4} value={manualOutput} readOnly onFocus={e=>e.currentTarget.select()}/></label><button className="btn secondary" type="button" onClick={()=>void navigator.clipboard.writeText(manualOutput).then(()=>setMessage('Код скопирован.')).catch(()=>setMessage('Не удалось скопировать код.'))}>Копировать код</button></>}
-    {role==='host'&&manualOutput&&connection!=='connected'&&<><label>Ответ гостя<textarea rows={3} value={manualInput} onChange={e=>setManualInput(e.target.value)}/></label><button className="btn primary" disabled={busy||!manualInput.trim()} type="button" onClick={()=>void connect('apply')}>3. Принять ответ</button></>}
-    {peerMode&&role==='host'&&connection==='connected'&&<button className="btn primary" type="button" onClick={beginShared}>Начать общую гонку (5 с)</button>}
-    {peerMode&&<button className="btn secondary" type="button" onClick={disconnect}>Отключиться от P2P</button>}
-    <div role="status" className="small muted">Соединение: {connection}. {message}</div>
+  <div className="surface card" style={{marginTop:18}}><div className="row spread"><h2>{tr('Гонка с другом','Race with a friend')}</h2><span className="chip">{tr('WebRTC · экспериментально','WebRTC · experimental')}</span></div>
+   <p className="small muted">{tr('Ссылка задаёт одинаковый текст, но ','The link sets the same text but ')}<strong>{tr('не подключает участников автоматически','does not connect participants automatically')}</strong>{tr('. Нужен обмен SDP-кодами; без STUN доступна в основном локальная сеть. Нет TURN, поэтому некоторые подключения не работают. Другой участник может узнать ваш IP через WebRTC.','. Exchange SDP codes manually; without STUN mostly local networks work. There is no TURN, so some connections fail. WebRTC may reveal your IP address to the other participant.')}</p>
+   <div className="social-form"><label htmlFor="race-link">{tr('Ссылка-приглашение','Invitation link')}</label><div className="row" style={{gap:8}}><input id="race-link" value={link} readOnly/><button className="btn secondary" type="button" onClick={()=>void navigator.clipboard.writeText(link).then(()=>setMessage(tr('Ссылка скопирована.','Link copied.'))).catch(()=>setMessage(tr('Не удалось скопировать ссылку.','Could not copy link.')))}>{tr('Копировать','Copy')}</button></div>
+    <label htmlFor="race-role">{tr('Моя роль','My role')}</label><select id="race-role" value={role} disabled={busy||peerMode} onChange={e=>setRole(e.target.value as 'host'|'guest')}><option value="host">{tr('Создатель комнаты','Host')}</option><option value="guest">{tr('Гость','Guest')}</option></select>
+    <label className="small"><input type="checkbox" checked={stun} disabled={busy||peerMode} onChange={e=>setStun(e.target.checked)}/> {tr('Разрешить внешний STUN (Google; сервис увидит ваш IP-адрес)','Allow external STUN (Google; this service will see your IP address)')}</label>
+    {role==='guest'&&<label>{tr('Код приглашения от создателя','Invitation code from host')}<textarea rows={3} value={manualInput} onChange={e=>setManualInput(e.target.value)} placeholder={tr('Вставьте предложение SDP в формате JSON','Paste the SDP offer in JSON format')}/></label>}
+    {role==='host'&&!manualOutput&&<button className="btn primary" type="button" disabled={busy} onClick={()=>void connect('offer')}>{busy?tr('Создание…','Creating…'):tr('1. Создать приглашение','1. Create invitation')}</button>}
+    {role==='guest'&&<button className="btn primary" type="button" disabled={busy||!manualInput.trim()} onClick={()=>void connect('answer')}>{busy?tr('Подключение…','Connecting…'):tr('2. Создать ответ','2. Create answer')}</button>}
+    {manualOutput&&<><label>{tr('Ваш код для второго участника','Your code for the other participant')}<textarea rows={4} value={manualOutput} readOnly onFocus={e=>e.currentTarget.select()}/></label><button className="btn secondary" type="button" onClick={()=>void navigator.clipboard.writeText(manualOutput).then(()=>setMessage(tr('Код скопирован.','Code copied.'))).catch(()=>setMessage(tr('Не удалось скопировать код.','Could not copy the code.')))}>{tr('Копировать код','Copy code')}</button></>}
+    {role==='host'&&manualOutput&&connection!=='connected'&&<><label>{tr('Ответ гостя','Guest answer')}<textarea rows={3} value={manualInput} onChange={e=>setManualInput(e.target.value)}/></label><button className="btn primary" disabled={busy||!manualInput.trim()} type="button" onClick={()=>void connect('apply')}>{tr('3. Принять ответ','3. Accept answer')}</button></>}
+    {peerMode&&role==='host'&&connection==='connected'&&<button className="btn primary" type="button" onClick={beginShared}>{tr('Начать общую гонку (5 с)','Start shared race (5 s)')}</button>}
+    {peerMode&&<button className="btn secondary" type="button" onClick={disconnect}>{tr('Отключиться от P2P','Disconnect P2P')}</button>}
+    <div role="status" className="small muted">{tr('Соединение: ','Connection: ')}{connection}. {message}</div>
    </div>
   </div>
-  <div className="note" style={{marginTop:16}}>Локальные боты симулируются математически и не представляют реальных игроков. P2P-результаты не защищены от подмены. Гонки не используются для глобального рейтинга.</div>
+  <div className="note" style={{marginTop:16}}>{tr('Локальные боты симулируются математически и не представляют реальных игроков. P2P-результаты не защищены от подмены. Гонки не используются для глобального рейтинга.','Local bots are mathematical simulations, not real players. P2P results can be tampered with. Races do not contribute to a global leaderboard.')}</div>
  </section>;
 }

@@ -1,0 +1,58 @@
+name: Iteration 5 - visual and full-theme a11y evidence
+on:
+  push:
+    branches: [feature/iter5-quality-design]
+    paths:
+      - 'e2e/iter5-a11y-matrix.spec.ts'
+      - 'e2e/iter5-visual.spec.ts'
+      - 'src/shared/theme/**'
+      - 'src/styles/**'
+      - 'src/features/home/**'
+      - 'src/features/results/**'
+      - 'src/features/analytics/**'
+      - 'src/features/practice/**'
+      - 'src/features/academy/**'
+      - '.github/workflows/iter5-a11y-visual.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-a11y-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check && npm run test
+      - run: VITE_BASE_PATH=/ npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Axe all 9 routes x 24 themes x 3 widths
+        env:
+          TYKORA_A11Y_FULL_MATRIX: '1'
+        run: npx playwright test e2e/iter5-a11y-matrix.spec.ts --project=chromium --workers=3
+  visual-review-artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: VITE_BASE_PATH=/ npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Capture review screenshots, NOT visual-diff pass
+        env:
+          TYKORA_VISUAL_CAPTURE: '1'
+        run: npx playwright test e2e/iter5-visual.spec.ts --project=chromium
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter5-visual-review-36-screens
+          path: performance-artifacts/iter5-visual/*.png
+          if-no-files-found: warn

@@ -1,6 +1,6 @@
 # TYKORA — evidence-gated roadmap (2026-10-25)
 
-**v0.9.0 development only.** The public GitHub Pages site and default `main` still represent v0.8.0; no one may treat this branch as a finished release solely because CI is green. Never skip a phase gate. See [baseline audit](audit-v0.8.0.md) and [performance](PERF-BASELINE-v0.8.0.md).
+**Release reality (verified at iteration 5 start, 2026-11-05):** `main@0a7d167bc320b503a03dfe1247c96687526ca28b` is the owner-approved **Beta v0.9.0** source. This `feature/iter5-quality-design` branch is **unreleased**; no merge, release tag, or Pages deployment is permitted. Do not treat passing CI as release approval. Never skip a phase gate. See [baseline audit](audit-v0.8.0.md) and [performance](PERF-BASELINE-v0.8.0.md).
 
 ## P0 — acceptance blockers (check only from logged evidence)
 - [x] Audit the v0.8.0 source and record reproducible, immutable-source Lighthouse Home / axe Practice observations (not a complete phase-0 gate).
@@ -30,3 +30,23 @@ Paid TURN relays, server leaderboards, external telemetry, fictional ranks and c
 
 ## Acceptance rule
 For each claim, record command, exact commit SHA, test log, browser/device and throttling where relevant. Missing evidence means **not confirmed**, not passed. `main` cannot be merged without explicit user approval. A draft PR is review space, not a release.
+
+## Iteration 5 A2 targets (introduced 2026-11-05, owner request)
+- Interaction **p95 ≤16ms at CDP CPU×1** and **≤32ms at CPU×4**, for the exact 1,250-grapheme / 500-input production scenario; both must state sample count, Event Timing threshold limitations, and run-to-run variability. These are *separate simulation budgets*, not proof of hardware latency.
+- Lowering the CPU×4 target from 16ms to 32ms acknowledges unavoidable frame scheduling under fourfold slowdown and prevents falsely equating observed quantized Event Timing to actual keypress-to-photon latency. CPU×1 must still hit 16ms. Threshold is an engineering budget, not a WCAG certification.
+- Simulated Lighthouse Home LCP target ≤1.2s, then ≤1.0s, median of 5 repetitions; do not relabel simulated data as physical Moto G Power.
+- Keep initial JS at most the fresh-main baseline; aspirational −30%, measured against actual route/network dependency graph, not just the entry chunk.
+- 10-minute Chrome heap test with forced GC and DOM-node samples, plus actual Chrome trace event/renderer task analysis. Do not claim zero memory growth without measurements.
+- Phase A2 is one time-bounded engineering pass. Start B and C after that pass even if latency goals remain open; document any FAIL explicitly.
+
+**A2 evidence update:** [A2 trace report](A2-TRACE.md) shows observed CPU×1 p95 24ms (FAIL ≤16), CPU×4 p95 32ms (boundary), simulated LCP ≥2.27s (FAIL ≤1.2s), 10-minute heap +1.108MB (no literal zero growth), initial graph ≤baseline not yet established. Proceeded to B/C after one A2 block as requested; **A not fully accepted**.
+
+**Five-run CDP acceptance update (2026-11-05):** p95 ×1=24ms (FAIL 16), ×4=32/32/32/40/32ms (FAIL robust 32). EventLatency stage slices unpaired; no adopted frame budget / no A acceptance. See docs/INPUT-PRESENTATION.md.
+
+## Iteration 5 owner-scoped B–E status (2026-11-05)
+
+- B golden visual screenshot reference: 36 reviewed PNGs, three themes and three widths, pinned from successful Actions #42041281178; pixel-diff rerun SUCCESS #42079021438. Reference is limited to four main routes and empty local data. Responsive native devices/zoom untested.
+- C expanded axe: 24 themes ×9 routes ×3 widths completed SUCCESS #42041281178 in Chromium; manual VoiceOver and NVDA explicitly **REQUIRES OWNER**, not performed. See A11Y-MANUAL.md.
+- D first 3/124 lessons have practice/review separation with `<10%` four-grapheme overlap and source-level tests; **122?** correction: 124 total, 3 addressed, **121** remain unevaluated for editorial rewrite. Use contentLint.test.ts for exact claims.
+- E main RU/EN copy now appears across nine routes and browser smoke verifies primary controls, but complete deep-dynamic / native-language QA remains NOT CONFIRMED. UI locale, exercise content language and keyboard layout must remain independent.
+- F (reliability hardening) and G (showcase/renaming) intentionally moved to next iteration. Never call iteration 5 a release or merge without owner approval.
