@@ -41,3 +41,10 @@
 - Added Chrome CDP Tracing experiment (3 runs CPU×1 and 3 runs CPU×4) with event-part breakdown, next-rAF and double-rAF probes, task aggregate and one-variable CSS candidates. These are workflow *definitions* until run log exists.
 - Added dedicated ten-minute memory exercise with CDP JS heap snapshots before/after forced GC and DOM node counts. Requires full ten-minute workflow completion, not inferred from source.
 - Intentionally do not call an Event Timing sub-16ms result precise input-to-presentation; PerformanceObserver is thresholded.
+
+## 2026-11-05 · A2 Home cold-start candidate
+
+- Reconciled ROADMAP's outdated v0.8.0 vs v0.9.0 statement against `main@0a7d167`.
+- Added static HTML first-paint skeleton and local critical CSS. Did not add network font preload: repository has **no** packaged .woff/.woff2 subset assets; no external font requests permitted.
+- Converted Home progress and UiStore settings persistence to post-render dynamic import; no score worker was on the Home critical route.
+- Updated p95 budgets to CPU×1 ≤16ms, CPU×4 ≤32ms, LCP first ≤1.2s then ≤1.0s, with explicit simulation caveats. Acceptance pending new CI and five-run Lighthouse source SHA.

@@ -13,7 +13,12 @@ const links=[
 export function Layout(){
  const {t}=useTranslation();const {pathname}=useLocation();const previousRoute=useRef<string|null>(null);
  const initialize=useUiStore(s=>s.initialize),settings=useUiStore(s=>s.settings),updateSettings=useUiStore(s=>s.updateSettings),notice=useUiStore(s=>s.storageNotice);
- useEffect(()=>{void initialize();},[initialize]);
+ useEffect(()=>{
+  // Apply persisted settings after the first render opportunity. The app is
+  // usable immediately, and the optional IndexedDB chunk loads separately.
+  const frame=requestAnimationFrame(()=>{void initialize();});
+  return ()=>cancelAnimationFrame(frame);
+ },[initialize]);
  useEffect(()=>{if(previousRoute.current!==null&&previousRoute.current!==pathname){document.getElementById('main-content')?.focus({preventScroll:true});}previousRoute.current=pathname;},[pathname]);
  const toggleDark=()=>{void updateSettings({themeName:settings.themeName==='Nightfall'?'Daylight':'Nightfall'});};
  const page=links.find(l=>l.href===pathname);

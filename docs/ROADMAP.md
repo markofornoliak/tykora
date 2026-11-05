@@ -1,6 +1,6 @@
 # TYKORA — evidence-gated roadmap (2026-10-25)
 
-**v0.9.0 development only.** The public GitHub Pages site and default `main` still represent v0.8.0; no one may treat this branch as a finished release solely because CI is green. Never skip a phase gate. See [baseline audit](audit-v0.8.0.md) and [performance](PERF-BASELINE-v0.8.0.md).
+**Release reality (verified at iteration 5 start, 2026-11-05):** `main@0a7d167bc320b503a03dfe1247c96687526ca28b` is the owner-approved **Beta v0.9.0** source. This `feature/iter5-quality-design` branch is **unreleased**; no merge, release tag, or Pages deployment is permitted. Do not treat passing CI as release approval. Never skip a phase gate. See [baseline audit](audit-v0.8.0.md) and [performance](PERF-BASELINE-v0.8.0.md).
 
 ## P0 — acceptance blockers (check only from logged evidence)
 - [x] Audit the v0.8.0 source and record reproducible, immutable-source Lighthouse Home / axe Practice observations (not a complete phase-0 gate).
@@ -30,3 +30,11 @@ Paid TURN relays, server leaderboards, external telemetry, fictional ranks and c
 
 ## Acceptance rule
 For each claim, record command, exact commit SHA, test log, browser/device and throttling where relevant. Missing evidence means **not confirmed**, not passed. `main` cannot be merged without explicit user approval. A draft PR is review space, not a release.
+
+## Iteration 5 A2 targets (introduced 2026-11-05, owner request)
+- Interaction **p95 ≤16ms at CDP CPU×1** and **≤32ms at CPU×4**, for the exact 1,250-grapheme / 500-input production scenario; both must state sample count, Event Timing threshold limitations, and run-to-run variability. These are *separate simulation budgets*, not proof of hardware latency.
+- Lowering the CPU×4 target from 16ms to 32ms acknowledges unavoidable frame scheduling under fourfold slowdown and prevents falsely equating observed quantized Event Timing to actual keypress-to-photon latency. CPU×1 must still hit 16ms. Threshold is an engineering budget, not a WCAG certification.
+- Simulated Lighthouse Home LCP target ≤1.2s, then ≤1.0s, median of 5 repetitions; do not relabel simulated data as physical Moto G Power.
+- Keep initial JS at most the fresh-main baseline; aspirational −30%, measured against actual route/network dependency graph, not just the entry chunk.
+- 10-minute Chrome heap test with forced GC and DOM-node samples, plus actual Chrome trace event/renderer task analysis. Do not claim zero memory growth without measurements.
+- Phase A2 is one time-bounded engineering pass. Start B and C after that pass even if latency goals remain open; document any FAIL explicitly.

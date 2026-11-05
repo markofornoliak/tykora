@@ -4,7 +4,7 @@ import {pageCopy} from '../../shared/i18n/pageCopy';
 import type {InterfaceLocale} from '../../shared/i18n/catalog';
 import {Link} from 'react-router-dom';
 import {Kpi,PageHeader,Placeholder} from '../../shared/ui/Layout';
-import {repositories} from '../../infrastructure/di/repositories';
+// Load persistence after first render, never in the initial Home module graph.
 import type {SessionRecord} from '../../application/ports/ProgressRepository';
 import {displayWpm} from '../../shared/utils/formatMetrics';
 import type {TrainingPlan} from '../../domain/plans/plan';
@@ -16,8 +16,11 @@ export function Home(){
  const [plan,setPlan]=useState<TrainingPlan|undefined>();
  useEffect(()=>{
   let active=true;
-  void repositories.progress.getRecentSessions(200).then(s=>{if(active)setSessions(s);}).catch(()=>{});
-  void repositories.plans.get().then(p=>{if(active)setPlan(p);}).catch(()=>{});
+  void import('../../infrastructure/di/repositories').then(({repositories})=>{
+   if(!active)return;
+   void repositories.progress.getRecentSessions(200).then(s=>{if(active)setSessions(s);}).catch(()=>{});
+   void repositories.plans.get().then(p=>{if(active)setPlan(p);}).catch(()=>{});
+  }).catch(()=>{});
   return ()=>{active=false;};
  },[]);
  const last=sessions[0];

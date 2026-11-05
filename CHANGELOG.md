@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- A2 diagnostics: new Chrome trace and 10-minute heap workflows; Home Dexie import made lazy and added static first-paint shell with local critical CSS. Results gated by CI and measured Lighthouse.
+
 - Prototype off-React typing-session store with 250 ms React snapshots, unchanged engine/scoring/storage contract, and bounded imperative target painting. Benchmarks and all-browser acceptance are mandatory before phase-A sign-off.
 - Extend the input benchmark output with observed Event Timing p50/p99 (still thresholded at 16 ms).
 - Follow-up prototype replaces full 288-node class scan with changed-span painting and defers persistence to browser idle.
