@@ -60,7 +60,7 @@ test('imperative target updates immediately and keeps only a bounded text window
  await expect(windowText).toBeVisible();
  await input.fill('a'.repeat(250));
  // Virtualized rendering excludes glyphs before the current window.
- expect(await windowText.locator('.typed').count()).toBeGreaterThan(100);
+ await expect(windowText.locator('.typed')).toHaveCount(154);
  expect(await windowText.locator('span').count()).toBeLessThanOrEqual(290);
  await input.fill('a'.repeat(249)+'x');
  await expect(windowText.locator('.err')).toHaveText('a');
