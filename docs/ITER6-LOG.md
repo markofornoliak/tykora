@@ -34,3 +34,10 @@
 - Experiment F2: `src/infrastructure/peer/manualWebRtc.ts` adds `PeerRateGate`; progress sends limited to 40 Hz but completion messages remain unconditional, invalid fractions are dropped, channel handlers are cleared on close.
 - `src/infrastructure/peer/manualWebRtc.test.ts`: deterministic count-window, independent-peer, backwards-clock, oversized SDP and room/role checks.
 - The 40/s bound is a new *security behavior*, **not** a reduced test workload. Existing user-side typing and scoring remain unchanged; no STUN defaults changed. Exact CI status pending; no physical multi-peer reliability claim.
+
+## 2026-11-05 · Track P: equal-session memory experiment
+
+- The iteration 5 ten-minute trend grows the input from 0 to 4,000 characters, so its +1.108 MB change cannot distinguish active-session state growth from a leak.
+- New experiment: five identical 500-character custom sessions, completion, persistence and restart, all in a **single browser document**. Force GC after every restart and record JS heap, DOM nodes, document/window listeners and CDP detached DOM nodes where supported.
+- Capture baseline and final Chromium .heapsnapshot.gz files for retainer inspection. Emit linear heap slope per session and exact raw samples. Zero growth **not assumed**; no artificial success threshold.
+- Workflow: `.github/workflows/iter6-memory.yml`; script `scripts/iter6-memory.mjs`. CI status **pending**. This is headless Chrome only, not Safari, headed GPU, physical memory, or an assertion of absent leaks.
