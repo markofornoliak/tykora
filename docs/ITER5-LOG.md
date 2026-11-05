@@ -116,3 +116,7 @@
 ## 2026-11-05 · E bilingual Results + Analytics
 
 - Authored RU/EN strings for Results and Analytics headings, metrics, evidence tables, error/empty states and offline PNG action; preserves existing RU defaults and E2E names. Other locales keep RU fallback for page body.
+
+## 2026-11-05 · E RU/EN Academy and Themes
+
+- Added authored bilingual RU/EN text on Academy and Themes, including course navigation, mastery stage labels, plan controls, settings explanations and contrasts. Existing lesson language selection remains an independent RU/EN switch. Default RU E2E labels preserved. 8 other locale body translations remain partial.

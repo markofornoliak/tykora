@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- E: RU/EN Themes and Academy page copy, course status and plan-setting labels.
+
 - E: RU/EN authored Results and Analytics body copy and table semantics (other 8 languages retain partial coverage).
 
 - B/E Home: RU/EN local-first editorial dashboard with factual last-session KPIs, daily goal ring and one practice CTA.
