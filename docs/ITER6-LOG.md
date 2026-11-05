@@ -162,3 +162,8 @@
 
 - [Temporary trial #42121924524](https://github.com/markofornoliak/tykora/actions/runs/42121924524) SUCCESS after exact Vitest 5.1.0 plus compatible `npm audit fix`; **0 critical, 0 high, 9 moderate, 2 low** (11 total), full `check:domain`, `check`, `lint`, `test`, `build`, `check:dist` and 162 cross-browser E2E passed. The remaining 11 findings must not be labelled clean; audit JSON and generated package files in artifact.
 - New narrow `iter6-apply-critical.yml`: re-run the *same* upgrades and all normal tests including production offline PWA, require no critical/high vulnerabilities, freeze exact package pair and SHA256 checksums in a **read-only** test job; only then a separate write-permitted job guarded on `feature/iter6-summit` + exact unchanged HEAD commits **only package.json and package-lock.json** to the feature branch. If HEAD moved, abort safely; no force push, main merge, release, or deployment. This does not allow a write token during `npm ci` or test execution. Workflow pending.
+
+## 2026-11-05 · Safe CI branch-update control failed before write, corrected
+
+- [Guarded fix run #42123116752](https://github.com/markofornoliak/tykora/actions/runs/42123116752): **verify-remediation SUCCESS**, including cross-browser and offline PWA, but the separate write-only job FAILED before any commit because SHA256SUMS contains paths starting `verified-lock/` and the script also `cd` into that folder, causing doubled path. Exact HEAD check passed. **No package update applied**; no security regression masked.
+- Minimal repair: run `sha256sum -c verified-lock/SHA256SUMS.txt` from checkout root with unchanged expected checksums. Re-run the complete job; only after all checks and SHA equality can it push one package-pair commit. No relaxation.
