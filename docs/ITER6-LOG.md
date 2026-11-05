@@ -55,3 +55,10 @@
 - Minimal variable: move original `src/main.tsx` React mount code unchanged in effect to `src/app/bootstrap.tsx`; `src/main.tsx` keeps original CSS imports, launches app after real rendering opportunity on prerendered Home.
 - This can lower the small *eager static graph* budget but **does not reduce bytes needed to make Home fully interactive**: deferred bootstrap still downloads the full React code. Do NOT claim initial JS ≤90k or ≤105k just by excluding dynamic bootstrap. Browser network waterfall must measure all requests through hydration. Must compare full LCP x10 before acceptance, inspect E2E hydration, offline, navigation and a11y.
 - Candidate status: `UNMEASURED` at commit creation. Revert this complete runtime change if matched LCP or interactive behavior does not improve.
+
+## 2026-11-05 · Track D: full-course failure census, BEFORE content mutation
+
+- Existing `contentLint.ts` only checks lessons 1–3, despite 124 course lessons. Preserving existing gate; added separate compiled-domain diagnostic over all **124×2 RU/EN** practice/review pairs.
+- Counts 4-gram overlap ≥10%, focus glyph coverage, length/forbidden characters, duplicate practice/review strings and legacy review IDs. Raw 248-row file and all issues uploaded as workflow artifact.
+- The audit intentionally reports a nonzero failure count instead of silently marking content quality PASS; no user scores, course IDs or copy rewritten in this observation-only step. Once measured, repair with versioned IDs and historical score compatibility.
+- Workflow `iter6-content-audit.yml`, script `iter6-content-audit.cjs`; results **pending CI** at authoring time.
