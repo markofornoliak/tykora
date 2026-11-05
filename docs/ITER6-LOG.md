@@ -175,3 +175,9 @@
 - Runtime repair: small **unconditional** parser-time inline hash guard flags non-Home routes, and critical CSS hides `#root[data-tykora-home-prerender="1"]` only for those routes; `src/main.tsx` removes its marker after clearing the wrong-route DOM. Home first paint and all scoring/content paths unchanged. No user-agent, Lighthouse or CI bypass. An eventual strict CSP must hash/nonce this inline guard as well as existing critical CSS.
 - New `e2e/iter6-deeplink-focus.spec.ts`: deliberately stall the real production entry JS on Academy and Themes across all three Playwright projects. Verify stale Home is absent from accessibility tree; after release, actual skip-link receives first Tab, Enter focuses main, and hash remains correct. Original skip-link E2E remains unchanged.
 - Evidence: **pending CI** for `check`, `lint`, `test`, `build`, `check:dist`, full Playwright and Lighthouse ×10. No assertion of PASS before completed runs.
+
+## 2026-11-05 · Isolated focus stress-gate (supplement to full matrix)
+
+- Full quality CI for `d5bd96ca` was still installing all three browsers; added an **independent supplemental** workflow with normal `check` / `lint` / `test` / `build` / `check:dist` followed by real production Playwright Chromium, `--repeat-each=5`, `--workers=1`. Runs *both* the original accessibility suite and the new blocked-entry regression without changing assertions. Any failure fails the job.
+- This stress gate does **not** replace `checks.yml` or its Chromium/Firefox/WebKit full E2E, and says nothing about real-device VoiceOver/NVDA.
+- Status at workflow authoring: **not measured**; require a finished run link and successful 5× repetitions before claiming the race repaired.
