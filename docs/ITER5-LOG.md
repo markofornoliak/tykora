@@ -176,3 +176,7 @@ Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95
 
 - Previous runtime removal of inline critical CSS repaired all 36 pinned screenshot diffs (#42089180681) but introduced a repeatable Lighthouse CLS 0.024632 on SHA 257a083a (mobile ×5, run #42089180649). This is a **real regression**, not accepted.
 - New candidate puts the inline fallback in `@layer tykora-critical`, removes late style-node deletion and avoids a standalone body line-height rule. Unlayered production CSS should win the cascade without a post-paint style transition. Requires exact-SHA 5-run mobile CLS and 36-image pixel diff before claiming acceptance.
+
+## 2026-11-05 · Hydration second failure, Suspense boundary
+
+- The direct text-node fix removed React's first text mismatch, but the next production React #418 had componentStack at `Suspense` inside Layout's Outlet (Actions #42089074900). The checked-in DOM was captured from a client-only tree and lacked real server-rendered Suspense boundary markers. Home imports eagerly; moving only the Home route outside the pathless Suspense route keeps lazy-load behavior for Practice and the other specialist routes while removing this unnecessary SSR hydration boundary. Must verify the exact-SHA hydration test across Chromium/Firefox/WebKit and all other route E2E before accepting.
