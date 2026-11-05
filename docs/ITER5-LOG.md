@@ -138,3 +138,9 @@ Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95
 - Inspected archived 36 PNGs from run #42041281178, SHA 722b6661, 3 themes ×3 viewports ×4 routes. Owner explicitly asked to approve reference screenshots.
 - Pinned this current archive as CI golden at 1.5% pixel mismatch threshold with 24 RGB-channel delta; this is screenshot-only acceptance, not hardware/zoom/screen-reader acceptance.
 - Future intentional redesign requires explicit visual review and new immutable archive, not auto-rebaseline.
+
+## 2026-11-05 · Home LCP follow-up: measured render blocker removal candidate
+
+- Inspected raw Lighthouse 12.8.2 report (5-run LCP SHA c2bd9d42): LCP is `main#main-content > section > header.pagehead > h1`, render delay 1502.5ms of 1955ms; Lighthouse estimated registerSW.js render blocker 301ms and CSS 151ms.
+- Added VitePWA `injectRegister:null`, preserving offline worker registration via native `navigator.serviceWorker.register()` on load + requestIdleCallback, no skipWaiting; unlike blocking PWA script it does not run in first-paint critical path.
+- Hypothesis only until 5× Lighthouse and PWA E2E on the new exact SHA; do not claim 1.2s or 1.0s. Static Home SSR/hydration remains unimplemented; previously injected HTML shell without hydration regressed LCP.
