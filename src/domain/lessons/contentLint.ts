@@ -10,11 +10,11 @@ export function overlapRatio(practice:string,review:string,n=4):number{
  const a=grams(practice,n),b=grams(review,n);
  return b.size?[...b].filter(g=>a.has(g)).length/b.size:1;
 }
-/** Versioned, original-only practice/review separation check. */
+/** Versioned, original-only practice/review separation for the entire 124-lesson corpus. */
 export function lintLessonContent(limit=0.10):LessonContentIssue[]{
  const issues:LessonContentIssue[]=[];
  for(const locale of ['ru','en'] as const){
-  for(const lesson of curriculum.slice(0,3)){
+  for(const lesson of curriculum){
    const a=lessonPrompt(lesson,locale),b=lessonPrompt(lesson,locale,undefined,'review');
    const overlap=overlapRatio(a.text,b.text);
    if(overlap>=limit)issues.push({id:lesson.id,locale,reason:'practice/review 4-gram overlap',detail:overlap});

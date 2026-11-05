@@ -62,3 +62,10 @@
 - Counts 4-gram overlap ≥10%, focus glyph coverage, length/forbidden characters, duplicate practice/review strings and legacy review IDs. Raw 248-row file and all issues uploaded as workflow artifact.
 - The audit intentionally reports a nonzero failure count instead of silently marking content quality PASS; no user scores, course IDs or copy rewritten in this observation-only step. Once measured, repair with versioned IDs and historical score compatibility.
 - Workflow `iter6-content-audit.yml`, script `iter6-content-audit.cjs`; results **pending CI** at authoring time.
+
+## 2026-11-05 · Track D: new holdout candidate for 121 lessons
+
+- Full-audit run [#42117417962](https://github.com/markofornoliak/tykora/actions/runs/42117417962) at `894749fa` finished SUCCESS as a **diagnostic workflow**, but reported corpus FAIL: 242 overlap violations out of 248 pairs (121 lessons × 2 languages); worst overlap 87.5%. No missing focus keys or duplicate text in that audit.
+- Candidate D1: leave original practices, ids and scores unchanged. Keep first-three `-review-v2` texts; version all later newly generated review prompts as `-review-v3`. Legacy `-review` identifiers remain accepted with their historical exact expected lengths. Extended `contentLint` now inspects 124×2 instead of only 3×2. New deterministic holdout: target-key drills for beginner levels and original authored narrative scenes plus drills for advanced levels.
+- The holdout generator uses deterministic local seeds, selects among variations with the lowest measured four-gram overlap; it never modifies user data, performs no external fetch, and caches generated text. Unit test checks that preexisting v1 review records for lesson 4 still satisfy mastery.
+- This is a *candidate*, not a content PASS. Full-audit, complete unit/build, all-browser E2E and human review still required before acceptance; failures mandate correction or revert.

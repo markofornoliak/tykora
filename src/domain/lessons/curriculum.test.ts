@@ -20,7 +20,7 @@ describe('course mastery: repeated demonstration on different texts',()=>{
   expect(new Set(second.map(x=>x.text)).size).toBe(124);
   expect(first.every((x,i)=>x.license==='original'&&graphemes(x.text).length>=30&&
     second[i].text!==x.text&&graphemes(second[i].text).length>=30)).toBe(true);
-  expect(second.map((x,i)=>x.id.endsWith(i<3?'-review-v2':'-review')).every(Boolean)).toBe(true);
+  expect(second.map((x,i)=>x.id.endsWith(i<3?'-review-v2':'-review-v3')).every(Boolean)).toBe(true);
   expect(lessonPrompt(curriculum[0],locale).id).toBe(`course-${curriculum[0].id}-${locale}`);
  });
  it('does not count partial text, even at perfect attempt accuracy',()=>{

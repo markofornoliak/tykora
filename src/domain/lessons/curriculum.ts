@@ -71,19 +71,100 @@ function legacyReviewText(lesson:CourseLesson,locale:SupportedLocale):string{
   : `${repeatFocus(reversed,2)} ${prose[lesson.index%prose.length]} ${repeatFocus(focus,2)} ${repeatFocus(reversed,1)}`;
 }
 
+
+/** Generated original holdouts: letter drills in levels 1–2; independent
+ * readable scenarios and focus-key drills for levels 3–10. The deterministic
+ * v3 identifiers never rewrite or reinterpret historical review-v1/v2 IDs. */
+const holdoutScenes:Record<SupportedLocale,readonly string[]>={
+ ru:[
+  'В мастерской инженер записал необычное наблюдение и повторил опыт. После проверки прибор снова работал ровно.',
+  'Ранним утром на вокзале открыли новый зал ожидания. Пассажиры сверяли маршруты и готовились к поездке.',
+  'После дождя в саду появились первые цветы. Садовник поправил дорожку и бережно осмотрел молодые растения.',
+  'Редактор внимательно перечитал заметку и заменил неточную фразу. Статья стала понятнее без лишних слов.',
+  'На заседании команды распределили задачи и уточнили сроки. Все решения аккуратно внесли в рабочий протокол.',
+  'На столе лежала старая карта с небольшими пометками. Путешественник сверил маршрут и закрыл блокнот.',
+  'Архитектор нарисовал светлую комнату с большим окном. За окном виднелись деревья и тихая площадь.',
+  'В лаборатории сохранили результаты измерения и повторили испытание. Вывод сделали после второй проверки.',
+  'Курьер принёс посылку в соседний дом. Получатель проверил адрес и оставил подпись в журнале.',
+  'Учитель предложил сравнить несколько способов решения. Каждый ученик объяснил собственную мысль.',
+  'Музыкант проверил инструмент перед началом репетиции. В концертном зале ещё было тихо.',
+  'На берегу реки установили указатель для пешеходов. Новая дорожка проходила рядом с высоким деревом.'
+ ],
+ en:[
+  'The engineer noticed an unusual sound in the workshop and recorded it. A second inspection confirmed the cause.',
+  'Early in the morning the station opened a new waiting room. Travelers checked the routes before departure.',
+  'After the rain bright flowers appeared in the garden. The gardener inspected the soil and cleared a narrow path.',
+  'An editor carefully reviewed the article and replaced an unclear sentence. The final draft became easier to read.',
+  'The team assigned the tasks and confirmed a clear schedule. Every decision was recorded in the meeting notes.',
+  'An old map lay next to a small notebook. The traveler checked the route and packed the supplies before leaving.',
+  'The architect sketched a room filled with daylight. A wide window overlooked the quiet square outside.',
+  'The laboratory saved the observations and repeated the experiment. Only then did the researchers draw a conclusion.',
+  'The courier delivered a small package to a nearby building. The recipient checked the address and signed the log.',
+  'The teacher asked students to compare several solutions. Everyone explained a different way to solve the problem.',
+  'A musician checked the instrument before rehearsal began. The concert hall was still quiet and cool.',
+  'A new sign marked the walking route beside the river. The path turned near a tall tree and a wooden bridge.'
+ ]
+};
+const v3ReviewCache=new Map<string,string>();
+function seedReview(text:string):number{
+ let h=2166136261;
+ for(const c of text){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}
+ return h>>>0;
+}
+function fourGramOverlap(a:string,b:string):number{
+ const set=(text:string)=>{const chars=graphemes(text),result=new Set<string>();
+  for(let i=0;i+4<=chars.length;i++)result.add(chars.slice(i,i+4).join(''));
+  return result;};
+ const left=set(a),right=set(b);
+ return right.size?[...right].filter(s=>left.has(s)).length/right.size:1;
+}
+function versionThreeReview(lesson:CourseLesson,locale:SupportedLocale,practice:string):string{
+ const key=lesson.id+':'+locale;
+ const cached=v3ReviewCache.get(key);if(cached)return cached;
+ const chars=[...new Set(graphemes(locale==='ru'?lesson.focusRu:lesson.focusEn).filter(c=>c.trim()))];
+ const alphabet=chars.filter(c=>!/[.,!?;:()[\]{}#+=/%«»"—–]/u.test(c));
+ const pool=alphabet.length>=2?alphabet:chars;
+ let best='',lowest=Infinity;
+ for(let trial=0;trial<128;trial++){
+  let state=seedReview(key+'v3:'+trial);
+  const random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state;};
+  const coverage=[...chars];
+  for(let i=coverage.length-1;i>0;i--){const j=random()%(i+1);[coverage[i],coverage[j]]=[coverage[j],coverage[i]];}
+  const words=[coverage.join('')];
+  for(let w=0;w<(lesson.level<=2?40:14);w++){
+   let token='';const n=4+random()%5;
+   for(let i=0;i<n;i++)token+=pool[random()%pool.length];
+   words.push(token);
+  }
+  const scenes=holdoutScenes[locale];
+  const prose=lesson.level<=2?'':[
+   scenes[(lesson.index+trial*3)%scenes.length],
+   scenes[(lesson.index*7+trial*5+1)%scenes.length],
+   scenes[(lesson.index*11+trial*7+3)%scenes.length]
+  ].join(' ');
+  const candidate=(prose?prose+' ':'')+words.join(' ');
+  const ratio=fourGramOverlap(practice,candidate);
+  if(ratio<lowest){best=candidate;lowest=ratio;}
+  if(lowest<0.10)break;
+ }
+ v3ReviewCache.set(key,best);
+ return best;
+}
+
 /** Two stable original text variants. Legacy v0.8 prompts retain their original id. */
 export type LessonVariant='practice'|'review';
 export function lessonPrompt(lesson:CourseLesson,locale:SupportedLocale,layoutId?:string,variant:LessonVariant='practice'):TypingPrompt {
  const focus=locale==='ru'?lesson.focusRu:lesson.focusEn;
  const prose=locale==='ru'?proseRu:proseEn;
  const reversed=focus.split(' ').reverse().join(' ');
+ const practiceText=lesson.level<=2
+   ? `${repeatFocus(focus,5)} ${repeatFocus(reversed,3)}`
+   : `${repeatFocus(focus,3)} ${prose[(lesson.index-1)%prose.length]} ${repeatFocus(focus,2)}`;
  const text=variant==='review'
-   ? lesson.index<=3?firstThreeReviewV2[locale][lesson.index-1]:legacyReviewText(lesson,locale)
-   : lesson.level<=2
-     ? `${repeatFocus(focus,5)} ${repeatFocus(reversed,3)}`
-     : `${repeatFocus(focus,3)} ${prose[(lesson.index-1)%prose.length]} ${repeatFocus(focus,2)}`;
+   ? lesson.index<=3?firstThreeReviewV2[locale][lesson.index-1]:versionThreeReview(lesson,locale,practiceText)
+   : practiceText;
  if(graphemes(text).length<30) throw new Error('Course exercise too short');
- return {id:`course-${lesson.id}-${locale}${variant==='review'?(lesson.index<=3?'-review-v2':'-review'):''}`,text,mode:'lesson',locale,
+ return {id:`course-${lesson.id}-${locale}${variant==='review'?(lesson.index<=3?'-review-v2':'-review-v3'):''}`,text,mode:'lesson',locale,
   layoutId:layoutId??(locale==='ru'?'ru-jcuken':'en-qwerty'),license:'original',sourceAttribution:'TYKORA original course'};
 }
 export function findLesson(id:string):CourseLesson|undefined{return curriculum.find(l=>l.id===id);}
@@ -122,7 +203,7 @@ export interface LessonProgress {
 export function lessonProgressFromScores(records:readonly CourseResult[],locale:SupportedLocale):Map<string,LessonProgress>{
  const attempts=new Map<string,{practice:Map<string,number>;review:Map<string,number>}>();
  for(const record of records){
-  const match=/^course-(L\d\d-\d\d)-(ru|en)(-review(?:-v2)?|-review2-(\d+)-(\d+)(?:-model-[a-z0-9-]+)?(?:-v-[0-9a-z]+(?:\.[0-9a-z]+)*)?)?$/.exec(record.promptId);
+  const match=/^course-(L\d\d-\d\d)-(ru|en)(-review(?:-v2|-v3)?|-review2-(\d+)-(\d+)(?:-model-[a-z0-9-]+)?(?:-v-[0-9a-z]+(?:\.[0-9a-z]+)*)?)?$/.exec(record.promptId);
   if(!match||match[2]!==locale||typeof record.id!=='string'||!record.id)continue;
   const lesson=findLesson(match[1]);if(!lesson)continue;
   const variant:LessonVariant=match[3]?'review':'practice';
@@ -134,7 +215,7 @@ export function lessonProgressFromScores(records:readonly CourseResult[],locale:
   const dynamicLength=match[4]?Number(match[4]):null;
   if(dynamicLength!==null&&(!Number.isSafeInteger(dynamicLength)||dynamicLength<30||dynamicLength>600))continue;
   if(record.promptId.includes('-model-')&&recoverReviewLength(record.promptId,locale)!==dynamicLength)continue;
-  const historicReview=record.promptId.endsWith('-review')&&lesson.index<=3;
+  const historicReview=record.promptId.endsWith('-review');
   const expectedLength=dynamicLength??graphemes(historicReview
    ?legacyReviewText(lesson,locale)
    :lessonPrompt(lesson,locale,undefined,variant).text).length;
