@@ -149,3 +149,10 @@ Run #42039411859, SHA 2077808c61f11327de317398cf96987023b76af2: Event Timing p95
 
 - Matched Lighthouse 12.8.2 mobile 5× at `9cc89e0d0964fc64144452aec020f3515da3bc46`, Actions #42079644192: LCP median **1952.95ms**, trials 1849 /1954 /1957 /1953 /1953; CLS 0. The ~1ms difference vs ~1954ms earlier is not a reproducible 300ms gain.
 - Since deferring `registerSW.js` did not materially shorten LCP and changed offline bootstrap semantics, reverted the experiment to the previously passing PWA registration. No fake 1.2s success claim.
+
+## 2026-11-05 · D/E continuation, owner-requested scope
+
+- D: First-three-lesson original practice/review distinct texts and 4-gram overlap <10% checks are covered by `contentLint.test.ts`; the remaining 121 lessons are not claimed rewritten. Existing backup IDs remain version-aware.
+- E: Added Profile/Race/Classroom RU/EN main interface strings with safety-critical backup/permission/IP disclosures; Profile achievements/tier and Race simulated bot display names are translated by stable IDs, without changing domain objects. Expanded English E2E to all nine routes.
+- Coverage is still **partial pending exhaustive string audit/native-speaker QA**, especially deep dynamic error/state paths and user-provided exercise copy that must remain independent of interface locale.
+- F and G intentionally deferred to next iteration. No merge/release/deploy or repo rename.

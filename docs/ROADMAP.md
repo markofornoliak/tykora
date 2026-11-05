@@ -42,3 +42,11 @@ For each claim, record command, exact commit SHA, test log, browser/device and t
 **A2 evidence update:** [A2 trace report](A2-TRACE.md) shows observed CPU×1 p95 24ms (FAIL ≤16), CPU×4 p95 32ms (boundary), simulated LCP ≥2.27s (FAIL ≤1.2s), 10-minute heap +1.108MB (no literal zero growth), initial graph ≤baseline not yet established. Proceeded to B/C after one A2 block as requested; **A not fully accepted**.
 
 **Five-run CDP acceptance update (2026-11-05):** p95 ×1=24ms (FAIL 16), ×4=32/32/32/40/32ms (FAIL robust 32). EventLatency stage slices unpaired; no adopted frame budget / no A acceptance. See docs/INPUT-PRESENTATION.md.
+
+## Iteration 5 owner-scoped B–E status (2026-11-05)
+
+- B golden visual screenshot reference: 36 reviewed PNGs, three themes and three widths, pinned from successful Actions #42041281178; pixel-diff rerun SUCCESS #42079021438. Reference is limited to four main routes and empty local data. Responsive native devices/zoom untested.
+- C expanded axe: 24 themes ×9 routes ×3 widths completed SUCCESS #42041281178 in Chromium; manual VoiceOver and NVDA explicitly **REQUIRES OWNER**, not performed. See A11Y-MANUAL.md.
+- D first 3/124 lessons have practice/review separation with `<10%` four-grapheme overlap and source-level tests; **122?** correction: 124 total, 3 addressed, **121** remain unevaluated for editorial rewrite. Use contentLint.test.ts for exact claims.
+- E main RU/EN copy now appears across nine routes and browser smoke verifies primary controls, but complete deep-dynamic / native-language QA remains NOT CONFIRMED. UI locale, exercise content language and keyboard layout must remain independent.
+- F (reliability hardening) and G (showcase/renaming) intentionally moved to next iteration. Never call iteration 5 a release or merge without owner approval.
