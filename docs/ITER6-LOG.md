@@ -135,3 +135,9 @@
 
 - Replaced stale v0.8-style privacy text with current human-readable Beta v0.9 local IndexedDB/backup disclosure, hosting caveat, optional manual WebRTC STUN/IP caveat and data deletion options. Added `docs/TERMS.md` (MIT license, no certificates, no cloud backup, prototype behavior) and README link, without asserting legal advice or unattested external-host guarantees.
 - Added `e2e/iter6-network.spec.ts`: observe actual browser request events on real Home, Practice and Profile first loads across Chromium, Firefox, WebKit, including startup/idle; assert every HTTP(S) URL same-origin and zero external requests absent consent, without interception/mocks. No claimed PASS until CI returns.
+
+## 2026-11-05 · F: 15 advisory findings and isolated dependency remediation trial
+
+- Supply chain [#42121416715](https://github.com/markofornoliak/tykora/actions/runs/42121416715) generated a valid **CycloneDX 1.5 SBOM with 542 components**; `npm audit` failed with **15 findings: 2 critical, 11 moderate, 2 low** (0 high). Critical chains are `vitest -> tinypool` (remote code execution via prototype pollution) and `vitest/@vitest/mocker`. Other affected tree includes `typescript-eslint`, `vite-plugin-pwa/workbox-build`, `minimatch`, `glob`, `deepmerge`.
+- This is a **release blocker**, although most packages are dev dependencies. No false `audit clean` claim or unsafe `--force` fix. Original SBOM and audit JSON kept in workflow artifact.
+- Added isolated `iter6-dependency-trial.yml` to run `npm install --save-dev --save-exact vitest@5.1.0` then `npm audit fix` without `--force` in disposable runner; upload candidate lockfile and residual advisories, run complete source checks and Chromium/Firefox/WebKit E2E. It does NOT push changes into any branch or production. Decide what to keep after inspecting exact package-lock diff and evidence. Current run pending.

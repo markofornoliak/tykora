@@ -1,0 +1,45 @@
+name: Iteration 6 - critical dependency remediation trial
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-dependency-trial.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  trial-locked-upgrade:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Upgrade critical test dependency on isolated runner only
+        run: npm install --save-dev --save-exact vitest@5.1.0 --no-fund
+      - name: Patch compatible indirect vulnerabilities without --force
+        shell: bash
+        run: |
+          mkdir -p performance-artifacts/iter6-upgrade
+          npm audit fix --no-fund > performance-artifacts/iter6-upgrade/audit-fix.log 2>&1 || true
+          npm audit --json > performance-artifacts/iter6-upgrade/audit-after.json || true
+          node - <<'NODE'
+          const fs=require('fs');
+          const d=JSON.parse(fs.readFileSync('performance-artifacts/iter6-upgrade/audit-after.json','utf8'));
+          console.log('ITER6_AUDIT_TRIAL '+JSON.stringify({sha:process.env.GITHUB_SHA,vulnerabilities:d.metadata?.vulnerabilities??null,names:Object.keys(d.vulnerabilities??{}),error:d.error??null}));
+          NODE
+          cp package.json package-lock.json performance-artifacts/iter6-upgrade/
+      - name: Require normal source build and domain safety after trial
+        run: npm run check:domain && npm run check && npm run lint && npm run test && npm run build && npm run check:dist
+      - name: Cross-browser E2E after proposed lockfile upgrade
+        run: npx playwright install --with-deps chromium firefox webkit && npm run test:e2e
+      - name: Upload exact candidate lockfile and advisories for code review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tykora-iter6-dependency-trial
+          path: performance-artifacts/iter6-upgrade/*
+          if-no-files-found: warn
