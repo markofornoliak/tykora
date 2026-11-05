@@ -101,3 +101,10 @@
 
 - New `e2e/iter6-bootstrap.spec.ts` holds the **real** hashed `bootstrap-*.js` request (no mocked app) to deterministically reproduce slow hydration on Chromium, Firefox, WebKit. Two scenarios: Home nav remains operable and reaches Classroom while chunk is withheld; direct `/#/themes` must never expose inert Home locale control before chunk completes, then actual language selection reaches English.
 - Explicitly release network request in a `finally` to avoid tainting following tests. This adds tests and does not lower existing assertions or snapshots. CI **pending**.
+
+## 2026-11-05 · Track G: published/draft documentation reconciliation
+
+- README now explicitly distinguishes published main Beta v0.9.0 from unreleased iter5/iter6, adds main CI/License/DRAFT badges, links measured baseline and naming dossier, and avoids misrepresenting the candidate's eager-only JS gzip.
+- `docs/ROADMAP.md` appended iteration 6 verified and unverified status, no existing failed objectives relabeled as passed.
+- `docs/RELEASE.md` removes the obsolete statement that no lockfile or production release exists; current merge/deploy restrictions remain explicit.
+- `docs/GITHUB-ABOUT.md` supplies owner-review description and topics but **does not claim** GitHub About was edited; GitHub integration lacks that metadata-write action. Real light/dark screenshots and GIF are missing and not invented.
