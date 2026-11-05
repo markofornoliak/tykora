@@ -4,14 +4,16 @@ import { repositories } from '../../infrastructure/di/repositories';
 import type { SessionRecord } from '../../application/ports/ProgressRepository';
 import {displayWpm} from '../../shared/utils/formatMetrics';
 import {weakestSkills,type SkillNode} from '../../domain/skills/model';
+import {KeyboardHeatmap} from './KeyboardHeatmap';
 export function Analytics(){
  const [sessions,setSessions]=useState<SessionRecord[]>([]);
  const [weak,setWeak]=useState<SkillNode[]>([]);
+ const [keyNodes,setKeyNodes]=useState<SkillNode[]>([]);
  const [error,setError]=useState(false);
  useEffect(()=>{let live=true;(async()=>{try{
    const s=await repositories.progress.getRecentSessions(30);
    if(!live)return;setSessions(s);
-   if(s[0]){const profile=await repositories.skills.byLayout(s[0].layoutId,s[0].locale);if(live)setWeak(weakestSkills(profile,s[0].layoutId,s[0].locale));}
+   if(s[0]){const profile=await repositories.skills.byLayout(s[0].layoutId,s[0].locale);if(live){setWeak(weakestSkills(profile,s[0].layoutId,s[0].locale));setKeyNodes(Object.values(profile).filter(n=>n.unit==='key'));}}
  }catch{if(live)setError(true);}})();return()=>{live=false;};},[]);
  const last=sessions[0];const ordered=[...sessions].reverse().filter(x=>x.summary.netWpm!==null);const max=Math.max(20,...ordered.map(x=>x.summary.netWpm??0));
  const points=ordered.map((x,i)=>`${30+ (i/Math.max(1,ordered.length-1))*640},${180-((x.summary.netWpm??0)/max)*148}`).join(' ');
@@ -33,6 +35,7 @@ export function Analytics(){
    </table>
   </div>
  </details>}</div>
+ <KeyboardHeatmap nodes={keyNodes} locale={last?.locale==='en'?'en':'ru'}/>
  <div className="section-title"><h2>Рекомендации</h2></div>
  <div className="surface card">{weak.length?<div className="lesson-list">{weak.map(n=><div className="lessonline" key={n.id}><span><b>{n.sequence}</b> · {n.unit}</span><span className="small muted">{n.samples} наблюдений · оценка {(n.mastery*100).toFixed(0)}%</span></div>)}</div>:<Placeholder>Адаптивная модель пока не имеет достаточно наблюдений. Упражняйтесь на целых текстах, чтобы накопить историю сочетаний.</Placeholder>}
  {error&&<p role="status">Локальная база недоступна; история может не сохраняться.</p>}</div>

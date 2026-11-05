@@ -1,0 +1,5 @@
+.heatmap-keyboard{display:grid;gap:var(--ds-space-2);margin:var(--ds-space-6) 0;max-width:720px}
+.heatmap-row{display:flex;gap:var(--ds-space-1);justify-content:center;flex-wrap:nowrap}
+.heatmap-key{flex:1 1 0;min-width:0;max-width:55px;text-align:center;padding:var(--ds-space-2) 0;border-radius:var(--ds-radius-sm);font:700 clamp(.72rem,1.4vw,.94rem)/1.4 var(--type-font);border:1px solid var(--border)}
+.heatmap-legend{display:flex;gap:var(--ds-space-1);align-items:center;font-size:var(--ds-type-xs);color:var(--muted);flex-wrap:wrap}
+.heatmap-legend i{width:20px;height:12px;border:1px solid var(--border);border-radius:3px}

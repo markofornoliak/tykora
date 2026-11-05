@@ -99,3 +99,7 @@
 
 - Added optional `SessionRecord.timeline` (schemaVersion stays 1) with sampled WPM/accuracy/attempt counts once per real second, no characters/key codes. Old sessions and JSON backups lack the field and continue to render an explicit empty state. Per-second Results chart is backed only by real saved samples and has an accessible table alternative.
 - Unit + real IndexedDB E2E added; CI required. This is not synthetic interpolation. No stored character-by-character input history.
+
+## 2026-11-05 · B accessible keyboard heatmap
+
+- Added per-key local error-rate heatmap in Analytics with Viridis sequential palette (not red-green), numeric labels and accessible table. Keys without valid completed-session observations remain visibly unmeasured. Not an inference of finger position.
