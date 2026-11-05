@@ -9,6 +9,21 @@ import {exportLocalBackup,importLocalBackup,parseBackupFile} from '../../infrast
 import {useUiStore} from '../../app/store/uiStore';
 import {useBilingual} from '../../shared/i18n/useBilingual';
 
+const achievementCopyEn:Record<string,readonly [string,string]>={
+ first:['First step','Save your first result'],
+ five:['Five sessions','Finish five practice sessions'],
+ twenty:['Consistency','Finish twenty sessions'],
+ precision:['Precision typing','Reach 98% accuracy in a test lasting at least 20 seconds'],
+ fifty:['50 WPM','Reach 50 WPM'],
+ eighty:['80 WPM','Reach 80 WPM'],
+ hour:['One hour of practice','Accumulate 60 minutes of practice'],
+ rhythm:['Rhythm','Practice on three consecutive calendar days']
+};
+const tierLabelsEn:Record<string,string>={
+ 'Начинающий':'Beginner','Практик':'Practitioner','Уверенный':'Confident',
+ 'Эксперт':'Expert','Мастер':'Master'
+};
+
 export function Profile(){
  const tr=useBilingual();
  const [alias,setAlias]=useState('');
@@ -26,6 +41,7 @@ export function Profile(){
   return ()=>{live=false;};
  },[]);
  const stats=summarizeProgress(sessions);
+ const tier=tr(stats.tier,tierLabelsEn[stats.tier]??stats.tier);
  const save=async(event:FormEvent)=>{
   event.preventDefault();
   if(!profileReady||savingAlias)return;
@@ -73,7 +89,7 @@ export function Profile(){
  const earned=stats.achievements.filter(a=>a.unlocked).length;
  const exportBadge=()=>{
   const safe=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]??c));
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="640" viewBox="0 0 1080 640"><rect width="1080" height="640" fill="#16271f"/><text x="70" y="90" font-family="sans-serif" font-size="32" fill="#b2d8c6">▦ TYKORA</text><text x="70" y="200" font-family="sans-serif" font-size="28" fill="#a6bfb0">${tr('Локальная карточка достижений','Local achievement card')}</text><text x="70" y="325" font-family="sans-serif" font-size="105" font-weight="bold" fill="#ffffff">${stats.bestWpm.toFixed(0)} WPM</text><text x="70" y="405" font-family="sans-serif" font-size="35" fill="#ffffff">${safe(alias||tr('Гость','Guest'))} · ${safe(stats.tier)}</text><text x="70" y="493" font-family="sans-serif" font-size="30" fill="#b2d8c6">${earned} / ${stats.achievements.length} ${tr('достижений','achievements')}</text><text x="70" y="580" font-family="sans-serif" font-size="23" fill="#c6cfc8">${tr('Самостоятельная карточка · Не является проверенным сертификатом','Self-reported card · Not a verified certificate')}</text></svg>`;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="640" viewBox="0 0 1080 640"><rect width="1080" height="640" fill="#16271f"/><text x="70" y="90" font-family="sans-serif" font-size="32" fill="#b2d8c6">▦ TYKORA</text><text x="70" y="200" font-family="sans-serif" font-size="28" fill="#a6bfb0">${tr('Локальная карточка достижений','Local achievement card')}</text><text x="70" y="325" font-family="sans-serif" font-size="105" font-weight="bold" fill="#ffffff">${stats.bestWpm.toFixed(0)} WPM</text><text x="70" y="405" font-family="sans-serif" font-size="35" fill="#ffffff">${safe(alias||tr('Гость','Guest'))} · ${safe(tier)}</text><text x="70" y="493" font-family="sans-serif" font-size="30" fill="#b2d8c6">${earned} / ${stats.achievements.length} ${tr('достижений','achievements')}</text><text x="70" y="580" font-family="sans-serif" font-size="23" fill="#c6cfc8">${tr('Самостоятельная карточка · Не является проверенным сертификатом','Self-reported card · Not a verified certificate')}</text></svg>`;
   downloadText('tykora-achievements.svg',svg,'image/svg+xml;charset=utf-8');
  };
  return <section className="social-page">
@@ -84,13 +100,13 @@ export function Profile(){
     <form onSubmit={save} className="social-form"><label htmlFor="profile-alias">{tr('Псевдоним','Nickname')}</label><input id="profile-alias" disabled={!profileReady||savingAlias} maxLength={32} placeholder={tr('Например, SilentFox','For example, SilentFox')} value={alias} onChange={e=>setAlias(e.target.value)}/><button type="submit" disabled={!profileReady||savingAlias} className="btn primary">{tr('Сохранить имя','Save nickname')}</button></form>
     {profileNotice&&<p role="status" className="small muted">{profileNotice}</p>}
    </div>
-   <div className="surface card"><div className="eyebrow">{tr('Персональный уровень','Personal tier')}</div><h2>{stats.tier}</h2><p className="small muted">{tr('Определяется лучшей сохранённой скоростью. Это не мировая лига и не официальный рейтинг.','Based on your highest saved speed; not an official ranking or global league.')}</p>
+   <div className="surface card"><div className="eyebrow">{tr('Персональный уровень','Personal tier')}</div><h2>{tier}</h2><p className="small muted">{tr('Определяется лучшей сохранённой скоростью. Это не мировая лига и не официальный рейтинг.','Based on your highest saved speed; not an official ranking or global league.')}</p>
    <div className="social-stat-grid"><div><strong>{stats.bestWpm.toFixed(1)}</strong><span>{tr('Рекорд WPM','Best WPM')}</span></div><div><strong>{stats.total}</strong><span>{tr('Тестов','Tests')}</span></div><div><strong>{stats.minutes.toFixed(0)}</strong><span>{tr('Минут','Minutes')}</span></div><div><strong>{stats.currentStreak}</strong><span>{tr('Дней подряд','Streak days')}</span></div></div>
    <p className="small muted">{tr('Пропуск не наказывается: серия просто считается от последнего активного дня.','Missed days have no penalty: the streak counts from your last active day.')}</p></div>
   </div>
   <div className="row spread section-title"><h2>{tr('Коллекция достижений','Achievement collection')}</h2><span className="hint">{earned} / {stats.achievements.length}</span></div>
   <div className="achievement-grid">{stats.achievements.map(a=><div key={a.id} className={`surface achievement ${a.unlocked?'unlocked':''}`}>
-   <span className="achievement-icon" aria-hidden="true">{a.unlocked?'✦':'○'}</span><div><strong>{a.title}</strong><p className="small muted">{a.detail}</p><div className="progress" aria-hidden="true"><i style={{width:`${Math.min(100,a.value/a.threshold*100)}%`}}/></div><span className="small muted">{Number(a.value.toFixed(1))} / {a.threshold}</span></div></div>)}</div>
+   <span className="achievement-icon" aria-hidden="true">{a.unlocked?'✦':'○'}</span><div><strong>{tr(a.title,achievementCopyEn[a.id]?.[0]??a.title)}</strong><p className="small muted">{tr(a.detail,achievementCopyEn[a.id]?.[1]??a.detail)}</p><div className="progress" aria-hidden="true"><i style={{width:`${Math.min(100,a.value/a.threshold*100)}%`}}/></div><span className="small muted">{Number(a.value.toFixed(1))} / {a.threshold}</span></div></div>)}</div>
   <div className="surface card" style={{marginTop:20}}>
    <h3>{tr('Мои данные · резервная копия','My data · Backup')}</h3>
    <p className="small muted">{tr('Экспортируйте историю занятий, карту навыков, настройки, тренировочный план и псевдоним в JSON. Файл создаётся и читается локально; сеть не используется. Не публикуйте его — он содержит вашу историю.','Export your session history, skills, settings, training plan and nickname as JSON. The file stays local; no network is used. Do not publish it, as it contains your history.')}</p>

@@ -56,7 +56,8 @@ export function Race(){
  const targetChars=useMemo(()=>graphemes(promptText),[promptText]);
  const typedChars=useMemo(()=>graphemes(session.typed),[session.typed]);
  const score=calculateScore(session,session.endedAtMs??now);
- const speedEntries=peerMode&&connection==='connected'?[{id:'peer',name:tr('Другой участник','Other participant'),progress:peerProgress,bot:false}]:bots.map(b=>({id:b.id,name:b.name,progress:botProgress(b,elapsed,promptText),bot:true}));
+ const botNamesEn:Record<string,string>={'bot-0':'Quiet Wind','bot-1':'Steady Rhythm','bot-2':'Fast Typist'};
+ const speedEntries=peerMode&&connection==='connected'?[{id:'peer',name:tr('Другой участник','Other participant'),progress:peerProgress,bot:false}]:bots.map(b=>({id:b.id,name:tr(b.name,botNamesEn[b.id]??b.name),progress:botProgress(b,elapsed,promptText),bot:true}));
  const link=`${location.origin}${location.pathname}#/race?room=${encodeURIComponent(room)}&lang=${locale}`;
  const connect=async(action:'offer'|'answer'|'apply')=>{
   setBusy(true);setMessage('');

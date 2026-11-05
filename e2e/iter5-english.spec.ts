@@ -21,9 +21,11 @@ test('English navigation and primary pages preserve independent content controls
  await page.goto('/#/profile');
  await expect(page.getByRole('heading',{name:'Your progress belongs to you.'})).toBeVisible();
  await expect(page.getByRole('button',{name:'Download backup'})).toBeVisible();
+ await expect(page.getByText('First step',{exact:true})).toBeVisible();
  await expect(page.getByText('Merge updates records sharing an ID.',{exact:false})).toBeVisible();
  await page.goto('/#/race');
  await expect(page.getByRole('heading',{name:'Race at your own pace.'})).toBeVisible();
+ await expect(page.getByText('Quiet Wind',{exact:false}).first()).toBeVisible();
  await expect(page.getByText('WebRTC may reveal your IP address to the other participant.',{exact:false})).toBeVisible();
  await page.goto('/#/classroom');
  await expect(page.getByRole('heading',{name:'Learning without accounts.'})).toBeVisible();

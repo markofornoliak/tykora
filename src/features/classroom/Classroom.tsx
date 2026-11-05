@@ -8,20 +8,34 @@ import {downloadText,readSmallJson} from '../../shared/utils/download';
 import {useBilingual} from '../../shared/i18n/useBilingual';
 
 const initial='Точный набор текста экономит время. Спокойный ритм помогает избегать случайных ошибок. Практика становится эффективнее, когда упражнения подобраны к реальным задачам.';
+const classroomErrorsEn:Record<string,string>={
+ 'Название должно содержать минимум 2 символа.':'Title must contain at least two characters.',
+ 'Текст задания: 25–1500 символов.':'Assignment text must be 25–1500 characters.',
+ 'Недопустимый порог точности.':'Invalid accuracy threshold.',
+ 'Неверный формат задания.':'Invalid assignment format.',
+ 'Файл не является заданием TYKORA v1.':'This is not a TYKORA v1 assignment file.',
+ 'Содержимое задания не соответствует ограничениям.':'Assignment content does not meet the validation requirements.',
+ 'Неверный формат отчёта.':'Invalid report format.',
+ 'Неверный формат отчёта TYKORA.':'Invalid TYKORA report format.'
+};
 export function Classroom(){
  const tr=useBilingual();
+ const userError=(e:unknown,fallbackRu:string,fallbackEn:string)=>{
+  if(!(e instanceof Error))return tr(fallbackRu,fallbackEn);
+  return tr(e.message,classroomErrorsEn[e.message]??fallbackEn);
+ };
  const [tab,setTab]=useState<'student'|'teacher'>('student');
- const [title,setTitle]=useState('Урок точного набора'),[text,setText]=useState(initial),[locale,setLocale]=useState<'ru'|'en'>('ru'),[threshold,setThreshold]=useState(95);
+ const [title,setTitle]=useState(()=>tr('Урок точного набора','Precision typing lesson')),[text,setText]=useState(initial),[locale,setLocale]=useState<'ru'|'en'>('ru'),[threshold,setThreshold]=useState(95);
  const [assignment,setAssignment]=useState<Assignment|null>(null);
  const [reports,setReports]=useState<ClassReport[]>([]);
- const [alias,setAlias]=useState('Ученик'),[notice,setNotice]=useState('');
+ const [alias,setAlias]=useState(()=>tr('Ученик','Student')),[notice,setNotice]=useState('');
  const [engine,setEngine]=useState<EngineState|null>(null),engineRef=useRef<EngineState|null>(null);
  const [composition,setComposition]=useState('');const composingRef=useRef(false);
- const make=()=>{try{const a=makeAssignment(title,text,locale,threshold/100);downloadText(`tykora-assignment-${a.id.slice(0,8)}.json`,JSON.stringify(a,null,2));setNotice(tr('Задание создано и скачано. Отправьте файл ученикам самостоятельно.','Assignment created and downloaded. Send the file to students yourself.'));}catch(e){setNotice(e instanceof Error?e.message:tr('Ошибка создания задания.','Could not create the assignment.'));}};
+ const make=()=>{try{const a=makeAssignment(title,text,locale,threshold/100);downloadText(`tykora-assignment-${a.id.slice(0,8)}.json`,JSON.stringify(a,null,2));setNotice(tr('Задание создано и скачано. Отправьте файл ученикам самостоятельно.','Assignment created and downloaded. Send the file to students yourself.'));}catch(e){setNotice(userError(e,'Ошибка создания задания.','Could not create the assignment.'));}};
  const loadAssignment=async(event:ChangeEvent<HTMLInputElement>)=>{
   const file=event.target.files?.[0];if(!file)return;
   try{const data=readAssignment(await readSmallJson(file,30_000));setAssignment(data);const next=createEngine({id:data.id,text:data.text,locale:data.locale,layoutId:data.locale==='ru'?'ru-jcuken':'en-qwerty',mode:'lesson',license:'user-provided'});engineRef.current=next;setEngine(next);setNotice(tr('Задание загружено только в текущую вкладку.','Assignment loaded in this tab only.'));}
-  catch(e){setNotice(e instanceof Error?e.message:tr('Не удалось открыть файл.','Could not open the file.'));}
+  catch(e){setNotice(userError(e,'Не удалось открыть файл.','Could not open the file.'));}
   event.target.value='';
  };
  const importReports=async(event:ChangeEvent<HTMLInputElement>)=>{
@@ -37,7 +51,7 @@ export function Classroom(){
  const complete=!!engine?.endedAtMs&&graphemes(engine.typed).length===graphemes(assignment?.text??'').length;
  const passed=complete&&score!==null&&score.accuracy>=(assignment?.minAccuracy??1);
  const downloadReport=()=>{if(!assignment||!engine||!score||!complete)return;
-  const report:ClassReport={kind:'tykora-report',version:1,assignmentId:assignment.id,assignmentTitle:assignment.title,alias:alias.trim().slice(0,40)||'Ученик',completedAt:new Date().toISOString(),complete:passed,score};
+  const report:ClassReport={kind:'tykora-report',version:1,assignmentId:assignment.id,assignmentTitle:assignment.title,alias:alias.trim().slice(0,40)||tr('Ученик','Student'),completedAt:new Date().toISOString(),complete:passed,score};
   downloadText(`tykora-report-${assignment.id.slice(0,8)}.json`,JSON.stringify(report,null,2));
   setNotice(tr('Отчёт скачан. Передайте файл преподавателю вручную.','Report downloaded. Send the file to your teacher yourself.'));
  };
