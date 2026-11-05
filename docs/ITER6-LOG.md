@@ -85,3 +85,8 @@
 
 - [Full 124-lesson audit #42118759970](https://github.com/markofornoliak/tykora/actions/runs/42118759970) for PR candidate `928f621bc8e7b8205a82c7eaf490616fc3e6caee`: **248 pairs, 0 contentLint issues**, 0 duplication, 0 missing target glyphs, worst four-gram overlap **0.05960265**, <0.10. This confirms the measurable overlap/coverage contract (not editorial or pedagogical excellence). Legacy review IDs for prior sessions remain score-compatible. Full cross-browser quality on candidate still pending.
 - **Budget semantics clarified**: split Home module bootstrap lowered static eager graph to about 1.3kB, but full React/i18n/bootstrap still loads on initial Home. Extended Phase0 script to compute `initialInteractiveJsGzipBytes` including dynamically imported bootstrap and its static closure, as well as browser-observed JS transfer. Static-only count alone is explicitly **not an initial interactive load success**. Source budgets unchanged; no reduced test scenario.
+
+## 2026-11-05 · Track G: naming due diligence completed to preliminary evidence level
+
+- Exact-name collision VERIFIED through public JXLabs recruitment and project listings: TYKORA DeFi prize vault on Rootstock, distinct from this typing product. Historical Canadian Class 5 application abandoned; Swiss secondary record deleted. `tykora.com` DNS record observed, registrar ownership and actual availability unverified.
+- Added `docs/NAMING.md` with primary citations, conflicting names, unknown social/domain statuses, three alternate name hypotheses and explicit owner-only decision gate. **No rename, purchases, contact, trademark clearance claim, or product configuration changes.**
