@@ -1,9 +1,12 @@
 import {test,expect} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-test('keyboard skip-link and typed-input focus are independently reachable',async({page})=>{
+test('keyboard skip-link and typed-input focus are independently reachable',async({page,browserName})=>{
  await page.goto('/#/practice');
- await page.keyboard.press('Tab');
+ // WebKit's default tab-navigation behavior varies by host settings; focus
+ // the link explicitly there and still test keyboard activation via Enter.
+ if(browserName==='webkit')await page.locator('.skip-link').focus();
+ else await page.keyboard.press('Tab');
  await expect(page.locator('.skip-link')).toBeFocused();
  await page.keyboard.press('Enter');
  await expect(page.locator('main#main-content')).toBeFocused();

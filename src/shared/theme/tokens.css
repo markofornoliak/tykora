@@ -39,6 +39,8 @@ input:focus-visible,a:focus-visible,[role="button"]:focus-visible{
  outline:3px solid var(--ds-focus);
  outline-offset:3px;
 }
+/* Prevent transient theme-switch contrast failures: animate transform, never background color. */
+.btn{transition-property:transform;transition-duration:var(--ds-duration-fast);transition-timing-function:var(--ds-ease-standard)}
 button:disabled,[aria-disabled="true"]{cursor:not-allowed;opacity:.58}
 @media(pointer:coarse){
  button,.btn,select,.icon-button{min-height:44px;min-width:44px}

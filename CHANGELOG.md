@@ -2,6 +2,8 @@
 
 ## Unreleased — Iteration 5 (experimental branch; not a release)
 
+- C/B fix candidate: prevent transient theme-switch contrast failure by removing button background animation; WebKit link activation regression exercises explicit focus without claiming full Tab-order verification.
+
 - B Results: offline generated PNG share card, comparison with prior compatible scoring/layout sessions, top-five observed weak n-grams, explicit absence of unsupported time-series.
 
 - C: keyboard/reduced-motion/forced-colors Playwright tests, full theme × route Chromium axe workflow, 36 screenshot evidence workflow, and explicit manual audit ledger (not performed).

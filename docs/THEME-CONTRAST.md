@@ -30,3 +30,7 @@ Numeric audit of 15 role/background pairs (360 total). Thresholds: normal text 4
 | Contrast Dark | 8.04:1 | 3.11:1 | PASS |
 
 Source: src/shared/theme/palettes.ts; calculation: resolvePalette() and WCAG relative luminance. Base --border failed 3:1 on 24/24 themes before derived semantic borders. The resolver fixes listed roles; manual controls, hover/active, custom palettes and actual browser screenshots remain unverified. CI Vitest must pass before treating this generated numerical table as implementation evidence.
+
+## Runtime transition defect discovered by axe
+
+The full-browser Chromium matrix identified a transient Nightfall /themes 320px `color-contrast` failure on the primary button, despite the 24×15 static role matrix passing. Browser sampling showed `--accent: #9bdbc3` and `--on-accent: #101815` while the button background was still the intermediate `rgb(39,109,93)` due to a 150ms background transition. Iteration 5 removes background-color transition from `.btn` (transform-only motion) so foreground/background switch atomically. This is a **fix candidate** until the full 648-cell axe workflow reruns successfully. Numerical role tests alone had missed this transient contrast regression.
