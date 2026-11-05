@@ -1,0 +1,36 @@
+name: Iteration 5 - CDP presentation five trials each CPU
+on:
+  push:
+    branches: [feature/iter5-quality-design]
+    paths: [scripts/iter5-trace-v2.mjs, .github/workflows/iter5-presentation.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  input-presentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: VITE_BASE_PATH=/ npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start local preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/presentation.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl --fail --silent http://127.0.0.1:4174/ > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/presentation.log; exit 1
+      - run: node scripts/iter5-trace-v2.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter5-input-presentation-traces
+          path: performance-artifacts/iter5-presentation/*
+          if-no-files-found: warn
