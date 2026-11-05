@@ -1,32 +1,31 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
-import './app/i18n';
+// Home ships the complete, semantic first-visit markup in index.html.
+// CSS is eager; the interactive React runtime is scheduled after the first
+// rendering opportunity. This is the SAME path for users and lab browsers.
 import './styles/app.css';
 import './shared/theme/tokens.css';
 import './shared/theme/heatmap.css';
 import './shared/theme/home.css';
-import { App } from './app/App';
 
-const root=document.getElementById('root')!;
-const app=<React.StrictMode><HashRouter><App /></HashRouter></React.StrictMode>;
+const root=document.getElementById('root');
+if(!root)throw new Error('TYKORA root element missing');
 const hash=window.location.hash;
-const homeAtBootstrap=!hash||hash==='#'||hash==='#/';
-if(homeAtBootstrap&&root.dataset.tykoraHomePrerender==='1'){
-  // The checked-in markup is an exact clean-profile Home DOM capture, not
-  // decorative placeholder text. Hydrate to retain the existing LCP heading.
-  ReactDOM.hydrateRoot(root,app,{
-    onRecoverableError:(error,info)=>{
-      // Never suppress or silently mask a hydration mismatch; the React
-      // component stack identifies the first inconsistent subtree in CI.
-      console.error('TYKORA_HOME_HYDRATION_RECOVERABLE',error,'componentStack',info.componentStack);
-    }
-  });
-}else{
-  // A deep-linked route must never show the static Home while JS initializes.
-  root.replaceChildren();
-  ReactDOM.createRoot(root).render(app);
+const homeAtBootstrap=(!hash||hash==='#'||hash==='#/')
+  &&root.dataset.tykoraHomePrerender==='1';
+let scheduled=false;
+function bootstrap(){
+ if(scheduled)return;
+ scheduled=true;
+ window.removeEventListener('hashchange',bootstrap);
+ void import('./app/bootstrap').then(({mountApp})=>mountApp()).catch(error=>{
+  console.error('TYKORA_BOOTSTRAP_FAILED',error);
+ });
 }
-
-// The critical Home fallback is in a lower-priority cascade layer. The
-// unlayered production stylesheet takes precedence without late CSS removal.
+if(homeAtBootstrap){
+ // Treat navigations occurring before hydration as urgent. Do not abandon
+ // the static Home, and do not delay real route changes.
+ window.addEventListener('hashchange',bootstrap);
+ requestAnimationFrame(()=>requestAnimationFrame(bootstrap));
+}else{
+ // Deep links do not have matching prerendered route markup.
+ bootstrap();
+}
