@@ -7,6 +7,11 @@ on:
       - 'e2e/iter5-visual.spec.ts'
       - 'src/shared/theme/**'
       - 'src/styles/**'
+      - 'src/features/home/**'
+      - 'src/features/results/**'
+      - 'src/features/analytics/**'
+      - 'src/features/practice/**'
+      - 'src/features/academy/**'
       - '.github/workflows/iter5-a11y-visual.yml'
   workflow_dispatch:
 permissions:
