@@ -204,3 +204,8 @@
 
 - Added `e2e/iter6-native-focus.spec.ts`: `/home`, `/academy`, `/practice`, `/analytics`, `/profile`, each initial URL `/#/...` with **real** bootstrap JS deliberately blocked, Home initially visible only for `/home`, stable native main/skip object identity, first Tab and Enter semantics and unchanged hash. Uses genuine application modules after release, never mocks React or score.
 - Updated dedicated stress workflow to run **5 repeats in Chromium, Firefox, WebKit** of the five-route suite plus original skip-link test, retaining all standard CI and quality gates. Original source tests and thresholds unchanged. Target 90 tests; number observed and success must be confirmed by CI, not presumed.
+
+## 2026-11-06 · Red stress 89/90, repair native main focus during bootstrap
+
+- [All-browser x5 #42223072837](https://github.com/markofornoliak/tykora/actions/runs/42223072837) had 89/90 passing; the single failure was Chromium original `a11y-i18n.spec.ts` at Academy: skip received first Tab, but Enter did not focus `<main>` before route hydration finished. A hidden *ancestor* `.app` was making the native main unfocusable during the pre-hydration window.
+- Narrow behavior correction: keep the permanent native `.app` and `<main>` visible/focusable; apply the hash-route guard only to `#root` and `#chrome-root` stale Home content. No Home skeleton is exposed, but the native main landmark can now receive focus immediately before JS. E2E source gate now verifies that both replaceable roots are hidden; it no longer hides the stable accessibility target. Original failing test is untouched; 90-case rerun mandatory. No thresholds weakened.

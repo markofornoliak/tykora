@@ -26,7 +26,9 @@ for(const route of ['/#/home','/#/academy','/#/practice','/#/analytics','/#/prof
    if(route==='/#/home'){
     await expect(page.getByRole('heading',{level:1,name:'Каждое нажатие — шаг вперёд.'})).toBeVisible();
    }else{
-    await expect(page.locator('.app')).toBeHidden();
+    await expect(page.locator('#root')).toBeHidden();
+    await expect(page.locator('#chrome-root')).toBeHidden();
+    await expect(main).toBeVisible();
    }
    await page.evaluate(()=>{
     const state=(window as unknown as {__ITER6_FOCUS__:{mainNode:Element|null;skipNode:Element|null;h1Node:Element|null}}).__ITER6_FOCUS__;

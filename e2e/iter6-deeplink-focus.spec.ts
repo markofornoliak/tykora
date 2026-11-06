@@ -16,7 +16,9 @@ for(const route of ['/#/academy','/#/themes'] as const){
    await page.goto(route,{waitUntil:'commit'});
    await expect.poll(()=>wasBlocked,{message:'Production entry JS request must be blocked'}).toBe(true);
    await expect(page.locator('html')).toHaveAttribute('data-tykora-deep-link','1');
-   await expect(page.locator('.app')).toBeHidden();
+   await expect(page.locator('#root')).toBeHidden();
+   await expect(page.locator('#chrome-root')).toBeHidden();
+   await expect(page.locator('main#main-content')).toBeVisible();
    await expect(page.locator('body > .skip-link')).toHaveCount(1);
    await expect(page.getByRole('link',{name:'Перейти к содержимому'})).toBeVisible();
    // Load the exact same actual production code; do not mock the app.

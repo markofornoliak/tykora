@@ -36,7 +36,7 @@ check('Native skip/main remain outside replaceable roots and navigation remains 
  assert.ok(app>0&&skip>0&&skip<app,'Skip link must be a stable native sibling of .app');
  assert.ok(chromeRoot>app&&landmark>chromeRoot&&contentRoot>landmark,'Native main must contain the content root but not the chrome root');
  assert.ok(html.includes('data-tykora-deep-link-guard')&&html.includes('event.preventDefault()'),'Pre-hydration skip activation must preserve hash');
- assert.ok(html.includes('html[data-tykora-deep-link="1"] .app{visibility:hidden}'),'Wrong-route Home must be hidden before bootstrap');
+ assert.ok(html.includes('html[data-tykora-deep-link="1"] #root,html[data-tykora-deep-link="1"] #chrome-root{visibility:hidden}'),'Wrong-route Home and chrome must be hidden, but native main must remain focusable');
  const s=fs.readFileSync('src/shared/ui/Layout.tsx','utf8');
  const chrome=fs.readFileSync('src/shared/ui/Chrome.tsx','utf8');
  const boot=fs.readFileSync('src/app/bootstrap.tsx','utf8');
