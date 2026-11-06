@@ -1,0 +1,91 @@
+name: Iteration 6 - parallel matched Lighthouse (5 routes x 3 SHAs x10)
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-matched-parallel.yml'
+      - 'scripts/iter6-matched-parallel.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  route-matched:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        route: [home, academy, practice, analytics, profile]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 0a7d167bc320b503a03dfe1247c96687526ca28b
+          path: .matched/main
+      - uses: actions/checkout@v4
+        with:
+          ref: 244c5060b37ba9d802dbad796b3ce1ed562f5339
+          path: .matched/iter5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Match three immutable source variants on the same route runner (N=10 each)
+        shell: bash
+        env:
+          ROUTE: ${{ matrix.route }}
+        run: |
+          set -euo pipefail
+          for variant in main iter5 iter6; do
+            if [[ "$variant" == "iter6" ]]; then src="$GITHUB_WORKSPACE"; else src="$GITHUB_WORKSPACE/.matched/$variant"; fi
+            pushd "$src"
+            npm ci --no-audit --no-fund
+            npm run check && npm run lint && npm run test
+            VITE_BASE_PATH=/ npm run build
+            npm run check:dist
+            npm run preview -- --host 127.0.0.1 --port 4174 >"/tmp/iter6-route-$ROUTE-$variant.log" 2>&1 &
+            pid=$!
+            trap 'kill "$pid" 2>/dev/null || true' EXIT
+            ok=0
+            for tries in $(seq 1 40); do
+              if curl -fsS http://127.0.0.1:4174/ >/dev/null; then ok=1; break; fi
+              sleep 1
+            done
+            if [[ "$ok" != "1" ]]; then cat "/tmp/iter6-route-$ROUTE-$variant.log"; exit 1; fi
+            output="$GITHUB_WORKSPACE/performance-artifacts/iter6-matched/$ROUTE/$variant"
+            mkdir -p "$output"
+            if [[ "$ROUTE" == "home" ]]; then url="http://127.0.0.1:4174/#/"; else url="http://127.0.0.1:4174/#/$ROUTE"; fi
+            for i in $(seq 1 10); do
+              npm exec --yes --package=lighthouse@12.8.2 -- lighthouse "$url" --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="$output/run-$i.json" --quiet
+            done
+            popd
+            node scripts/iter6-matched-parallel.mjs variant "$ROUTE" "$variant" "$src/dist" "$output"
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            trap - EXIT
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter6-matched-parallel-${{ matrix.route }}
+          path: performance-artifacts/iter6-matched/
+          if-no-files-found: warn
+  all-routes:
+    needs: [route-matched]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: iter6-matched-parallel-*
+          merge-multiple: true
+          path: performance-artifacts/iter6-matched/
+      - name: Verify 15 route-source summaries and publish exact comparison
+        run: node scripts/iter6-matched-parallel.mjs aggregate
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iter6-matched-parallel-comparison
+          path: performance-artifacts/iter6-matched/comparison.json
