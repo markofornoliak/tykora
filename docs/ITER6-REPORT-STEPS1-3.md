@@ -31,3 +31,19 @@
 ### Follow-up same-source URL parity (not a substitute for the earlier three-source table)
 
 [Independent URL-parity #42229177523](https://github.com/markofornoliak/tykora/actions/runs/42229177523) on **one exact iter6 SHA `61a27432`**, one runner, Lighthouse N10 each, found Home `/` **LCP 938.8115 / TBT46.25 / CLS0**, Home `/#/` **LCP938.4724 / TBT45 / CLS0**, and `/#/home` **LCP905.88075 / TBT46.5 / CLS0** (all ms except CLS). Each uses real H1, full interactive JS **152969B gzip**. `/` had a real extreme outlier LCP1954.35075/TBT2362ms; not excluded. Do not compare the earlier N10 `/#/` value ~1954ms on different source/runner as proof hash links are slower. Latest HEAD still requires remeasurement after any runtime change.
+
+## Verified requested JS after route readiness (separate N=5 census)
+
+[75-visit CI #42230674960](https://github.com/markofornoliak/tykora/actions/runs/42230674960) **SUCCESS**, fresh browser contexts, no omitted deferred React bootstrap. Source main `0a7d167bc320b503a03dfe1247c96687526ca28b`, iter5 `244c5060b37ba9d802dbad796b3ce1ed562f5339`, iter6 `5777982e64221aa4564a992889955927bcc9b233`. Five identical observed gzip sizes on each cell:
+
+| Route | main (bytes) | iter5 (bytes) | iter6 (bytes) |
+|---|---:|---:|---:|
+| Home | 150491 | 151870 | **152969** |
+| Academy | 160570 | 163000 | **166255** |
+| Practice | 171992 | 175672 | **178930** |
+| Analytics | 152440 | 155552 | **156672** |
+| Profile | 157156 | 159911 | **161030** |
+
+Numbers are gzipped local lengths of the JavaScript actually requested by the browser **after actual route H1 and network idle**, not transfer bytes or chunks required only for future interaction. Independent from the N10 Lighthouse trials (and at a different iter6 SHA), therefore cannot be represented as one synchronous experiment. The Home deferred `bootstrap` **was included**. All iter6 route results fail both 105000/90000-byte targets.
+
+**Unchanged pinned pixel golden #42227299262 FAIL:** 31/36 pass and five fail; three Daylight Practice captures have real height mismatches. See [ITER6-VISUAL-FAILURES.md](ITER6-VISUAL-FAILURES.md), no golden/threshold changes.
