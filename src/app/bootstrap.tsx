@@ -9,7 +9,7 @@ export function mountApp(){
  if(!root||!chrome)throw Error('TYKORA native roots missing');
  const home=!location.hash||location.hash==='#'||location.hash==='#/'||location.hash==='#/home';
  const content=<React.StrictMode><HashRouter><App/></HashRouter></React.StrictMode>;
- const navigation=<React.StrictMode><HashRouter><Chrome/></HashRouter></React.StrictMode>;
+ const navigation=<React.StrictMode><Chrome/></React.StrictMode>;
  if(home&&root.dataset.tykoraHomePrerender==='1'){
   ReactDOM.hydrateRoot(root,content,{onRecoverableError:(error,info)=>console.error('TYKORA_HOME_HYDRATION_RECOVERABLE',error,'componentStack',info.componentStack)});
  }else{root.replaceChildren();ReactDOM.createRoot(root).render(content);}

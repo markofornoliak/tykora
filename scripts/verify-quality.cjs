@@ -42,7 +42,7 @@ check('Native skip/main remain outside replaceable roots and navigation remains 
  const boot=fs.readFileSync('src/app/bootstrap.tsx','utf8');
  assert.ok(s.includes("document.getElementById('main-content')?.focus"),'Route updates must focus the stable main');
  assert.ok(!s.includes('<main')&&!s.includes('className="skip-link"'),'React Layout must never recreate landmarks');
- assert.ok(chrome.includes('NavLink')&&chrome.includes('links.map')&&chrome.includes('tykora:chrome-hydrated'),'Navigation must be live and report readiness');
+ assert.ok(chrome.includes("href={'#'+link.href}")&&chrome.includes('links.map')&&chrome.includes('tykora:chrome-hydrated')&&chrome.includes('tykora:route-changed'),'Navigation must use native route links and synchronize with the content router');
  assert.ok(boot.includes('hydrateRoot(root,content')&&boot.includes('hydrateRoot(chrome,navigation'),'Real Home and chrome must hydrate rather than replacing their first-paint nodes');
 });
 check('Native IME composition handlers remain in use',()=>{

@@ -1,5 +1,4 @@
-import {useEffect} from 'react';
-import {NavLink,useLocation} from 'react-router-dom';
+import {useEffect,useState} from 'react';
 import {useTranslation} from 'react-i18next';
 const links=[
  {href:'/',key:'home',icon:'⌂'},{href:'/practice',key:'practice',icon:'⌨'},
@@ -8,18 +7,36 @@ const links=[
  {href:'/profile',key:'profile',icon:'✧'},{href:'/classroom',key:'classroom',icon:'◫'},
  {href:'/themes',key:'themes',icon:'◐'}
 ] as const;
+function currentPath(){return window.location.hash.replace(/^#/,'')||'/';}
 export function Chrome(){
- const {t}=useTranslation(),{pathname}=useLocation();
- useEffect(()=>{window.dispatchEvent(new Event('tykora:chrome-hydrated'));},[]);
- const LinkItem=({link}:{link:typeof links[number]})=><NavLink end={link.href==='/'} to={link.href}
-  className={({isActive})=>'navlink '+(isActive||(link.href==='/'&&pathname==='/home')?'active':'')}>
-  <span className="navicon" aria-hidden="true">{link.icon}</span><span>{t(link.key)}</span>
- </NavLink>;
+ const {t}=useTranslation();
+ const [pathname,setPathname]=useState(currentPath);
+ useEffect(()=>{
+  // Hash anchors trigger native hashchange. Main-router Link navigation uses
+  // history.pushState, so App emits the explicit route-changed event as well.
+  const sync=()=>setPathname(currentPath());
+  window.addEventListener('hashchange',sync);
+  window.addEventListener('tykora:route-changed',sync);
+  window.dispatchEvent(new Event('tykora:chrome-hydrated'));
+  return ()=>{
+   window.removeEventListener('hashchange',sync);
+   window.removeEventListener('tykora:route-changed',sync);
+  };
+ },[]);
+ const isActive=(path:string)=>path==='/'?(pathname==='/'||pathname==='/home'):pathname===path;
+ const LinkItem=({link}:{link:typeof links[number]})=>{
+  const active=isActive(link.href);
+  return <a href={'#'+link.href} data-discover="true" aria-current={active?'page':undefined}
+   className={'navlink '+(active?'active':'')}>
+   <span className="navicon" aria-hidden="true">{link.icon}</span><span>{t(link.key)}</span>
+  </a>;
+ };
  return <>
   <aside className="sidebar">
-   <NavLink className={({isActive})=>'brand '+(isActive||pathname==='/home'?'active':'')} to="/">
+   <a className={'brand '+(isActive('/')?'active':'')} href="#/" data-discover="true"
+    aria-current={isActive('/')?'page':undefined}>
     <span className="logo" aria-hidden="true"><i/><i/><i/><i/></span>TYKORA
-   </NavLink>
+   </a>
    <div className="navtitle">{t('navMain')}</div>
    <nav className="nav" aria-label={t('navMain')}>{links.filter(l=>l.key!=='themes').map(l=><LinkItem link={l} key={l.key}/>)}</nav>
    <div className="navtitle" style={{marginTop:24}}>{t('navSettings')}</div>
