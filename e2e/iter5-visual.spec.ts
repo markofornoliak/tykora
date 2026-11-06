@@ -15,7 +15,12 @@ test('screen captures across 3 themes × 3 viewports × 4 routes',async({page,br
   await page.getByRole('button',{name:theme,exact:true}).click();
   for(const [name,route] of routes){
    await page.evaluate(path=>{location.hash='#'+path;},route);
-   await expect(page.locator('main h1,main h2').first()).toBeVisible();
+   // Never capture the previous route's heading while a lazy route loads.
+   // Keep exactly the same user-facing content, themes and golden threshold.
+   if(name==='practice')await expect(page.locator('#practice-mode')).toBeVisible();
+   else if(name==='themes')await expect(page.locator('.themes-grid')).toBeVisible();
+   else if(name==='home')await expect(page.getByRole('heading',{level:1,name:'Каждое нажатие — шаг вперёд.'})).toBeVisible();
+   else await expect(page.getByRole('heading',{level:1,name:'Хороший ритм. Чёткий результат.'})).toBeVisible();
    for(const width of [320,768,1440]){
     await page.setViewportSize({width,height:900});
     // Fonts, theme hydration and responsive reflow must settle before a
