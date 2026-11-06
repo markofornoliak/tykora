@@ -1,0 +1,72 @@
+name: Iteration 6 - isolated Dexie lazy initialization trial
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-dexie-lazy-lab.yml'
+      - 'scripts/iter6-dexie-lazy-lab.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matched-no-product-write:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: .iter6-dexie-baseline
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: .iter6-dexie-candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Change one import edge in disposable candidate only
+        run: node scripts/iter6-dexie-lazy-lab.mjs patch .iter6-dexie-candidate
+      - name: Check, build, cross-browser E2E, and compare exact sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium firefox webkit
+          for variant in baseline candidate; do
+            src="$GITHUB_WORKSPACE/.iter6-dexie-$variant"
+            pushd "$src"
+            npm ci --no-audit --no-fund
+            npm run check
+            npm run lint
+            npm run test
+            VITE_BASE_PATH=/ npm run build
+            npm run check:dist
+            npm run test:e2e
+            npm run test:e2e:production
+            npm run preview -- --host 127.0.0.1 --port 4174 >/tmp/iter6-dexie-$variant.log 2>&1 &
+            pid=$!
+            trap 'kill "$pid" 2>/dev/null || true' EXIT
+            for n in $(seq 1 40); do
+              if curl -fsS http://127.0.0.1:4174/ >/dev/null; then break; fi
+              sleep 1
+            done
+            popd
+            for url in bare hash; do
+              mkdir -p "performance-artifacts/iter6-dexie-lab/$variant/$url"
+              if [[ "$url" == bare ]]; then target='http://127.0.0.1:4174/'; else target='http://127.0.0.1:4174/#/'; fi
+              for trial in $(seq 1 10); do
+                npm exec --yes --package=lighthouse@12.8.2 -- lighthouse "$target" --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="performance-artifacts/iter6-dexie-lab/$variant/$url/run-$trial.json" --quiet
+              done
+            done
+            node scripts/iter6-dexie-lazy-lab.mjs summarize "$variant"
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            trap - EXIT
+          done
+          node scripts/iter6-dexie-lazy-lab.mjs compare
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter6-dexie-lazy-isolated-trial
+          path: performance-artifacts/iter6-dexie-lab/
+          if-no-files-found: warn

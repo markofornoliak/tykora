@@ -236,3 +236,11 @@
 - Its `requestedJsGzip` of 125B or 1415B for deferred-bootstrap variants is a truncated request-window metric, **not full interactive JS**. Never use these numbers to assert 105KB/90KB JS goals. The separate bundle ledger identifies ~152–153KB gzip for React Home bootstrap, source-specific.
 - New same-runner, same-SHA `iter6-url-parity.yml` explicitly compares `/`, `/#/`, `/#/home`, 10 independent Lighthouse 12.8.2 runs each, raw reports and original filmstrip frames, extracting authentic LCP H1 and all four stages. No results claimed until successful workflow; this tests whether the URL is a material confounder.
 - The 30 E2E skip ledger was independently checked and renumbered 1–30; no source tests were skipped or modified. Firefox/WebKit full palette matrix remains an evidence gap, distinct from the 90/90 stress focus success [#42225392245](https://github.com/markofornoliak/tykora/actions/runs/42225392245).
+
+
+## 2026-11-06 · P: one-variable Dexie eager-import candidate (CI-only)
+
+- Source-map and import-graph evidence shows bootstrap still holds React DOM, React Router, Dexie and i18n. First proposal is isolated exactly one source edge: `src/app/store/uiStore.ts` imports the repository facade lazily on actual settings load/save, **without changing persisted storage contracts, values, scoring or eager Home HTML**.
+- This is intentionally **not** applied to the feature-branch application yet. A disposable CI-only baseline and disposable patched checkout both use the same source SHA and one GitHub runner. All standard `check`, `lint`, `test`, `build`, `check:dist`, three-browser E2E and production PWA must pass for both. Only then Lighthouse 12.8.2 N10 on each of `/` and `/#/` for both builds, same mobile settings.
+- Regression history: iteration5's earlier storage-import deferral cost ~320ms LCP, so the current experiment is high risk and cannot be accepted before measured comparisons. Failure means **reject the candidate, no branch runtime code touched**. `iter6-dexie-lazy-lab.yml` has read-only permissions and no push, merge, tags or deploy.
+- Authored workflow ≠ measured improvement; **pending** CI.
