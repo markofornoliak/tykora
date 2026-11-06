@@ -244,3 +244,9 @@
 - This is intentionally **not** applied to the feature-branch application yet. A disposable CI-only baseline and disposable patched checkout both use the same source SHA and one GitHub runner. All standard `check`, `lint`, `test`, `build`, `check:dist`, three-browser E2E and production PWA must pass for both. Only then Lighthouse 12.8.2 N10 on each of `/` and `/#/` for both builds, same mobile settings.
 - Regression history: iteration5's earlier storage-import deferral cost ~320ms LCP, so the current experiment is high risk and cannot be accepted before measured comparisons. Failure means **reject the candidate, no branch runtime code touched**. `iter6-dexie-lazy-lab.yml` has read-only permissions and no push, merge, tags or deploy.
 - Authored workflow ≠ measured improvement; **pending** CI.
+
+
+## 2026-11-06 · First requested-route JS census red: harness install bug, not app failure
+
+- [CI #42229737970](https://github.com/markofornoliak/tykora/actions/runs/42229737970) built and validated immutable main successfully, then failed before any browser size observation because `scripts/iter6-route-js-budget.mjs` imports `@playwright/test` from the repository root, but only the separate source checkout had its dependencies installed. Error: `ERR_MODULE_NOT_FOUND: Cannot find package '@playwright/test'`.
+- Corrected harness preflight with **root `npm ci --no-audit --no-fund` before browser install**, without touching product source/test thresholds. Prior failed run remains invalid for JS metrics; require all 75 fresh contexts and artifacts before claiming per-route initial JS numbers.

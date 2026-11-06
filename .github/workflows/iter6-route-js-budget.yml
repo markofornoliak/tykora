@@ -29,6 +29,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          npm ci --no-audit --no-fund
           npx playwright install chromium
           for variant in main iter5 iter6; do
             if [[ "$variant" == "iter6" ]]; then src="$GITHUB_WORKSPACE"; else src="$GITHUB_WORKSPACE/.iter6-js-source/$variant"; fi
