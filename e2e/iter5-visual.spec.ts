@@ -30,6 +30,10 @@ test('screen captures across 3 themes × 3 viewports × 4 routes',async({page,br
      await document.fonts.ready;
      await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
     });
+    // Hash navigation from a tall settings page can retain scrollY=204.
+    // Standardize screenshot state at document top before asserting sticky chrome.
+    await page.evaluate(()=>window.scrollTo(0,0));
+    await expect.poll(()=>page.evaluate(()=>Math.round(window.scrollY))).toBe(0);
     // All desktop themes must place the actual chrome/sidebar at document top.
     // The historical Contrast Dark golden inadvertently captured it at y≈200.
     if(width===1440)await expect.poll(async()=>{
