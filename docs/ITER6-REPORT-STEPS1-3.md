@@ -1,4 +1,48 @@
-# TYKORA Iteration 6 — Step 1–3 interim evidence table
+# TYKORA Iteration 6 — Step 1–3 evidence report
+
+## 2026-11-06 · Controlled Step 1/2 acceptance and Step 3 experiment status
+
+**Important version separation:** the historical five-*runner* 15-cell table below is superseded for determining the contradictory Home regression by the completed *single-runner* bisect. It remains historical evidence, **not the requested unified final 15-cell table**. Attested single-runner all-5-route N10/JS workflows [initial #42279863002](https://github.com/markofornoliak/tykora/actions/runs/42279863002) and post-optimization [#42283000598](https://github.com/markofornoliak/tykora/actions/runs/42283000598) were running when this paragraph was written; don't fill missing rows with the old different-SHA measurements.
+
+### Step 1 — authentic Home verified (N=100; one runner, same URL, SHA256 bytes)
+
+[Bisect #42279731534](https://github.com/markofornoliak/tykora/actions/runs/42279731534) **SUCCESS**: all 5 versions × both exact URLs `/`, `/#/` × 10 trials each, one ubuntu-24.04 runner Lighthouse 12.8.2 412×823 CPU×4 RTT150. Every one of the 21 built JS/CSS/HTML source artifacts matched the served file bytes using SHA-256, and every LCP is the real Home H1. There is **no runtime commit responsible for the historical 908→1954ms jump**. SHA `9dedc20b` and `f655e862` have byte-identical output assets. Same-URL Home p50/p90/max (ms):
+
+| Source SHA | / LCP | / TBT | /#/ LCP | /#/ TBT |
+|---|---|---|---|---|
+| d5bd96ca | 932.61 / 1971.49 / 2109.19 | 6 / 55.95 / 492 | 904.87 / 929.47 / 931.91 | 5.75 / 8.15 / 9.5 |
+| 12ee7458 | 905.53 / 929.96 / 932.51 | 6.25 / 8.60 / 9.5 | 916.32 / 931.94 / 935.87 | 6.50 / 7.55 / 8 |
+| effe80d8 | 931.14 / 938.24 / 939.61 | 6.25 / 8.10 / 9 | 904.31 / 932.13 / 937.95 | 6.75 / 7.55 / 8 |
+| 9dedc20b | 904.13 / 908.46 / 932.92 | 6.50 / 8.05 / 8.5 | 904.07 / 905.10 / 905.11 | 6 / 7.65 / 9 |
+| f655e862 | 904.85 / 932.64 / 940.58 | 6 / 6.80 / 9.5 | 903.84 / 936.49 / 938.97 | 6 / 12.35 / 56 |
+
+Latest post-Dexie `1455ca77a171fb245921cdc1c0af93dba3cf9ed4`: [URL parity #42282876306](https://github.com/markofornoliak/tykora/actions/runs/42282876306) **SUCCESS** (Home H1 all 30 trials; observed full Home interactive static requested chunk closure **114,931 gzip bytes**, above 105,000B target). Metrics p50/p90/max:
+
+| Home URL | LCP ms | TBT ms | CLS p50/max |
+|---|---|---|---|
+| `/` | 933.36 / **1821.24** / **1935.59** | 0 / 9.60 / **91.5** | 0/0 |
+| `/#/` | 920.25 / 939.75 / 940.84 | 0 / 3.50 / 3.5 | 0/0 |
+| `/#/home` | 904.29 / 934.68 / 943.02 | 0.5 / 1.60 / 2.5 | 0/0 |
+
+Low TBT does not prove the deferred bootstrap completed during the Lighthouse metric window or that the full app is interactive; full browser-requested JS remains separately measured. The `/` high LCP tail is retained, **not trimmed**. Independent earlier same-SHA61a / outlier TBT2362ms was associated with 1079/408ms bootstrap and506ms registerSW tasks; no causal attribution to SW or Dexie proven. Details/ADR in [DECISIONS.md](DECISIONS.md).
+
+### Step 2 — pixel diff
+
+All five historical failures inspected: three Practice were not-ready route screenshots (900px document vs correct 1430/1356/2045); two Contrast Dark desktop goldens pinned old sidebar ~200px below its correct top. After route-specific H1/content and font readiness, scroll-to-top, scrollY0 and sidebar geometry assertions, the reviewed new golden (run [#42281897793](https://github.com/markofornoliak/tykora/actions/runs/42281897793), SHA `32236f2d`) passes [#42282386276](https://github.com/markofornoliak/tykora/actions/runs/42282386276): **36/36 at unchanged 1.5%**. Recorded why a prior provisional reference also had stale scrollY204 and was replaced. No exclusions or tolerance increase.
+
+### Step 3 — measured Academy CLS only; deep-route performance thresholds open
+
+Before source adoption, [isolated full-gates same-SHA Academy N10 A/B #42232589205](https://github.com/markofornoliak/tykora/actions/runs/42232589205) demonstrated true viewport reserved Suspense fallback reduces Academy CLS p50/max **0.03698→0** without worsening p50 LCP (2354.64→2352.76ms). Fallback carried to source and true active route modulepreload added using Vite's emitted chunk manifest. Real content remains LCP. **No claim of five-route CLS0 or deep LCP≤1.4s/≤1.0s** until single-runner current-SHA raw LHR results; notably the standalone CLS experiment did *not* reach LCP targets.
+
+### Outbound gates and safety
+
+- New `iter6-one-runner-matrix.yml` produces exact served SHA256 byte attestations and 150 Lighthouse reports plus 150 browser JS-request contexts; `iter6-initial-js-budget.mjs` fails if any current route's actual requested initial gzip JS exceeds immutable iter5. Home goal ≤105KB and stretch ≤90KB separate and **not yet passed**.
+- Selected isolated Dexie lazy settings import has proven old lab 152,844→114,792 bytes; latest source URL parity measures 114,931 bytes, still above 105,000. Other routes may still grow and correctly fail new CI regression gate.
+- Manual owner accessibility scenarios recorded in [ITER6-MANUAL-A11Y-OWNER.md](ITER6-MANUAL-A11Y-OWNER.md) as **UNRUN**. [ITER6-INPUT-MEMORY.md](ITER6-INPUT-MEMORY.md) retains N10 input rAF proxy only (no compositor proof), and five-GC heap slope +197,841.6B/session (not stable), detached DOM0.
+- Rejected Preact (larger TBT, no comparable Profiler), rejected deferred SW registration without measured LCP win, old corrupt goldens replaced with explicit reason. Draft PR #4 unmerged, main SHA fixed, no release tag or deploy.
+
+---
+
 **No launch / no merge / no tag.** This table is from completed [matched five-route x10 Lighthouse #42226462615](https://github.com/markofornoliak/tykora/actions/runs/42226462615), not the latest commit. Five independent GitHub Linux runners, one per route; **within each route** all three source variants were measured sequentially on that route's runner. Lighthouse 12.8.2 mobile 412×823, CPU×4, RTT150ms, N=10 each. Do not compare different routes as controlled same-machine observations.
 
 | Route | Variant · SHA | LCP median ms | TBT median ms | CLS median | Full route interactive JS gzip |
