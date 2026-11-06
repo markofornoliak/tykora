@@ -1,6 +1,6 @@
 # Iteration 6 · 30 intentional Playwright skips (no invisible gaps)
 
-Source: `e2e/iter5-a11y-matrix.spec.ts` and `e2e/iter5-visual.spec.ts` at `e8dd01f752bfe311f88d77940721c3e459270fed`.
+Source: `e2e/iter5-a11y-matrix.spec.ts` and `e2e/iter5-visual.spec.ts` at `e8dd01f752bfe311f88d77940721c3e459270fed`. Verified unchanged intentional omissions in current exact source `9dedc20bd4b6551e35d18323d9affed84133e40b`, [quality #42224715967](https://github.com/markofornoliak/tykora/actions/runs/42224715967) **186 passed / 30 skipped**. The dedicated 648-cell Chromium axe and visual evidence run [#42222639681](https://github.com/markofornoliak/tykora/actions/runs/42222639681) succeeded on prior native-shell candidate; repeat latest-version review remains required.
 The standard `test:e2e` runs 3 projects. Exactly 27 skipped are the 9-route 24-theme × 3-width axe **separate** matrix (nine specs × three projects), plus 3 skipped Chromium/Firefox/WebKit visual **capture-only** tasks. Their skip conditions have named Playwright descriptions in source; none represents an unreported product failure or a disabled base route test.
 
 | # | Test file | Route/coverage | Project | Current skip reason |
