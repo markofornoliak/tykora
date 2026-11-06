@@ -199,3 +199,8 @@
 
 - Initial structural candidate CI #42222639702 failed in `check:quality` because `scripts/verify-quality.cjs` asserted skip-link `e.preventDefault()` and `links.map` text must appear in `src/shared/ui/Layout.tsx`. Those features moved to permanent native markup/head listener and `src/shared/ui/Chrome.tsx` respectively.
 - Replaced positional source assertion with stronger checks for actual native DOM ordering, route guard, click focus handler, separate `hydrateRoot` calls and live Chrome navigation; unchanged 4.5:1 contrast and other assertions. Explicitly documented rationale in ADR-029; E2E and Lighthouse still must pass. This is not a test exemption.
+
+## 2026-11-06 · Requested five direct-route focus stress candidate
+
+- Added `e2e/iter6-native-focus.spec.ts`: `/home`, `/academy`, `/practice`, `/analytics`, `/profile`, each initial URL `/#/...` with **real** bootstrap JS deliberately blocked, Home initially visible only for `/home`, stable native main/skip object identity, first Tab and Enter semantics and unchanged hash. Uses genuine application modules after release, never mocks React or score.
+- Updated dedicated stress workflow to run **5 repeats in Chromium, Firefox, WebKit** of the five-route suite plus original skip-link test, retaining all standard CI and quality gates. Original source tests and thresholds unchanged. Target 90 tests; number observed and success must be confirmed by CI, not presumed.
