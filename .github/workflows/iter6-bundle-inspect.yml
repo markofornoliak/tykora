@@ -1,0 +1,31 @@
+name: Iteration 6 - bundle source-map attribution (private CI artifact only)
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-bundle-inspect.yml'
+      - 'scripts/iter6-sourcemap-audit.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check && npm run lint && npm run test && npm run build && npm run check:dist
+      - name: Build a separate source-map lab bundle; never deploy source maps
+        run: npx vite build --sourcemap && npm run check:dist
+      - name: Attribute all Vite JS chunks to original source modules
+        run: node scripts/iter6-sourcemap-audit.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter6-js-module-ledger-no-source-code
+          path: performance-artifacts/iter6-bundle/module-ledger.json
+          if-no-files-found: warn
