@@ -26,3 +26,8 @@
 **Structural focus:** native skip-link and main outside replaceable React roots; five direct hash URLs × five repetitions × three browsers, **90/90** in [stress #42225392245](https://github.com/markofornoliak/tykora/actions/runs/42225392245). Full quality [#42227682843](https://github.com/markofornoliak/tykora/actions/runs/42227682843) passed on `2e12fe6c`, but not the *latest* post-report commit. The 30 default skips are enumerated in [ITER6-SKIPPED-E2E.md](ITER6-SKIPPED-E2E.md): 27 independently scheduled full-palette tests, three raw visual-capture cases. Firefox/WebKit full 24-theme and three-engine golden checks remain open.
 
 **Outstanding:** matched `/` vs `/#/` vs `/#/home` route-parity workflow; latest-sha deep route LCP/CLS, full JS gzip, real-device keyboard-to-presentation, rising forced-GC heap, accessibility at all themes/zoom and proper visual-golden approval. Do **not** recommend merge.
+
+
+### Follow-up same-source URL parity (not a substitute for the earlier three-source table)
+
+[Independent URL-parity #42229177523](https://github.com/markofornoliak/tykora/actions/runs/42229177523) on **one exact iter6 SHA `61a27432`**, one runner, Lighthouse N10 each, found Home `/` **LCP 938.8115 / TBT46.25 / CLS0**, Home `/#/` **LCP938.4724 / TBT45 / CLS0**, and `/#/home` **LCP905.88075 / TBT46.5 / CLS0** (all ms except CLS). Each uses real H1, full interactive JS **152969B gzip**. `/` had a real extreme outlier LCP1954.35075/TBT2362ms; not excluded. Do not compare the earlier N10 `/#/` value ~1954ms on different source/runner as proof hash links are slower. Latest HEAD still requires remeasurement after any runtime change.
