@@ -30,7 +30,7 @@ test('screen captures across 3 themes × 3 viewports × 4 routes',async({page,br
      await document.fonts.ready;
      await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
     });
-    const geometry=await page.locator('main').evaluate(el=>({
+    // All desktop themes must place the actual chrome/sidebar at document top.\n    // The historical Contrast Dark golden inadvertently captured it at y≈200.\n    if(width===1440)await expect.poll(async()=>{\n     const box=await page.locator('.sidebar').boundingBox();\n     return box===null?null:Math.round(box.y);\n    }).toBe(0);\n    const geometry=await page.locator('main').evaluate(el=>({
      height:el.getBoundingClientRect().height,
      documentHeight:document.documentElement.scrollHeight,
      locale:document.documentElement.lang,
