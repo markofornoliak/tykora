@@ -1,62 +1,43 @@
-// Home ships the complete, semantic first-visit markup in index.html.
-// CSS is eager; the interactive React runtime is scheduled after the first
-// rendering opportunity. This is the SAME path for users and lab browsers.
+// Native <main> and skip link live outside both replaceable React roots.
 import './styles/app.css';
 import './shared/theme/tokens.css';
 import './shared/theme/heatmap.css';
 import './shared/theme/home.css';
-
-const root=document.getElementById('root');
-if(!root)throw new Error('TYKORA root element missing');
-const hash=window.location.hash;
-const homeAtBootstrap=(!hash||hash==='#'||hash==='#/')
-  &&root.dataset.tykoraHomePrerender==='1';
-let scheduled=false;
-let mounted=false;
-// hydrateRoot schedules hydration and returns before React has committed it.
-// Keep native hash-link delegation until React actually commits App.
-window.addEventListener('tykora:hydrated',()=>{
- mounted=true;
- window.removeEventListener('click',prerenderNavigation,true);
-},{once:true});
-/** Keep links functional while the initial Home is still awaiting React.
- * A capture handler commits user navigation synchronously; the matching
- * React Router route mounts once the normal runtime finishes loading.
- */
-function prerenderNavigation(event:MouseEvent){
- if(mounted||event.button!==0||event.metaKey||event.ctrlKey||event.altKey||event.shiftKey)return;
- const target=event.target;
- if(!(target instanceof Element))return;
- const link=target.closest('a[href^="#/"]');
- if(!link||!root?.contains(link))return;
- const href=link.getAttribute('href');
- if(!href)return;
- event.preventDefault();
- window.location.hash=href;
- bootstrap();
+const root=document.getElementById('root'),chrome=document.getElementById('chrome-root');
+if(!root||!chrome)throw Error('TYKORA native shell missing');
+function homeHash(){return !location.hash||location.hash==='#'||location.hash==='#/'||location.hash==='#/home';}
+const hydrateHome=homeHash()&&root.dataset.tykoraHomePrerender==='1';
+let scheduled=false,mainReady=false,chromeReady=false;
+function checkReady(){
+ if(!mainReady||!chromeReady)return;
+ document.documentElement.removeAttribute('data-tykora-deep-link');
+ window.removeEventListener('click',beforeHydrationNavigation,true);
+ window.removeEventListener('hashchange',trackRoute);
 }
-window.addEventListener('click',prerenderNavigation,true);
+window.addEventListener('tykora:hydrated',()=>{mainReady=true;checkReady();});
+window.addEventListener('tykora:chrome-hydrated',()=>{chromeReady=true;checkReady();});
+function trackRoute(){if(!homeHash())document.documentElement.dataset.tykoraDeepLink='1';}
+function beforeHydrationNavigation(event:MouseEvent){
+ if((mainReady&&chromeReady)||event.button!==0||event.ctrlKey||event.altKey||event.metaKey||event.shiftKey)return;
+ const target=event.target;if(!(target instanceof Element))return;
+ const link=target.closest('a[href^="#/"]');
+ if(!link||!(chrome?.contains(link)||root?.contains(link)))return;
+ const href=link.getAttribute('href');if(!href)return;
+ event.preventDefault();window.location.hash=href;trackRoute();bootstrap();
+}
+window.addEventListener('click',beforeHydrationNavigation,true);
+window.addEventListener('hashchange',trackRoute);
 function bootstrap(){
  if(scheduled)return;
  scheduled=true;
- window.removeEventListener('hashchange',bootstrap);
- void import('./app/bootstrap').then(({mountApp})=>{
-  mountApp();
- }).catch(error=>{
-  console.error('TYKORA_BOOTSTRAP_FAILED',error);
- });
+ void import('./app/bootstrap').then(({mountApp})=>mountApp()).catch(error=>console.error('TYKORA_BOOTSTRAP_FAILED',error));
 }
-if(homeAtBootstrap){
- // Treat navigations occurring before hydration as urgent. Do not abandon
- // the static Home, and do not delay real route changes.
- window.addEventListener('hashchange',bootstrap);
+if(hydrateHome){
+ window.addEventListener('hashchange',bootstrap,{once:true});
  requestAnimationFrame(()=>requestAnimationFrame(bootstrap));
 }else{
- // Deep links must never expose stale, unhydrated Home controls. Clear the
- // wrong-route static DOM BEFORE dynamic module loading, not after it.
- root.replaceChildren();
- // Release the parser-time deep-link guard only after clearing stale Home.
- // This leaves an empty root until React renders the real route.
- delete root.dataset.tykoraHomePrerender;
+ document.documentElement.dataset.tykoraDeepLink='1';
+ root.replaceChildren();chrome.replaceChildren();
+ delete root.dataset.tykoraHomePrerender;delete chrome.dataset.tykoraChromePrerender;
  bootstrap();
 }

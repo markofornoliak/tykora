@@ -27,6 +27,7 @@ export function App(){
    {/* Home is eager and intentionally outside Suspense: a captured client-only
        DOM cannot supply SSR Suspense boundary markers for hydrateRoot. */}
    <Route path="/" element={<Home/>}/>
+   <Route path="/home" element={<Home/>}/>
    <Route element={<Suspense fallback={<div role="status" className="sr-only">Загрузка раздела…</div>}><Outlet/></Suspense>}>
     <Route path="/practice" element={<Profiler id="Practice" onRender={onPracticeCommit}><Practice/></Profiler>}/>
     <Route path="/academy" element={<Academy/>}/>

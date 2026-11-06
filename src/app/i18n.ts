@@ -9,7 +9,7 @@ const navigatorLocale = typeof navigator === 'undefined' ? 'ru' : navigator.lang
 // preferences still apply after hydration through uiStore.initialize().
 const prerenderedHome = typeof document !== 'undefined'
   && document.getElementById('root')?.dataset.tykoraHomePrerender === '1'
-  && (!location.hash || location.hash === '#' || location.hash === '#/');
+  && (!location.hash || location.hash === '#' || location.hash === '#/' || location.hash === '#/home');
 const initialLocale: InterfaceLocale = prerenderedHome
   ? 'ru'
   : uiLocales.includes(navigatorLocale as InterfaceLocale) ? navigatorLocale as InterfaceLocale : 'ru';

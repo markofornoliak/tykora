@@ -15,9 +15,10 @@ for(const route of ['/#/academy','/#/themes'] as const){
    // production entry request is still deliberately blocked.
    await page.goto(route,{waitUntil:'commit'});
    await expect.poll(()=>wasBlocked,{message:'Production entry JS request must be blocked'}).toBe(true);
-   await expect(page.locator('#root[data-tykora-home-prerender="1"]')).toBeHidden();
-   await expect(page.locator('#root .skip-link')).toHaveCount(1);
-   await expect(page.getByRole('link',{name:'Перейти к содержимому'})).toHaveCount(0);
+   await expect(page.locator('html')).toHaveAttribute('data-tykora-deep-link','1');
+   await expect(page.locator('.app')).toBeHidden();
+   await expect(page.locator('body > .skip-link')).toHaveCount(1);
+   await expect(page.getByRole('link',{name:'Перейти к содержимому'})).toBeVisible();
    // Load the exact same actual production code; do not mock the app.
    release();
    const skip=page.getByRole('link',{name:'Перейти к содержимому'});
