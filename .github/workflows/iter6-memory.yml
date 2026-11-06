@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/iter6-memory.yml'
       - 'scripts/iter6-memory.mjs'
+      - 'src/**'
+      - 'index.html'
   workflow_dispatch:
 permissions:
   contents: read
