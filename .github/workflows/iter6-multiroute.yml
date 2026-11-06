@@ -1,0 +1,74 @@
+name: Iteration 6 - matched 3x5-route Lighthouse x10
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-multiroute.yml'
+      - 'scripts/iter6-multiroute-summary.mjs'
+      - 'index.html'
+      - 'src/**'
+      - 'vite.config.ts'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  same-runner-3x5:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 0a7d167bc320b503a03dfe1247c96687526ca28b
+          path: .iter6-matched/main
+      - uses: actions/checkout@v4
+        with:
+          ref: 244c5060b37ba9d802dbad796b3ce1ed562f5339
+          path: .iter6-matched/iter5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run 150 comparable mobile Lighthouse trials
+        shell: bash
+        run: |
+          set -euo pipefail
+          for variant in main iter5 iter6; do
+            if [[ "$variant" == "iter6" ]]; then source_dir="$GITHUB_WORKSPACE"; else source_dir="$GITHUB_WORKSPACE/.iter6-matched/$variant"; fi
+            pushd "$source_dir"
+            npm ci --no-audit --no-fund
+            npm run check && npm run lint && npm run test
+            VITE_BASE_PATH=/ npm run build
+            npm run check:dist
+            ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4174 >/tmp/iter6-multi-preview.log 2>&1 &
+            pid=$!
+            trap 'kill "$pid" 2>/dev/null || true' EXIT
+            ready=0
+            for k in $(seq 1 60); do
+              if curl --silent --fail http://127.0.0.1:4174/ >/dev/null; then ready=1; break; fi
+              sleep 1
+            done
+            if [[ "$ready" != "1" ]]; then cat /tmp/iter6-multi-preview.log; exit 1; fi
+            output="$GITHUB_WORKSPACE/performance-artifacts/iter6-multiroute/$variant"
+            mkdir -p "$output"
+            cp -R dist "$output/dist"
+            for route in home academy practice analytics profile; do
+              mkdir -p "$output/$route"
+              if [[ "$route" == "home" ]]; then url='http://127.0.0.1:4174/#/'; else url="http://127.0.0.1:4174/#/$route"; fi
+              for trial in $(seq 1 10); do
+                npm exec --yes --package=lighthouse@12.8.2 -- lighthouse "$url" --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="$output/$route/run-$trial.json" --quiet
+              done
+            done
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            trap - EXIT
+            popd
+          done
+          node scripts/iter6-multiroute-summary.mjs
+      - name: Keep 150 raw JSON reports and per-route summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iter6-matched-multiroute-150-lhrs
+          path: |
+            performance-artifacts/iter6-multiroute/**/*.json
+          if-no-files-found: warn
