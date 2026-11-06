@@ -30,7 +30,7 @@ for path in files:
       'pass':not dimensionMismatch and ratio<=threshold}
     rows.append(record)
     print('TYKORA_PIXEL_DIFF',json.dumps(record))
-summary={'baselineRunId':42041281178,'baselineSha':'722b66615a60507bc243ce622650aa9974da738f',
+summary={'baselineRunId':42231771148,'baselineSha':'d1f95ef9759e63d709a33a1c055b80f11f39b31b',
  'threshold':threshold,'passed':sum(x['pass'] for x in rows),'total':len(rows),'files':rows}
 (out/'summary.json').write_text(json.dumps(summary,indent=2))
 print('TYKORA_PIXEL_DIFF_SUMMARY',json.dumps({k:v for k,v in summary.items() if k!='files'}))
