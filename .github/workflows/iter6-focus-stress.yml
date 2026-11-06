@@ -8,6 +8,8 @@ on:
       - 'e2e/a11y-i18n.spec.ts'
       - 'e2e/iter6-deeplink-focus.spec.ts'
       - 'src/main.tsx'
+      - 'src/app/**'
+      - 'src/shared/ui/**'
       - 'index.html'
   workflow_dispatch:
 permissions:
