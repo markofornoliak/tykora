@@ -1,0 +1,97 @@
+name: Iteration 6 - verified Home LCP bisect (same runner, N10)
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-controlled-bisect.yml'
+      - 'scripts/iter6-controlled-lighthouse.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bisect-verified-artifacts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 130
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: d5bd96ca5611d73c70298eda7c7fd369b8ff1315
+          path: .iter6-bisect/d5bd
+      - uses: actions/checkout@v4
+        with:
+          ref: 12ee74586164092f46e4b7da6cf272ae5ebd7428
+          path: .iter6-bisect/split
+      - uses: actions/checkout@v4
+        with:
+          ref: effe80d894f134d031e3d47f845b5df0dde54200
+          path: .iter6-bisect/focus
+      - uses: actions/checkout@v4
+        with:
+          ref: 9dedc20bd4b6551e35d18323d9affed84133e40b
+          path: .iter6-bisect/router
+      - uses: actions/checkout@v4
+        with:
+          ref: f655e8628eeac5e7f26a5a21efe46258d3597fb8
+          path: .iter6-bisect/f655
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install the one pinned Lighthouse CLI
+        run: |
+          npm ci --no-audit --no-fund
+          npm exec --yes --package=lighthouse@12.8.2 -- lighthouse --version
+      - name: Bisect only source-changing commits, same mobile profile, URLs and runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          for version in d5bd split focus router f655; do
+            case "$version" in
+              d5bd) commit=d5bd96ca5611d73c70298eda7c7fd369b8ff1315 ;;
+              split) commit=12ee74586164092f46e4b7da6cf272ae5ebd7428 ;;
+              focus) commit=effe80d894f134d031e3d47f845b5df0dde54200 ;;
+              router) commit=9dedc20bd4b6551e35d18323d9affed84133e40b ;;
+              f655) commit=f655e8628eeac5e7f26a5a21efe46258d3597fb8 ;;
+            esac
+            src="$GITHUB_WORKSPACE/.iter6-bisect/$version"
+            test "$(git -C "$src" rev-parse HEAD)" = "$commit"
+            pushd "$src"
+            npm ci --no-audit --no-fund
+            VITE_BASE_PATH=/ npm run build
+            npm run check:dist
+            node "$GITHUB_WORKSPACE/scripts/iter6-controlled-lighthouse.mjs" stamp "$src" "$version" "$commit"
+            ./node_modules/.bin/vite preview --host 127.0.0.1 --strictPort --port 4174 >"/tmp/iter6-bisect-$version.log" 2>&1 &
+            pid=$!
+            trap 'kill "$pid" 2>/dev/null || true' EXIT
+            ok=0
+            for k in $(seq 1 40); do
+              if curl -sf http://127.0.0.1:4174/iter6-source-attestation.json >/dev/null; then ok=1; break; fi
+              sleep 1
+            done
+            if [ "$ok" != 1 ]; then cat "/tmp/iter6-bisect-$version.log"; exit 1; fi
+            node "$GITHUB_WORKSPACE/scripts/iter6-controlled-lighthouse.mjs" verify "$src" "$version" "$commit"
+            popd
+            for route in bare hash; do
+              case "$route" in bare) url="http://127.0.0.1:4174/" ;; hash) url="http://127.0.0.1:4174/#/" ;; esac
+              output="$GITHUB_WORKSPACE/performance-artifacts/iter6-controlled-bisect/$version/$route"
+              mkdir -p "$output"
+              for trial in $(seq 1 10); do
+                npm exec --yes --package=lighthouse@12.8.2 -- lighthouse "$url" --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="$output/run-$trial.json" --quiet
+              done
+              node scripts/iter6-controlled-lighthouse.mjs summary "$output" "$version" "$commit" "$route"
+            done
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            for k in $(seq 1 30); do
+              if ! curl -sf http://127.0.0.1:4174/ >/dev/null 2>&1; then break; fi
+              sleep 1
+            done
+            if curl -sf http://127.0.0.1:4174/ >/dev/null 2>&1; then echo 'Port leaked between commits'; exit 1; fi
+            trap - EXIT
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter6-controlled-home-bisect-100-raw-lhr
+          path: performance-artifacts/iter6-controlled-bisect/
+          if-no-files-found: warn
