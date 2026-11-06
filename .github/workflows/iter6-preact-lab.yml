@@ -1,0 +1,86 @@
+name: Iteration 6 - opt-in Preact lab (never production)
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-preact-lab.yml'
+      - 'vite.config.ts'
+      - 'index.html'
+      - 'src/app/**'
+      - 'src/shared/ui/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matched-ab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-fund
+      - run: npm run check && npm run lint && npm run test
+      - name: Build unchanged React baseline
+        run: npm run build && npm run check:dist
+      - name: Measure React on this runner (Lighthouse 12.8.2 x10)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p performance-artifacts/iter6-preact/react
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/iter6-react.log 2>&1 & echo $! > /tmp/iter6-react.pid)
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:4174/ > /dev/null && break
+            sleep 1
+          done
+          for i in $(seq 1 10); do
+            npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/ --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="performance-artifacts/iter6-preact/react/run-$i.json" --quiet
+          done
+          node scripts/iter6-phase0-summary.mjs iter6 dist performance-artifacts/iter6-preact/react
+          kill "$(cat /tmp/iter6-react.pid)" || true
+      - name: Install Preact only in isolated CI working tree
+        run: npm install --no-save --no-package-lock --no-fund preact@10.27.0
+      - name: Build Preact experimental alias (not committed or deployed)
+        run: TYKORA_PREACT_EXPERIMENT=1 npm run build && npm run check:dist
+      - name: Measure Preact on same runner and environment (x10)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p performance-artifacts/iter6-preact/preact
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/iter6-preact.log 2>&1 & echo $! > /tmp/iter6-preact.pid)
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:4174/ > /dev/null && break
+            sleep 1
+          done
+          for i in $(seq 1 10); do
+            npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/ --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="performance-artifacts/iter6-preact/preact/run-$i.json" --quiet
+          done
+          node scripts/iter6-phase0-summary.mjs iter6 dist performance-artifacts/iter6-preact/preact
+          node -e "const fs=require('fs');const a=JSON.parse(fs.readFileSync('performance-artifacts/iter6-preact/react/summary.json'));const b=JSON.parse(fs.readFileSync('performance-artifacts/iter6-preact/preact/summary.json'));console.log('ITER6_PREACT_AB '+JSON.stringify({sha:process.env.GITHUB_SHA,n:10,react:{lcp:a.lcp.median,tbt:a.tbt.median,perf:a.performance.median,startupGzip:a.bundle.initialInteractiveJsGzipBytes},preact:{lcp:b.lcp.median,tbt:b.tbt.median,perf:b.performance.median,startupGzip:b.bundle.initialInteractiveJsGzipBytes},note:'Two complete builds on same runner; no production replacement.'}));"
+          kill "$(cat /tmp/iter6-preact.pid)" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tykora-iter6-preact-ab-lh12
+          path: performance-artifacts/iter6-preact/
+          if-no-files-found: warn
+  preact-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-fund
+      - run: npm install --no-save --no-package-lock --no-fund preact@10.27.0
+      - run: npm run check && npm run lint && npm run test && npm run check:domain
+      - run: TYKORA_PREACT_EXPERIMENT=1 npm run build && npm run check:dist
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Full unweakened browser E2E on opt-in Preact build
+        run: npm run test:e2e
+      - name: Offline PWA acceptance on opt-in Preact build
+        run: npx playwright install chromium && npm run test:e2e:production

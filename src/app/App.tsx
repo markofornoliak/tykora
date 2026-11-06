@@ -1,5 +1,5 @@
-import {lazy,Suspense,Profiler,type ProfilerOnRenderCallback} from 'react';
-import {Navigate,Outlet,Route,Routes} from 'react-router-dom';
+import {lazy,Suspense,Profiler,useEffect,type ProfilerOnRenderCallback} from 'react';
+import {Navigate,Outlet,Route,Routes,useLocation} from 'react-router-dom';
 import {Layout} from '../shared/ui/Layout';
 import {Home} from '../features/home/Home';
 
@@ -21,12 +21,16 @@ const onPracticeCommit:ProfilerOnRenderCallback=()=>{
  if(p)p.profilerCommits=(p.profilerCommits??0)+1;
 };
 export function App(){
+ const location=useLocation();
+ useEffect(()=>{window.dispatchEvent(new Event('tykora:hydrated'));},[]);
+ useEffect(()=>{window.dispatchEvent(new Event('tykora:route-changed'));},[location.key,location.pathname]);
  return <Routes>
   <Route element={<Layout/>}>
    {/* Home is eager and intentionally outside Suspense: a captured client-only
        DOM cannot supply SSR Suspense boundary markers for hydrateRoot. */}
    <Route path="/" element={<Home/>}/>
-   <Route element={<Suspense fallback={<div role="status" className="sr-only">Загрузка раздела…</div>}><Outlet/></Suspense>}>
+   <Route path="/home" element={<Home/>}/>
+   <Route element={<Suspense fallback={<div role="status" className="route-loading" aria-live="polite">Загрузка раздела…</div>}><Outlet/></Suspense>}>
     <Route path="/practice" element={<Profiler id="Practice" onRender={onPracticeCommit}><Practice/></Profiler>}/>
     <Route path="/academy" element={<Academy/>}/>
     <Route path="/analytics" element={<Analytics/>}/>

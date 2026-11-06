@@ -1,0 +1,78 @@
+name: Iteration 6 - isolated deep route CLS footer-shift experiment
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-cls-footer-lab.yml'
+      - 'scripts/iter6-cls-footer-lab.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  paired-deep-route:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: .iter6-cls-baseline
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: .iter6-cls-candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Add one route-loading geometry candidate only in disposable checkout
+        run: |
+          cd .iter6-cls-candidate
+          node ../scripts/iter6-cls-footer-lab.mjs patch
+      - name: Matched same-runner ten-trial Academy comparison with all regular gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          for variant in baseline candidate; do
+            src="$GITHUB_WORKSPACE/.iter6-cls-$variant"
+            pushd "$src"
+            npm ci --no-audit --no-fund
+            npm run check
+            npm run lint
+            npm run test
+            VITE_BASE_PATH=/ npm run build
+            npm run check:dist
+            npm run test:e2e
+            npm run test:e2e:production
+            ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4174 >/tmp/cls-$variant-preview.log 2>&1 &
+            pid=$!
+            trap 'kill "$pid" 2>/dev/null || true' EXIT
+            ready=0
+            for i in $(seq 1 40); do
+              if curl -fsS http://127.0.0.1:4174/ >/dev/null; then ready=1; break; fi
+              sleep 1
+            done
+            if [[ "$ready" != 1 ]]; then cat /tmp/cls-$variant-preview.log; exit 1; fi
+            popd
+            mkdir -p "performance-artifacts/iter6-cls-lab/$variant"
+            for i in $(seq 1 10); do
+              npm exec --yes --package=lighthouse@12.8.2 -- lighthouse 'http://127.0.0.1:4174/#/academy' --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="performance-artifacts/iter6-cls-lab/$variant/run-$i.json" --quiet
+            done
+            node scripts/iter6-cls-footer-lab.mjs summarize "$variant"
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            for i in $(seq 1 20); do
+              if ! curl -fsS http://127.0.0.1:4174/ >/dev/null 2>&1; then break; fi
+              sleep 1
+            done
+            if curl -fsS http://127.0.0.1:4174/ >/dev/null 2>&1; then echo 'Preview port leaked'; exit 1; fi
+            trap - EXIT
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter6-cls-footer-20-trial-raw-lhr
+          path: performance-artifacts/iter6-cls-lab/
+          if-no-files-found: warn

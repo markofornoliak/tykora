@@ -84,5 +84,32 @@ for(const legacyVersion of [1,2,3]){
    id:`legacy-session-v${legacyVersion}`,
    summary:{scoringVersion:'tykora-1.0.0',netWpm:28}
   });
+  // Dexie must remain idempotent after the first upgrade: two fresh document
+  // lifecycles may reopen v4 without losing or changing the historical score.
+  for(let reopen=0;reopen<2;reopen++){
+   await page.reload();
+   await expect(page.locator('#profile-alias')).toBeEnabled();
+   const persisted=await page.evaluate(async(version)=>{
+    const connection=await new Promise<IDBDatabase>((resolve,reject)=>{
+     const request=indexedDB.open('tykora-db');
+     request.onsuccess=()=>resolve(request.result);
+     request.onerror=()=>reject(request.error);
+    });
+    const record=await new Promise<unknown>((resolve,reject)=>{
+     const request=connection.transaction('sessions','readonly')
+      .objectStore('sessions').get(`legacy-session-v${version}`);
+     request.onsuccess=()=>resolve(request.result);
+     request.onerror=()=>reject(request.error);
+    });
+    const versionNumber=connection.version;
+    connection.close();
+    return {record,versionNumber};
+   },legacyVersion);
+   expect(persisted.versionNumber).toBe(40);
+   expect(persisted.record).toMatchObject({
+    id:`legacy-session-v${legacyVersion}`,
+    summary:{scoringVersion:'tykora-1.0.0',netWpm:28}
+   });
+  }
  });
 }

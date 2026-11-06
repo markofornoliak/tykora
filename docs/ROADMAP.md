@@ -50,3 +50,19 @@ For each claim, record command, exact commit SHA, test log, browser/device and t
 - D first 3/124 lessons have practice/review separation with `<10%` four-grapheme overlap and source-level tests; **122?** correction: 124 total, 3 addressed, **121** remain unevaluated for editorial rewrite. Use contentLint.test.ts for exact claims.
 - E main RU/EN copy now appears across nine routes and browser smoke verifies primary controls, but complete deep-dynamic / native-language QA remains NOT CONFIRMED. UI locale, exercise content language and keyboard layout must remain independent.
 - F (reliability hardening) and G (showcase/renaming) intentionally moved to next iteration. Never call iteration 5 a release or merge without owner approval.
+
+## Iteration 6 — evidence update (2026-11-05; all changes unmerged)
+
+This section supersedes only obsolete status descriptions above; existing v0.9 and iteration 5 findings remain historical facts. [Draft PR #4](https://github.com/markofornoliak/tykora/pull/4) is based on iter5, **not** main.
+
+- [x] Exact-SHA, single-runner, 3-way LCP/CLS/TBT/JS x10 baseline. [Actions #42114840487](https://github.com/markofornoliak/tykora/actions/runs/42114840487); initial LCP main 1954ms / iter5 1953ms / iter6 1956ms, all fail ≤1s; CLS=0, Performance 98.
+- [x] Automated 5 identical completed 500-char sessions with forced GC and heap snapshots. [Actions #42116205658](https://github.com/markofornoliak/tykora/actions/runs/42116205658); DOM/listeners flat, **heap slope positive**, not proof of zero leaks.
+- [x] CRC corruption, oversized-import and repeated-migration E2E added to ordinary cross-browser CI. Physical old profile exports still required to validate real historical data.
+- [x] P2P per-peer message processing rate bound, stable protocol and terminal progress handling, unit test.
+- [x] Full 124×2 RU/EN contentLint and versioned review-v3 candidate; 248 pairs PASS at [Actions #42118759970](https://github.com/markofornoliak/tykora/actions/runs/42118759970), worst four-gram overlap 5.96%; editorial assessment not complete.
+- [ ] Paint-first runtime candidate reached **917ms** simulated LCP but TBT **118ms**, initial **interactive** JS still heavy and Firefox/Chromium first-paint E2E races required further fixes. Accept only if the latest exact SHA all-browser CI and script network accounting passes.
+- [x] Preliminary exact-name TYKORA/Rootstock collision review. No rename approved; see `NAMING.md`.
+- [ ] 120+ independently sourced licensed passages per language; multilingual deep strings; comprehensive zoom/forced-colors matrix; full visual coverage; audited screenshots/GIF; SBOM, security, release rollback; physical input latency; device and VoiceOver/NVDA verification. **All not confirmed**.
+- [ ] PR #3/#4 merge only by owner; no draft commits treated as release.
+
+The precise experiment list and evidence are in [ITER6-LOG.md](ITER6-LOG.md).

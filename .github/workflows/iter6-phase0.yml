@@ -1,0 +1,84 @@
+name: Iteration 6 - matched three-way mobile baseline x10
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-phase0.yml'
+      - 'scripts/iter6-phase0-summary.mjs'
+      - 'src/**'
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matched-mobile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - name: Checkout iter6 harness and source
+        uses: actions/checkout@v4
+      - name: Checkout immutable main baseline
+        uses: actions/checkout@v4
+        with:
+          ref: 0a7d167bc320b503a03dfe1247c96687526ca28b
+          path: .iter6-variants/main
+      - name: Checkout immutable iteration 5 baseline
+        uses: actions/checkout@v4
+        with:
+          ref: 244c5060b37ba9d802dbad796b3ce1ed562f5339
+          path: .iter6-variants/iter5
+      - name: Set up fixed Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Compare 3 production builds on ONE runner and ONE browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p performance-artifacts/iter6-phase0
+          for variant in main iter5 iter6; do
+            if [[ "$variant" == "iter6" ]]; then
+              source_dir="$GITHUB_WORKSPACE"
+            else
+              source_dir="$GITHUB_WORKSPACE/.iter6-variants/$variant"
+            fi
+            echo "::group::Build and measure $variant"
+            pushd "$source_dir"
+            npm ci --no-audit --no-fund
+            npm run check
+            npm run lint
+            npm run test
+            VITE_BASE_PATH=/ npm run build
+            npm run check:dist
+            ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4174 > "/tmp/iter6-preview-$variant.log" 2>&1 &
+            server_pid=$!
+            trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+            ready=0
+            for retry in $(seq 1 45); do
+              if curl --fail --silent http://127.0.0.1:4174/ > /dev/null; then ready=1; break; fi
+              sleep 1
+            done
+            if [[ $ready != 1 ]]; then cat "/tmp/iter6-preview-$variant.log"; exit 1; fi
+            output_dir="$GITHUB_WORKSPACE/performance-artifacts/iter6-phase0/$variant"
+            mkdir -p "$output_dir"
+            for trial in $(seq 1 10); do
+              npm exec --yes --package=lighthouse@12.8.2 -- lighthouse http://127.0.0.1:4174/ --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="$output_dir/run-$trial.json" --quiet
+            done
+            kill "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
+            trap - EXIT
+            popd
+            node scripts/iter6-phase0-summary.mjs "$variant" "$source_dir/dist" "$output_dir"
+            echo "::endgroup::"
+          done
+          node scripts/iter6-phase0-summary.mjs compare "$GITHUB_WORKSPACE/performance-artifacts/iter6-phase0"
+      - name: Upload raw reports including all 30 Lighthouse JSON files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tykora-iter6-phase0-3way-lh12x
+          path: performance-artifacts/iter6-phase0/
+          if-no-files-found: warn

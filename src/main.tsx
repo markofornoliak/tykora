@@ -1,32 +1,43 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
-import './app/i18n';
+// Native <main> and skip link live outside both replaceable React roots.
 import './styles/app.css';
 import './shared/theme/tokens.css';
 import './shared/theme/heatmap.css';
 import './shared/theme/home.css';
-import { App } from './app/App';
-
-const root=document.getElementById('root')!;
-const app=<React.StrictMode><HashRouter><App /></HashRouter></React.StrictMode>;
-const hash=window.location.hash;
-const homeAtBootstrap=!hash||hash==='#'||hash==='#/';
-if(homeAtBootstrap&&root.dataset.tykoraHomePrerender==='1'){
-  // The checked-in markup is an exact clean-profile Home DOM capture, not
-  // decorative placeholder text. Hydrate to retain the existing LCP heading.
-  ReactDOM.hydrateRoot(root,app,{
-    onRecoverableError:(error,info)=>{
-      // Never suppress or silently mask a hydration mismatch; the React
-      // component stack identifies the first inconsistent subtree in CI.
-      console.error('TYKORA_HOME_HYDRATION_RECOVERABLE',error,'componentStack',info.componentStack);
-    }
-  });
-}else{
-  // A deep-linked route must never show the static Home while JS initializes.
-  root.replaceChildren();
-  ReactDOM.createRoot(root).render(app);
+const root=document.getElementById('root'),chrome=document.getElementById('chrome-root');
+if(!root||!chrome)throw Error('TYKORA native shell missing');
+function homeHash(){return !location.hash||location.hash==='#'||location.hash==='#/'||location.hash==='#/home';}
+const hydrateHome=homeHash()&&root.dataset.tykoraHomePrerender==='1';
+let scheduled=false,mainReady=false,chromeReady=false;
+function checkReady(){
+ if(!mainReady||!chromeReady)return;
+ document.documentElement.removeAttribute('data-tykora-deep-link');
+ window.removeEventListener('click',beforeHydrationNavigation,true);
+ window.removeEventListener('hashchange',trackRoute);
 }
-
-// The critical Home fallback is in a lower-priority cascade layer. The
-// unlayered production stylesheet takes precedence without late CSS removal.
+window.addEventListener('tykora:hydrated',()=>{mainReady=true;checkReady();});
+window.addEventListener('tykora:chrome-hydrated',()=>{chromeReady=true;checkReady();});
+function trackRoute(){if(!homeHash())document.documentElement.dataset.tykoraDeepLink='1';}
+function beforeHydrationNavigation(event:MouseEvent){
+ if((mainReady&&chromeReady)||event.button!==0||event.ctrlKey||event.altKey||event.metaKey||event.shiftKey)return;
+ const target=event.target;if(!(target instanceof Element))return;
+ const link=target.closest('a[href^="#/"]');
+ if(!link||!(chrome?.contains(link)||root?.contains(link)))return;
+ const href=link.getAttribute('href');if(!href)return;
+ event.preventDefault();window.location.hash=href;trackRoute();bootstrap();
+}
+window.addEventListener('click',beforeHydrationNavigation,true);
+window.addEventListener('hashchange',trackRoute);
+function bootstrap(){
+ if(scheduled)return;
+ scheduled=true;
+ void import('./app/bootstrap').then(({mountApp})=>mountApp()).catch(error=>console.error('TYKORA_BOOTSTRAP_FAILED',error));
+}
+if(hydrateHome){
+ window.addEventListener('hashchange',bootstrap,{once:true});
+ requestAnimationFrame(()=>requestAnimationFrame(bootstrap));
+}else{
+ document.documentElement.dataset.tykoraDeepLink='1';
+ root.replaceChildren();chrome.replaceChildren();
+ delete root.dataset.tykoraHomePrerender;delete chrome.dataset.tykoraChromePrerender;
+ bootstrap();
+}

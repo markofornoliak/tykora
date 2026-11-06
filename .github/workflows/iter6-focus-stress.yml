@@ -1,0 +1,43 @@
+name: Iteration 6 - five-route 3-engine keyboard focus stress x5
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-focus-stress.yml'
+      - 'e2e/iter6-native-focus.spec.ts'
+      - 'e2e/a11y-i18n.spec.ts'
+      - 'e2e/iter6-deeplink-focus.spec.ts'
+      - 'src/main.tsx'
+      - 'src/app/**'
+      - 'src/shared/ui/**'
+      - 'index.html'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  all-browser-focus-repeat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+      - run: npm run check:dist
+      - name: Install Chromium, Firefox and WebKit for focus stress
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Real deep-link focus x5 at five routes across all browser engines
+        run: npx playwright test e2e/iter6-native-focus.spec.ts e2e/a11y-i18n.spec.ts --grep="native skip and main remain stable|skip link moves focus" --repeat-each=5 --workers=2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter6-all-browser-five-routes-focus-x5
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore

@@ -1,0 +1,59 @@
+name: Iteration 6 - Home URL LCP parity x10
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-url-parity.yml'
+      - 'scripts/iter6-url-parity.mjs'
+      - 'index.html'
+      - 'src/main.tsx'
+      - 'src/app/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  same-runner-url-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+      - run: npm run lint
+      - run: npm run test
+      - run: VITE_BASE_PATH=/ npm run build
+      - run: npm run check:dist
+      - name: Preview exact production build
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 >/tmp/url-parity.log 2>&1 &)
+          for i in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:4174/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/url-parity.log; exit 1
+      - name: Lighthouse 12.8.2 at /, /#/ and /#/home - x10 each
+        shell: bash
+        run: |
+          set -euo pipefail
+          for route in bare hash home; do
+            mkdir -p "performance-artifacts/iter6-url-parity/$route"
+            case "$route" in
+              bare) url='http://127.0.0.1:4174/' ;;
+              hash) url='http://127.0.0.1:4174/#/' ;;
+              home) url='http://127.0.0.1:4174/#/home' ;;
+            esac
+            for i in $(seq 1 10); do
+              npm exec --yes --package=lighthouse@12.8.2 -- lighthouse "$url" --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="performance-artifacts/iter6-url-parity/$route/run-$i.json" --quiet
+            done
+          done
+      - name: Audit actual H1, LCP 4 phases and original filmstrip
+        run: node scripts/iter6-url-parity.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter6-url-parity-full-30-raw-LHR
+          path: performance-artifacts/iter6-url-parity/
+          if-no-files-found: warn

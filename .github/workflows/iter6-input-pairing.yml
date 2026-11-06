@@ -1,0 +1,39 @@
+name: Iteration 6 - paired keydown to frame callbacks CPU x1 and x4
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-input-pairing.yml'
+      - 'scripts/iter6-input-pairing.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  input-pairing:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check && npm run lint && npm run test && npm run build && npm run check:dist
+      - run: npx playwright install --with-deps chromium
+      - name: Start real production preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 >/tmp/iter6-pair.log 2>&1 &)
+          for i in $(seq 1 45); do
+            curl -fsS http://127.0.0.1:4174/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/iter6-pair.log
+          exit 1
+      - name: Pair each real keydown to requestAnimationFrame callbacks
+        run: node scripts/iter6-input-pairing.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter6-input-pairing-20trials-raw
+          path: performance-artifacts/iter6-input-pairing/
+          if-no-files-found: warn

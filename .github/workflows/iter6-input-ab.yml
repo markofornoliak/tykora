@@ -1,0 +1,83 @@
+name: Iteration 6 - React versus Preact 500-input traces
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-input-ab.yml'
+      - 'scripts/iter5-trace-v2.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare-500-input:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check && npm run lint && npm run test
+      - run: npx playwright install --with-deps chromium
+      - name: Matched 500-character, CPU x1 and x4, 10 trials per runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p performance-artifacts/iter6-input-ab
+          for runtime in react preact; do
+            if [[ "$runtime" == "preact" ]]; then
+              npm install --no-save --no-package-lock --no-fund preact@10.27.0
+              TYKORA_PREACT_EXPERIMENT=1 npm run build
+            else
+              npm run build
+            fi
+            npm run check:dist
+            (npm run preview -- --host 127.0.0.1 --port 4174 > "/tmp/iter6-input-$runtime.log" 2>&1 & echo $! > "/tmp/iter6-input-$runtime.pid")
+            for i in $(seq 1 60); do
+              curl -fsS http://127.0.0.1:4174/ > /dev/null && break
+              sleep 1
+            done
+            for replication in 1 2; do
+              BENCH_BASE_URL=http://127.0.0.1:4174 node scripts/iter5-trace-v2.mjs
+              mv performance-artifacts/iter5-presentation "performance-artifacts/iter6-input-ab/$runtime-pass-$replication"
+            done
+            kill "$(cat "/tmp/iter6-input-$runtime.pid")" || true
+            wait "$(cat "/tmp/iter6-input-$runtime.pid")" 2>/dev/null || true
+          done
+          node - <<'NODE'
+          const fs=require('fs'),p='performance-artifacts/iter6-input-ab/';
+          const rows=[];
+          for(const runtime of ['react','preact'])for(const cpu of [1,4]){
+            const trials=[];
+            for(const rep of [1,2]){
+              const r=JSON.parse(fs.readFileSync(p+runtime+'-pass-'+rep+'/summary.json','utf8'));
+              for(const x of r.reference.filter(x=>x.cpu===cpu))trials.push({
+                trial:rep+'-'+x.trial,eventP95:x.p95,
+                oneRafP95:x.oneRafP95,twoRafUpperBoundP95:x.twoRafUpperBoundP95,
+                sampledEventCount:x.eventSamples
+              });
+            }
+            if(trials.length!==10)throw Error('Expected ten comparable runs for '+runtime+' cpu'+cpu);
+            const med=values=>{const a=[...values].sort((x,y)=>x-y);return (a[4]+a[5])/2;};
+            const ev=trials.map(t=>t.eventP95).filter(Number.isFinite);
+            const rf=trials.map(t=>t.oneRafP95).filter(Number.isFinite);
+            const upper=trials.map(t=>t.twoRafUpperBoundP95).filter(Number.isFinite);
+            rows.push({runtime,cpu,n:trials.length,eventsNonempty:ev.length,
+              eventP95Median:ev.length===10?med(ev):null,
+              oneRafP95Median:rf.length===10?med(rf):null,
+              twoRafP95Median:upper.length===10?med(upper):null,trials});
+          }
+          const summary={sha:process.env.GITHUB_SHA,scenario:'exact same 1250-text 500 input and custom mode in two successive five-trial passes per runtime, CPU 1 and CPU 4',
+            caveat:'CDP Event Timing threshold >=16ms and one/two rAF bounds are estimates, NOT matched keydown-to-presentation. Profiler callbacks are not comparable under Preact shim.',
+            rows};
+          fs.writeFileSync(p+'comparison.json',JSON.stringify(summary,null,2));
+          console.log('ITER6_INPUT_AB '+JSON.stringify(summary));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tykora-iter6-react-preact-input-ab
+          path: performance-artifacts/iter6-input-ab/
+          if-no-files-found: warn

@@ -1,10 +1,22 @@
 # TYKORA · Beta v0.9.0
 
+[![Quality gates (main)](https://github.com/markofornoliak/tykora/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/markofornoliak/tykora/actions/workflows/checks.yml?query=branch%3Amain) ![MIT license](https://img.shields.io/badge/license-MIT-informational) ![Unreleased work](https://img.shields.io/badge/iteration%206-DRAFT-lightgrey)
+
 **Free forever · Offline-first · Local-first · Open source (MIT).**
 
 TYKORA is an experimental typing-learning platform built with React, TypeScript and Vite. It includes 124 RU/EN lessons, 12 exercise modes, an adaptive model of individual keys and n-grams, local results, 24 themes, 10-language *UI shell*, bot races, a manual-code WebRTC prototype, a teacher assignment prototype, and portable IndexedDB backups.
 
 **Verified v0.8.0 deployment:** GitHub Actions [quality run 40145391299](https://github.com/markofornoliak/tykora/actions/runs/40145391299) and [Pages release run 40145391276](https://github.com/markofornoliak/tykora/actions/runs/40145391276) succeeded on 2026-10-25 at commit `9fb97bc`. This is source/build/Chromium E2E evidence, **not** a full accessibility, cross-browser or performance certification. Beta v0.9.0 is published by project-owner authorization as an experimental beta; **several original v0.9 acceptance targets remain unmet**. See [release notes](docs/RELEASE_NOTES-v0.9.0.md), [measured input latency](docs/PERF-v0.9-BASELINE.md) and [roadmap](docs/ROADMAP.md). See [v0.8 audit](docs/audit-v0.8.0.md) and [measured baseline](docs/PERF-BASELINE-v0.8.0.md).
+
+## Current development and honest measurements
+
+**Published:** Beta v0.9.0 on `main`, still experimental. **Unreleased:** iteration 5 in Draft PR #3; iteration 6 in [Draft PR #4](https://github.com/markofornoliak/tykora/pull/4) from iter5. No merging, tagging or production deployment is authorized for those drafts.
+
+[Iteration 6 acceptance evidence](docs/ITER6-REPORT-STEPS1-3.md) compares the immutable `main`, iter5 and iter6 sources over five routes (Lighthouse 12.8.2 mobile, CPU×4, RTT150ms, N=10 per source/route, with a matched runner *within each route*). Deep-route LCP is **2.18–2.37 seconds**, and measured deep-route CLS is **0.0378**, so neither LCP≤1s nor CLS=0 is achieved on all routes. A separate same-SHA URL parity experiment [#42229177523](https://github.com/markofornoliak/tykora/actions/runs/42229177523) recorded Home LCP medians **939ms** at `/`, **938ms** at `/#/`, and **906ms** at `/#/home` (N=10 each), with **one real outlier TBT 2362ms** retained in the results. On the real React runtime, complete requested JavaScript after initial Home interactivity is **152,969 bytes gzip**; the ≤105kB and ≤90kB budgets fail ([75-browser-visit census #42230674960](https://github.com/markofornoliak/tykora/actions/runs/42230674960)). Reporting only the initial tiny entry while hiding deferred React bootstrap would be misleading.
+
+The authentic Home H1 and unchanged DOM identity through hydration were verified ([LCP audit](docs/LCP-ITER6-AUTHENTICITY.md)); native skip-link/main stress across five direct routes and three browsers passed **90/90** ([CI](https://github.com/markofornoliak/tykora/actions/runs/42225392245)). All 30 default-suite skips are explicitly inventoried in [the E2E skip ledger](docs/ITER6-SKIPPED-E2E.md). A pinned 36-screen pixel comparison **failed 5 screens**, including page-height mismatches; the original golden and 1.5% threshold were not changed ([visual failures](docs/ITER6-VISUAL-FAILURES.md)). Real keyboard-to-presented-frame and leak-free five-session GC have **not** been certified; see [input and memory evidence](docs/ITER6-INPUT-MEMORY.md). Draft PR #4 remains unmerged and is **not** a finished or released v0.10.
+
+The full RU/EN 124-lesson candidate [content audit](https://github.com/markofornoliak/tykora/actions/runs/42118759970) found zero four-gram overlap/coverage violations; human editorial quality is not certified. [Naming due diligence](docs/NAMING.md) documents a known exact-name DeFi project and owner-only decision. Do not interpret these draft results as features or certifications of the published build.
 
 ## Quickstart
 
@@ -64,6 +76,10 @@ The 10 UI languages only cover the shell and primary labels, not every page or l
 
 - [Deployment and release checklist](docs/RELEASE.md)
 - [Privacy](docs/PRIVACY.md)
+- [Terms and product limitations](docs/TERMS.md)
+- [Matched iteration 6 performance baseline](docs/PERF-v0.10-BASELINE.md)
+- [Iteration 6 live engineering log](docs/ITER6-LOG.md)
+- [Naming collision review (decision pending)](docs/NAMING.md)
 - [Contributor guide](CONTRIBUTING.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Stages 4–7](docs/STAGE7-QUALITY.md)

@@ -1,0 +1,99 @@
+name: Iteration 6 - attested single-runner 3x5 N10 Lighthouse and JS
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-one-runner-matrix.yml'
+      - 'scripts/iter6-controlled-lighthouse.mjs'
+      - 'scripts/iter6-initial-js-budget.mjs'
+      - 'index.html'
+      - 'src/**'
+      - 'vite.config.ts'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  one-runner-source-matrix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 0a7d167bc320b503a03dfe1247c96687526ca28b
+          path: .iter6-reference/main
+      - uses: actions/checkout@v4
+        with:
+          ref: 244c5060b37ba9d802dbad796b3ce1ed562f5339
+          path: .iter6-reference/iter5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Confirm one Lighthouse 12.8.2 and fixed source refs
+        run: |
+          npm exec --yes --package=lighthouse@12.8.2 -- lighthouse --version
+          test "$(git -C .iter6-reference/main rev-parse HEAD)" = 0a7d167bc320b503a03dfe1247c96687526ca28b
+          test "$(git -C .iter6-reference/iter5 rev-parse HEAD)" = 244c5060b37ba9d802dbad796b3ce1ed562f5339
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: One runner, three byte-attested production builds, five identical route URLs, N10
+        shell: bash
+        run: |
+          set -euo pipefail
+          for variant in main iter5 iter6; do
+            case "$variant" in
+              main) src="$GITHUB_WORKSPACE/.iter6-reference/main"; commit=0a7d167bc320b503a03dfe1247c96687526ca28b ;;
+              iter5) src="$GITHUB_WORKSPACE/.iter6-reference/iter5"; commit=244c5060b37ba9d802dbad796b3ce1ed562f5339 ;;
+              iter6) src="$GITHUB_WORKSPACE"; commit="$GITHUB_SHA" ;;
+            esac
+            pushd "$src"
+            npm ci --no-audit --no-fund
+            npm run check
+            npm run lint
+            npm run test
+            VITE_BASE_PATH=/ npm run build
+            npm run check:dist
+            node "$GITHUB_WORKSPACE/scripts/iter6-controlled-lighthouse.mjs" stamp "$src" "$variant" "$commit"
+            ./node_modules/.bin/vite preview --host 127.0.0.1 --strictPort --port 4174 >"/tmp/iter6-matrix-$variant.log" 2>&1 &
+            pid=$!
+            trap 'kill "$pid" 2>/dev/null || true' EXIT
+            ok=0
+            for k in $(seq 1 50); do
+              if curl -sf http://127.0.0.1:4174/iter6-source-attestation.json >/dev/null; then ok=1; break; fi
+              sleep 1
+            done
+            if [[ "$ok" != 1 ]]; then cat "/tmp/iter6-matrix-$variant.log"; exit 1; fi
+            node "$GITHUB_WORKSPACE/scripts/iter6-controlled-lighthouse.mjs" verify "$src" "$variant" "$commit"
+            popd
+            output="$GITHUB_WORKSPACE/performance-artifacts/iter6-one-runner/$variant"
+            node scripts/iter6-controlled-lighthouse.mjs js "$src" "$variant" "$commit" "$output"
+            for route in bare academy practice analytics profile; do
+              case "$route" in
+                bare) url='http://127.0.0.1:4174/' ;;
+                *) url="http://127.0.0.1:4174/#/$route" ;;
+              esac
+              folder="$output/$route"
+              mkdir -p "$folder"
+              for trial in $(seq 1 10); do
+                npm exec --yes --package=lighthouse@12.8.2 -- lighthouse "$url" --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="$folder/run-$trial.json" --quiet
+              done
+              node scripts/iter6-controlled-lighthouse.mjs summary "$folder" "$variant" "$commit" "$route"
+            done
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            for k in $(seq 1 30); do
+              if ! curl -sf http://127.0.0.1:4174/ >/dev/null 2>&1; then break; fi
+              sleep 1
+            done
+            if curl -sf http://127.0.0.1:4174/ >/dev/null 2>&1; then echo 'Port leaked between source variants'; exit 1; fi
+            trap - EXIT
+          done
+      - name: Fail on requested initial JavaScript growth versus Iteration 5
+        run: node scripts/iter6-initial-js-budget.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter6-single-runner-attested-150-lhr-n10-js
+          path: performance-artifacts/iter6-one-runner/
+          if-no-files-found: warn

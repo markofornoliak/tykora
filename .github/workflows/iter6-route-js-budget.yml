@@ -1,0 +1,68 @@
+name: Iteration 6 - complete route requested JS gzip census
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-route-js-budget.yml'
+      - 'scripts/iter6-route-js-budget.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matched-route-js:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 0a7d167bc320b503a03dfe1247c96687526ca28b
+          path: .iter6-js-source/main
+      - uses: actions/checkout@v4
+        with:
+          ref: 244c5060b37ba9d802dbad796b3ce1ed562f5339
+          path: .iter6-js-source/iter5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build and check each immutable source, then measure five cold visits per route
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npx playwright install chromium
+          for variant in main iter5 iter6; do
+            if [[ "$variant" == "iter6" ]]; then src="$GITHUB_WORKSPACE"; else src="$GITHUB_WORKSPACE/.iter6-js-source/$variant"; fi
+            pushd "$src"
+            npm ci --no-audit --no-fund
+            npm run check
+            npm run lint
+            npm run test
+            VITE_BASE_PATH=/ npm run build
+            npm run check:dist
+            ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4174 >/tmp/iter6-js-$variant.log 2>&1 &
+            pid=$!
+            trap 'kill "$pid" 2>/dev/null || true' EXIT
+            ready=0
+            for n in $(seq 1 40); do
+              if curl -fsS http://127.0.0.1:4174/ >/dev/null; then ready=1; break; fi
+              sleep 1
+            done
+            if [[ "$ready" != 1 ]]; then cat /tmp/iter6-js-$variant.log; exit 1; fi
+            popd
+            node scripts/iter6-route-js-budget.mjs "$variant" "$src"
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            for retry in $(seq 1 20); do
+              if ! curl -fsS http://127.0.0.1:4174/ >/dev/null 2>&1; then break; fi
+              sleep 1
+            done
+            if curl -fsS http://127.0.0.1:4174/ >/dev/null 2>&1; then echo 'Stale preview still bound 4174'; exit 1; fi
+            trap - EXIT
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iter6-route-js-requested-closure-75-visits
+          path: performance-artifacts/iter6-route-js/
+          if-no-files-found: warn

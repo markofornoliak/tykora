@@ -15,7 +15,12 @@ test('screen captures across 3 themes × 3 viewports × 4 routes',async({page,br
   await page.getByRole('button',{name:theme,exact:true}).click();
   for(const [name,route] of routes){
    await page.evaluate(path=>{location.hash='#'+path;},route);
-   await expect(page.locator('main h1,main h2').first()).toBeVisible();
+   // Never capture the previous route's heading while a lazy route loads.
+   // Keep exactly the same user-facing content, themes and golden threshold.
+   if(name==='practice')await expect(page.locator('#practice-mode')).toBeVisible();
+   else if(name==='themes')await expect(page.locator('.themes-grid')).toBeVisible();
+   else if(name==='home')await expect(page.getByRole('heading',{level:1,name:'Каждое нажатие — шаг вперёд.'})).toBeVisible();
+   else await expect(page.getByRole('heading',{level:1,name:'Хороший ритм. Чёткий результат.'})).toBeVisible();
    for(const width of [320,768,1440]){
     await page.setViewportSize({width,height:900});
     // Fonts, theme hydration and responsive reflow must settle before a
@@ -25,6 +30,16 @@ test('screen captures across 3 themes × 3 viewports × 4 routes',async({page,br
      await document.fonts.ready;
      await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
     });
+    // Hash navigation from a tall settings page can retain scrollY=204.
+    // Standardize screenshot state at document top before asserting sticky chrome.
+    await page.evaluate(()=>window.scrollTo(0,0));
+    await expect.poll(()=>page.evaluate(()=>Math.round(window.scrollY))).toBe(0);
+    // All desktop themes must place the actual chrome/sidebar at document top.
+    // The historical Contrast Dark golden inadvertently captured it at y≈200.
+    if(width===1440)await expect.poll(async()=>{
+     const box=await page.locator('.sidebar').boundingBox();
+     return box===null?null:Math.round(box.y);
+    }).toBe(0);
     const geometry=await page.locator('main').evaluate(el=>({
      height:el.getBoundingClientRect().height,
      documentHeight:document.documentElement.scrollHeight,

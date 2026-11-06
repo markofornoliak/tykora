@@ -1,0 +1,42 @@
+name: Iteration 6 - equal-session heap and listener test
+on:
+  push:
+    branches: [feature/iter6-summit]
+    paths:
+      - '.github/workflows/iter6-memory.yml'
+      - 'scripts/iter6-memory.mjs'
+      - 'src/**'
+      - 'index.html'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  five-identical-sessions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check && npm run lint && npm run test && npm run build && npm run check:dist
+      - run: npx playwright install --with-deps chromium
+      - name: Start production preview
+        run: |
+          (npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/iter6-memory.log 2>&1 &)
+          for i in $(seq 1 45); do
+            curl -fsS http://127.0.0.1:4174/ > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/iter6-memory.log
+          exit 1
+      - name: Five identical completed sessions, forced GC and heap snapshots
+        run: node scripts/iter6-memory.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tykora-iter6-5session-heap
+          path: performance-artifacts/iter6-memory/
+          if-no-files-found: warn

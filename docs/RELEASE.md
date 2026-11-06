@@ -1,6 +1,9 @@
-# TYKORA · Stage 8 Release Guide
+# TYKORA · Release and rollback operations
 
-Version: **0.8.0** · Release quality: **source candidate; NOT verified for public production**.
+**Status 2026-11-05:** Beta **v0.9.0** is already published on owner-approved `main`. The procedures below originated at v0.8 and are retained for historical context; do **not** re-run the publication steps from an iteration branch. Draft PR #3/#4 are **not approved** for merges, tags or production deploys. Current source/build and performance criteria are in [ROADMAP.md](ROADMAP.md), [PERF-v0.10-BASELINE.md](PERF-v0.10-BASELINE.md) and [ITER6-LOG.md](ITER6-LOG.md).
+
+**Release gate:** verify exact immutable SHA, pinned `npm ci`, `check:domain`, `check:backup`, `check:workers`, `check:quality`, `check`, `lint`, `test`, `build`, `check:dist`, Chromium/Firefox/WebKit E2E, production offline PWA, accessible screenshots/zoom, peer and backup compatibility, Lighthouse x10 and device checks. A green pipeline is not owner authorization.
+
 
 ## 1. Local prerequisites and full gate
 
@@ -22,9 +25,9 @@ npm run test:e2e:production
 npm run preview
 ```
 
-**Gate:** All commands must exit 0 on a clean clone, including full TypeScript, Vitest, Playwright and production PWA smoke. If any fails, fix before publishing. The first three checks have been run successfully in the authoring container. The remainder need a network-enabled environment with dependencies.
+**Gate:** All commands must exit 0 on a clean clone, including full TypeScript, Vitest, Playwright and production PWA smoke. If any fails, fix before publishing. The current GitHub Actions CI performs reproducible build and browser tests. Refer to the completed run for the **exact proposed SHA**, not a historical green badge. Hardware and manual accessibility remain owner tasks.
 
-Generate and commit `package-lock.json`; after committing change workflow install steps to `npm ci`. No lockfile has been fabricated in this offline source artifact.
+A real npm-generated `package-lock.json` is present and CI uses `npm ci`. Do not regenerate it without a dependency change and reviewed diff.
 
 ## 2. GitHub Pages · zero infrastructure bill
 

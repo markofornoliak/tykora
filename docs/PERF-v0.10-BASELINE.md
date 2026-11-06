@@ -80,3 +80,71 @@ A2 measured report: [A2-TRACE.md](A2-TRACE.md) (Chrome trace runs ×1/×4, 3 eac
 ## Five-run input gate
 
 CDP ×1 and ×4, five runs each: CPU×1 p95 24ms (FAIL ≤16ms); CPU×4 p95 32/32/32/40/32ms (FAIL robust ≤32ms). See docs/INPUT-PRESENTATION.md and Actions #42039411859.
+
+## Iteration 6 · Phase 0 — verified matched triple baseline (2026-11-05)
+
+**Completed run:** [three-way Lighthouse x10 #42114840487](https://github.com/markofornoliak/tykora/actions/runs/42114840487); workflow SUCCESS; all thirty raw JSON reports saved as GitHub Actions artifact `tykora-iter6-phase0-3way-lh12x`. This section supersedes the *pending* Iteration 6 placeholders, not the earlier historical Iteration 5 observations.
+
+Single `ubuntu-24.04` runner, sequential `npm ci`, `check`, `lint`, `test`, `build`, `check:dist` for each immutable source; Lighthouse **12.8.2**, 412×823 simulated mobile, CPU ×4, RTT 150ms; 10 trials each (N=10). Automated cross-variant Lighthouse version, Chrome host user-agent and throttling/screen configuration equality: **PASS**.
+
+| Variant (immutable SHA) | LCP median (ms), N=10 | LCP min–max (ms) | CLS median | TBT median (ms) | Performance median | Entry gzip (bytes) | Initial static JS graph gzip (bytes) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| main `0a7d167bc320b503a03dfe1247c96687526ca28b` | 1953.9814 | 1952.7636–1957.1257 | 0 | 7.5 | 98 | 150366 | 150491 |
+| iter5 `244c5060b37ba9d802dbad796b3ce1ed562f5339` | 1952.9922 | 1805.2779–1958.2916 | 0 | 4.5 | 98 | 151745 | 151870 |
+| iter6 initial `a2b200a7053abf5770cf1fd99823899e21fa91d3` | 1955.7971 | 1804.9328–1983.0601 | 0 | 6.5 | 98 | 151745 | 151870 |
+
+**Verdict:** Iter5 median LCP differs from main by **−0.9892ms**; initial iter6 by **+1.8157ms**, dwarfed by observed variability. No supported significant LCP gain or regression. All three FAIL ≤1200ms minimum and ≤1000ms target. Initial graph gzip on iter6 **151870 bytes**, FAIL ≤105k/≤90k. CLS=0 accepted in this *Lighthouse scenario only*; Performance=98 FAIL ≥99. The *static import graph* budget is not a full browser HAR accounting for dynamic routes, workers or requests after load.
+
+**Known limitation:** the Lighthouse 12.8.2 LHR `largest-contentful-paint-element` diagnostic snippet is **null** in the emitted summary for all thirty reports; do not claim LCP element identification from this audit. This is a Linux Lighthouse emulation, not a physical low-end phone. Need trace/request chain and full Lighthouse artifact to establish the 4 LCP subparts and browser rendering causality.
+
+## Iteration 6 · five equal-session memory evidence (2026-11-05)
+
+Run: [#42116205658](https://github.com/markofornoliak/tykora/actions/runs/42116205658), commit `2cfcc70ea492df74652a47440a3ebce313b6be74`. Workflow SUCCESS, 5 finished **identical 500-character custom-text sessions** on one Chromium tab with UI reset each time and forced GC after restart. Baseline and final gzip Chrome heap snapshots are uploaded; browser-reported nodes and listeners were stable.
+
+| GC sample | Heap used bytes | DOM elements | JS event listeners | Detached DOM |
+|---|---:|---:|---:|---:|
+| Before | 3830460 | 513 | 204 | 0 |
+| After #1 | 4626364 | 513 | 204 | 0 |
+| After #2 | 4780232 | 513 | 204 | 0 |
+| After #3 | 4869752 | 513 | 204 | 0 |
+| After #4 | 4960752 | 513 | 204 | 0 |
+| After #5 | 5026648 | 513 | 204 | 0 |
+
+Ordinary-least-squares **+202104 bytes/session**, total **+1196188 bytes** (before vs after 5), but decelerating increments after the first session; likely initial runtime warm-up and/or accumulated references, not yet diagnosed. **Memory plateau ≈0 and leak absence are NOT proven.** No detached elements in these CDP samples and no increase in the 204 event listeners. To distinguish caches from retained sessions, compare snapshot retainers and repeat equal-session blocks without expanding session/IDB histories.
+
+### Iter6 Phase P1 (conditional, NOT accepted)
+
+[Candidate `ac695bcfe19b911f281d24010d9a7c94de9a430e`, matched Lighthouse x10](https://github.com/markofornoliak/tykora/actions/runs/42117102911) had main LCP median 1954.7715ms, iter5 1953.8973ms, iter6 candidate 917.3164ms (range 904.2743–955.3455ms). CLS=0, Perf=99. However TBT **118ms** on candidate versus 26ms on iter5, FAIL ≤100ms, and Firefox mobile navigation E2E FAILED on one run. Static eager JS graph 1322 bytes omits dynamic React bootstrap; **do not** compare that to 90k/105k full initial JS budget. The Phase0 harness now also computes interactive startup graph and browser JS network transfer. Re-run after navigation fix before deciding whether to keep P1.
+
+### Correction of quantile arithmetic (raw Lighthouse evidence, 2026-11-05)
+
+All earlier `ITER6_PHASE0_*` summaries used **nearest-rank p50**, the 5th ordered value when N=10, and incorrectly called this a mathematical median. The original raw reports are intact. Recomputing as the arithmetic mean of 5th and 6th observations, from the exact same [run #42119203944](https://github.com/markofornoliak/tykora/actions/runs/42119203944) **without discarding trials**, gives:
+
+| Matched variant | Genuine N=10 LCP median | Genuine TBT median | Perf score median (before integer UI rounding) | CLS median | Full Home interactive JS gzip |
+|---|---:|---:|---:|---:|---:|
+| main `0a7d167b` | **1955.0003 ms** | 16.25 ms | 98 | 0 | 150491 bytes |
+| iter5 `244c5060` | **1956.1089 ms** | 16.0 ms | 98 | 0 | 151870 bytes |
+| iter6 `1c97ec25` | **946.2403 ms** | 88.5 ms | **99.5** (trial scores 99–100) | 0 | **152509 bytes** |
+
+LCP ranges unchanged: main 1952.9447–1968.6435ms, iter5 1805.3122–1958.6371ms, iter6 904.5901–952.3355ms. The corrected interpolating percentile/median function is committed to the harness for all subsequent runs (R type 7). This is a **calculation correction**, not a change of workload or acceptance target. Performance 100 remains **NOT MET on all runs**, since some scored 99. LCP/TBT pass their numerical *simulated* targets; JS fails.
+
+## Iteration 6 — verified Phase 0 at app SHA d5bd96ca (2026-11-05)
+
+The same-runner N=10 baseline [workflow #42125543917](https://github.com/markofornoliak/tykora/actions/runs/42125543917) measured main `0a7d167b` LCP 1955.3563ms / initial interactive gzip 150491B; iter5 `244c5060` LCP 1955.27845ms / 151870B; iter6 `d5bd96ca` LCP **908.2175ms** / **152568B**. Exact median CLS=0 for all, iter6 TBT median **110.5ms**, Lighthouse Performance median **99**. All runs simulated 412×823, CPU×4, RTT 150ms, Lighthouse 12.8.2, N=10, identical GitHub runner. Raw JSON and per-chunk map are available in run artifact. **LCP goal passed in simulator; full summit did not pass (TBT, Performance and interactive JS budget fail).**
+
+Skip-link race fix at `d5bd96ca`: full [quality #42125551475](https://github.com/markofornoliak/tykora/actions/runs/42125551475) passed 168 E2E / 30 existing skips and 9 offline PWA; supplementary 5-repeat Chromium focus [#42126592040](https://github.com/markofornoliak/tykora/actions/runs/42126592040) passed 45/45 tests at workflow-only commit `19a2ad7c`. No claim of exact physical keyboard-to-photon latency.
+
+## Iteration 6 · November 6, 2026 native shell and unreported input/heap evidence
+
+Source references, distinct SHAs and protocol must not be mixed.
+
+- [LCP authenticity raw audit #42221093767](https://github.com/markofornoliak/tykora/actions/runs/42221093767) on `d5bd96ca`: genuine first-visit Home H1, no replacement after real hydration. LCP mathematical median **908.2175ms** for N10, representative #7 **908.2511ms**; raw insight TTFB4.5ms/renderDelay106.987ms, text image-loading stages N/A, not additive to simulated LCP. 8 filmstrip frames preserved.
+- [Matched three-source after-native-shell trial #42222639704](https://github.com/markofornoliak/tykora/actions/runs/42222639704), **N10** same ubuntu-24.04, Lighthouse12.8.2 mobile412×823 CPU4 RTT150: main LCP **1954.85845ms**, TBT **4.75ms**, CLS0, full initial interactive JS **150491B gzip**; iter5 LCP **1957.04485ms**, TBT **4.75ms**, CLS0, JS **151870B**; native-shell `12ee74586164092f46e4b7da6cf272ae5ebd7428` LCP **906.5617ms**, TBT **10.5ms**, CLS0, Performance median100, full interactive JS **152790B**. This is historical candidate evidence, **not the current head**; full interactive budget FAIL 105k/90k.
+- [Current structural full-quality #42224715967](https://github.com/markofornoliak/tykora/actions/runs/42224715967) at `9dedc20bd4b6551e35d18323d9affed84133e40b`: SUCCESS, 186 passing E2E / 30 intentionally skipped, **9 production offline tests passed**; independent identical SHA quality #42224724114 SUCCESS. Source skip/main preserved; native five-route x5 stress at preceding `effe80d8` **90/90 PASS** [#42223695365](https://github.com/markofornoliak/tykora/actions/runs/42223695365). Re-run after router repair remains required.
+- [Measured 20-trial keydown/rAF proxy #42224396853](https://github.com/markofornoliak/tykora/actions/runs/42224396853) at `4b1c45ae`: accepted 500/500 every run. CPU×1 rAF1 p50 6.95ms, rAF1 p95 13.80ms, thresholded Event Timing p95 16ms; CPU×4 rAF1 p50 3.90ms, rAF1 p95 15.55ms, observed Event Timing p95 32ms. **Not compositor-paired presentation**; goal NOT CONFIRMED.
+- [Five equal-session GC heap #42224715840](https://github.com/markofornoliak/tykora/actions/runs/42224715840) at `9dedc20b`: 3,734,948→4,899,772B after five identical sessions; +197,841.6B/session slope, 516 DOM nodes, 332 JS event listeners, detached=0 throughout. **Heap stabilization NOT MET**. See [ITER6-INPUT-MEMORY.md](ITER6-INPUT-MEMORY.md) for all rows and limitations.
+- The matched 150-trial main/iter5/iter6 × 5-route [Lighthouse #42226462615](https://github.com/markofornoliak/tykora/actions/runs/42226462615) is now **SUCCESS**: N=10/source/route, source iter6 `f655e8628eeac5e7f26a5a21efe46258d3597fb8`. Five distinct route runners; three variants on each route were sequential. Exact LCP/TBT/CLS table in [ITER6-REPORT-STEPS1-3.md](ITER6-REPORT-STEPS1-3.md). Deep-route CLS=0.0377633782 (FAIL 0). Separate complete browser-requested JS after H1/network-idle [#42230674960](https://github.com/markofornoliak/tykora/actions/runs/42230674960) N=5/source/route at iter6 `5777982e64221aa4564a992889955927bcc9b233` measured 152969B gzip on Home, 166255 Academy, 178930 Practice, 156672 Analytics, 161030 Profile. These are separate source/protocol measurements: **do not present them as simultaneous same-SHA observations**. Neither full JS budget met.
+
+## Iteration 6 · Source-map JS closure and rejected Preact experiment
+
+See [ITER6-JS-LEDGER.md](ITER6-JS-LEDGER.md), [source map CI #42227143157](https://github.com/markofornoliak/tykora/actions/runs/42227143157) and [Preact A/B #42226025567](https://github.com/markofornoliak/tykora/actions/runs/42226025567). Exact full interactive startup JS React 152,969B gzip vs Preact 92,899B at `f8dd7479` (N10); matched TBT React84.25ms vs Preact99.5ms; Perf React100 vs Preact99. The experiment **fails combined acceptance**, so React stays in production. Bootstrap source-map 52 modules at `c12d8a97`; no false claims that source bytes equal gzip. Goal JS≤105,000/90,000 remains FAIL on the actual React runtime.
