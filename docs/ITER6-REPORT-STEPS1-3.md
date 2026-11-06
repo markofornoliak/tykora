@@ -1,5 +1,31 @@
 # TYKORA Iteration 6 — Step 1–3 evidence report
 
+## Completed same-runner 3×5×N10 matrix with exact build attestation (pre-CLS/pre-Dexie source)
+
+[Workflow #42279863002](https://github.com/markofornoliak/tykora/actions/runs/42279863002) **SUCCESS**. **This is the fully valid requested one-runner 15-cell format** (not the later optimized SHA): one ubuntu-24.04 runner, sequential `main` at `0a7d167bc320b503a03dfe1247c96687526ca28b`, `iter5` at `244c5060b37ba9d802dbad796b3ce1ed562f5339` and `iter6` at `d169d2efc264ecd31b15206d2c6193757fe0df79`. Same fixed Chrome and Lighthouse 12.8.2 simulated mobile 412×823 CPU×4 RTT150, 10 independent trials per source-route cell (150 raw LHR). For every source, exact SHA-256 digest of *every* generated HTML/CSS/JS asset was verified byte-for-byte against the active preview server (19 main files, 20 iter5, 21 iter6). Separate **150 cold browser contexts** captured actual requested JS *after actual route heading+networkidle*, including dynamically imported bootstrap, gzip sizes against that same built dist. All 150 contexts were checked for exact asset membership; no static-entry-only false reductions.
+
+| Route | Source SHA | LCP p50 / p90 / max (ms) | TBT p50 / p90 / max (ms) | CLS p50 / max | Requested JS gzip (B, N10) |
+|---|---|---:|---:|---:|---:|
+| Home `/` | main `0a7d167b` | 1954.4 / 1968.4 / 1971.1 | 8.8 / 11.5 / 11.5 | 0.0 / 0.0 | 150,491 |
+| Home `/` | iter5 `244c5060` | 1954.0 / 1981.8 / 1983.1 | 7.0 / 12.0 / 12.5 | 0.0 / 0.0 | 151,870 |
+| Home `/` | iter6 `d169d2ef` | 939.0 / 940.1 / 942.1 | 39.0 / 45.3 / 47.5 | 0.0 / 0.0 | 152,969 |
+| academy | main `0a7d167b` | 2335.1 / 2341.2 / 2344.1 | 13.5 / 19.1 / 33.0 | 0.0 / 0.0 | 160,570 |
+| academy | iter5 `244c5060` | 2346.0 / 2349.5 / 2357.8 | 27.0 / 31.0 / 31.0 | 0.0 / 0.0 | 163,000 |
+| academy | iter6 `d169d2ef` | 2318.3 / 2330.7 / 2339.1 | 22.0 / 25.5 / 26.0 | 0.0 / 0.0 | 166,255 |
+| practice | main `0a7d167b` | 2336.2 / 2342.0 / 2345.5 | 13.0 / 14.6 / 15.0 | 0.0 / 0.0 | 171,992 |
+| practice | iter5 `244c5060` | 2493.2 / 2522.5 / 2737.0 | 23.0 / 30.1 / 31.0 | 0.0 / 0.0 | 175,672 |
+| practice | iter6 `d169d2ef` | 2472.1 / 2473.6 / 2475.3 | 24.3 / 26.7 / 28.5 | 0.0 / 0.0 | 178,930 |
+| analytics | main `0a7d167b` | 2175.5 / 2179.1 / 2180.2 | 9.3 / 12.5 / 12.5 | 0.0 / 0.0 | 152,440 |
+| analytics | iter5 `244c5060` | 2193.0 / 2198.6 / 2199.5 | 25.5 / 30.3 / 33.0 | 0.0 / 0.0 | 155,552 |
+| analytics | iter6 `d169d2ef` | 2166.1 / 2169.7 / 2171.9 | 24.8 / 27.6 / 28.5 | 0.0 / 0.0 | 156,672 |
+| profile | main `0a7d167b` | 2180.7 / 2185.8 / 2199.3 | 12.2 / 14.7 / 16.5 | 0.0 / 0.0 | 157,156 |
+| profile | iter5 `244c5060` | 2187.6 / 2194.1 / 2194.4 | 23.5 / 27.0 / 27.0 | 0.0 / 0.0 | 159,911 |
+| profile | iter6 `d169d2ef` | 2166.4 / 2170.7 / 2170.9 | 24.0 / 28.0 / 28.5 | 0.0 / 0.0 | 161,030 |
+
+**Interpretation and limitations:** This source `d169d2ef` precedes accepted viewport-reserved Suspense loading, active-route preload and lazy Dexie. It proves authentic Home `/` LCP p50 939.1ms at this runner, unlike main/iter5 ~1954ms, but all four deep routes still fail LCP≤1.4s and CLS0. Deep JS grew vs iter5 on this snapshot on all routes; the later strict CI no-growth gate is **not** retroactively passed. Do not combine new Home 114,931B from source1455 with this old matrix in a single same-source table. Historical raw 17MB archive is attached to the workflow. Low TBT here reflects Lighthouse window behavior, not a proven compositor or fully hydrated interaction.
+
+---
+
 ## 2026-11-06 · Controlled Step 1/2 acceptance and Step 3 experiment status
 
 **Important version separation:** the historical five-*runner* 15-cell table below is superseded for determining the contradictory Home regression by the completed *single-runner* bisect. It remains historical evidence, **not the requested unified final 15-cell table**. Attested single-runner all-5-route N10/JS workflows [initial #42279863002](https://github.com/markofornoliak/tykora/actions/runs/42279863002) and post-optimization [#42283000598](https://github.com/markofornoliak/tykora/actions/runs/42283000598) were running when this paragraph was written; don't fill missing rows with the old different-SHA measurements.
