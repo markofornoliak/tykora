@@ -194,3 +194,8 @@
 - Structural refactor candidate: outer HTML owns the focusable skip-link and `<main id="main-content">` as persistent nodes outside both React roots. Home remains real server-shipped markup inside a nested main content root and hydrates with React; navigation gets a separate hydration root. Main content route updates cannot replace the native main landmark or skip anchor.
 - The head script synchronously hides the Home shell for non-Home hash routes, including navigation during bootstrap; the app is unhidden after both main and chrome React roots commit. Pre-hydration skip-link activation focuses the native main with unchanged URL hash. Explicit `/home` alias added.
 - Candidate requires normal TypeScript/lint/unit/build/dist and 3-browser E2E + repeated focus; follow with matched Lighthouse ×10. **Pending measurements; not accepted**.
+
+## 2026-11-06 · Source gate repair without weakening
+
+- Initial structural candidate CI #42222639702 failed in `check:quality` because `scripts/verify-quality.cjs` asserted skip-link `e.preventDefault()` and `links.map` text must appear in `src/shared/ui/Layout.tsx`. Those features moved to permanent native markup/head listener and `src/shared/ui/Chrome.tsx` respectively.
+- Replaced positional source assertion with stronger checks for actual native DOM ordering, route guard, click focus handler, separate `hydrateRoot` calls and live Chrome navigation; unchanged 4.5:1 contrast and other assertions. Explicitly documented rationale in ADR-029; E2E and Lighthouse still must pass. This is not a test exemption.
