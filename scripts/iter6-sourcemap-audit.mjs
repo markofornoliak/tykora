@@ -31,7 +31,7 @@ const rows=files.map(file=>{
   groups:[...grouped].map(([group,stats])=>({group,...stats})).sort((a,b)=>b.sourceBytes-a.sourceBytes),
   modules:sources.sort((a,b)=>b.sourceBytes-a.sourceBytes)};
 });
-const special=['registerSW.js','sw.js','workbox-2fbc6a65.js'];
+const special=readdirSync(root).filter(file=>file.endsWith('.js'));
 for(const file of special){
  const path=join(root,file);
  if(existsSync(path)){
