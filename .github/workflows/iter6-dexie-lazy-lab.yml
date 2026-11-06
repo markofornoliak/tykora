@@ -31,6 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium firefox webkit
           for variant in baseline candidate; do
             src="$GITHUB_WORKSPACE/.iter6-dexie-$variant"
@@ -43,7 +44,7 @@ jobs:
             npm run check:dist
             npm run test:e2e
             npm run test:e2e:production
-            npm run preview -- --host 127.0.0.1 --port 4174 >/tmp/iter6-dexie-$variant.log 2>&1 &
+            ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4174 >/tmp/iter6-dexie-$variant.log 2>&1 &
             pid=$!
             trap 'kill "$pid" 2>/dev/null || true' EXIT
             for n in $(seq 1 40); do
@@ -61,6 +62,11 @@ jobs:
             node scripts/iter6-dexie-lazy-lab.mjs summarize "$variant"
             kill "$pid" 2>/dev/null || true
             wait "$pid" 2>/dev/null || true
+            for retry in $(seq 1 20); do
+              if ! curl -fsS http://127.0.0.1:4174/ >/dev/null 2>&1; then break; fi
+              sleep 1
+            done
+            if curl -fsS http://127.0.0.1:4174/ >/dev/null 2>&1; then echo 'Stale preview still bound 4174'; exit 1; fi
             trap - EXIT
           done
           node scripts/iter6-dexie-lazy-lab.mjs compare
