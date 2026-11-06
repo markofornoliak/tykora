@@ -5,6 +5,9 @@ on:
     paths:
       - '.github/workflows/iter6-preact-lab.yml'
       - 'vite.config.ts'
+      - 'index.html'
+      - 'src/app/**'
+      - 'src/shared/ui/**'
   workflow_dispatch:
 permissions:
   contents: read
