@@ -38,7 +38,7 @@ jobs:
       - name: Download pinned verified screenshot archive
         uses: actions/download-artifact@v4
         with:
-          run-id: 42231771148
+          run-id: 42281897793
           name: iter6-36-visual-review-images
           path: performance-artifacts/iter5-golden
           repository: markofornoliak/tykora
